@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VIP v3.17 · Demo Guide</title><style>
+:root{--paper:#F3F5F4;--panel:#E9EEEC;--ink:#122B33;--accent:#1E5A78;--accent-deep:#143E54;--accent-light:#7FB0C4;--seal:#973A3A;--graphite:#54646A;--line:#C7D2D1;--wash:#D8E2E4;--lavender:#D6D3E6;--rose:#DFB3BE;--display:"Schibsted Grotesk",Arial,sans-serif;--body:"Source Serif 4",Georgia,serif;--mono:"Fragment Mono","Courier New",monospace;--r:3px;--rule:1px solid var(--line)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+h1,h2,h3,h4{font-family:var(--display);line-height:1.12;letter-spacing:-.015em}
+h1{font-size:clamp(30px,4.6vw,46px);font-weight:800}h2{font-size:25px;font-weight:700;margin-bottom:14px}h3{font-size:17px;font-weight:700;margin:20px 0 8px}
+p{max-width:70ch;margin-bottom:13px}.lede{font-size:18.5px;color:var(--graphite);max-width:64ch}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:12px}
+.dim{position:relative;border-top:var(--rule);margin:44px 0 38px}.dim::before,.dim::after{content:"";position:absolute;top:-5px;width:1px;height:11px;background:var(--line)}.dim::before{left:0}.dim::after{right:0}
+header{padding:54px 0 0}
+.mark{display:inline-flex;align-items:center;gap:13px;margin-bottom:26px}
+.mark .tile{width:42px;height:42px;background:var(--ink);color:var(--paper);font-family:var(--display);font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;border-radius:var(--r)}
+.mark .word{font-family:var(--display);font-weight:700;font-size:15.5px}
+.mark .word span{display:block;font-family:var(--mono);font-weight:400;font-size:11px;color:var(--graphite);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
+.asis{border:1.5px solid var(--seal);border-radius:var(--r);background:#fff;padding:13px 16px 13px 48px;position:relative;max-width:880px;margin-top:6px}
+.asis::before{content:"§";position:absolute;left:15px;top:10px;font-family:var(--display);font-weight:800;font-size:21px;color:var(--seal)}
+.asis p{font-size:13.5px;margin:0;font-family:var(--display)}.asis b{color:var(--seal)}
+.card{border:var(--rule);border-radius:var(--r);background:#fff;padding:18px 20px;margin-bottom:16px}.card h3{margin-top:0}
+.grid{display:grid;gap:16px}.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}.g3{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}.g4{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+table.tls{width:100%;border-collapse:collapse;background:#fff;border:var(--rule);font-size:14.5px}
+table.tls th{font-family:var(--display);font-weight:700;font-size:13px;text-align:left;background:var(--panel);padding:10px 13px;border-bottom:var(--rule)}
+table.tls td{padding:10px 13px;border-bottom:var(--rule);vertical-align:top;font-family:var(--display);font-size:14px}
+table.tls tr:last-child td{border-bottom:none}table.tls td.num,table.tls td.mono{font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+.metric{border:var(--rule);border-left:3px solid var(--accent);border-radius:var(--r);background:#fff;padding:16px 18px}
+.metric .v{font-family:var(--display);font-weight:800;font-size:30px;letter-spacing:-.02em}
+.metric .l{font-family:var(--display);font-size:12.5px;color:var(--graphite);margin-top:4px}
+.metric .src{font-family:var(--mono);font-size:10px;color:var(--graphite);margin-top:8px;display:block;letter-spacing:.04em}
+.metric.lav{border-left-color:var(--lavender)}.metric.roz{border-left-color:var(--rose)}.metric.sea{border-left-color:var(--seal)}
+.ann{border:var(--rule);border-left:3px solid var(--accent);border-radius:var(--r);background:#fff;padding:15px 18px;margin-bottom:12px}
+.ann h3{font-size:15.5px;margin:0 0 5px}.ann p{font-family:var(--display);font-size:13.9px;color:var(--graphite);margin:0;max-width:none}
+.ann.l2{border-left-color:var(--lavender)}.ann.l3{border-left-color:var(--rose)}.ann.lg{border-left-color:var(--graphite)}.ann.ls{border-left-color:var(--seal)}
+.chartwrap{border:var(--rule);border-radius:var(--r);background:#fff;padding:20px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;font-family:var(--display);font-size:12.5px;color:var(--graphite)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.dark{background:var(--ink);color:var(--paper);border-radius:var(--r);padding:22px 24px}.dark .eyebrow{color:var(--accent-light)}
+.note{font-family:var(--mono);font-size:11.5px;color:var(--graphite);line-height:1.7;margin-top:12px;max-width:900px}
+.titleblock{border:1.5px solid var(--ink);border-radius:var(--r);background:#fff;overflow:hidden;font-size:13px;max-width:760px}
+.tb-row{display:grid;grid-template-columns:170px 1fr;border-bottom:1px solid var(--ink)}.tb-row:last-child{border-bottom:none}
+.tb-row .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--graphite);padding:8px 12px;border-right:1px solid var(--ink);background:var(--panel);display:flex;align-items:center}
+.tb-row .v2{font-family:var(--display);font-weight:500;padding:8px 12px}.tb-row .v2.mono{font-family:var(--mono);font-size:12px;font-weight:400}.tb-row .v2.seal{color:var(--seal);font-weight:700}
+.tb-row .v2{min-width:0;overflow-wrap:anywhere}
+@media(max-width:560px){.tb-row{grid-template-columns:118px 1fr}}
+footer{padding:44px 0 64px}
+/* v3.17 interactive layer */
+.calcgrid{display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start}@media(max-width:860px){.calcgrid{grid-template-columns:1fr}}
+.ctrlcard{border:var(--rule);border-radius:var(--r);background:#fff;padding:20px;position:sticky;top:16px}
+label{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--graphite);display:block;margin:14px 0 5px}label:first-of-type{margin-top:0}label b{color:var(--accent-deep);font-size:13px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.seg{display:flex;gap:6px;margin-top:4px}.seg button{flex:1;font-family:var(--display);font-weight:700;font-size:12.5px;padding:9px 4px;border:var(--rule);border-radius:var(--r);background:#fff;cursor:pointer;color:var(--ink)}
+.seg button.on{background:var(--wash);border-color:var(--accent)}
+.btn{font-family:var(--display);font-weight:700;font-size:13.5px;padding:10px 16px;border:var(--rule);border-radius:var(--r);background:#fff;cursor:pointer;color:var(--ink)}
+.btn.pri{background:var(--accent);border-color:var(--accent-deep);color:#fff}.btn.seal{background:var(--seal);border-color:var(--seal);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.resetb{width:100%;font-family:var(--display);font-weight:700;font-size:13px;padding:10px;border:var(--rule);border-radius:var(--r);background:transparent;cursor:pointer;margin-top:16px;color:var(--graphite)}
+.steps{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 18px}
+.steps button{font-family:var(--mono);font-size:11px;letter-spacing:.06em;padding:9px 12px;border:var(--rule);border-radius:var(--r);background:#fff;cursor:pointer;color:var(--graphite)}
+.steps button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.steps button.done{border-color:var(--accent);color:var(--accent-deep)}
+.screen{border:1.5px solid var(--ink);border-radius:6px;background:#fff;overflow:hidden;box-shadow:6px 6px 0 var(--wash)}
+.sbar{display:flex;align-items:center;gap:8px;background:var(--panel);border-bottom:var(--rule);padding:8px 12px;font-family:var(--mono);font-size:10.5px;color:var(--graphite);letter-spacing:.08em}
+.sbar i{width:9px;height:9px;border-radius:50%;background:var(--line);display:inline-block}
+.sbody{padding:20px;min-height:300px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--display);font-weight:700;font-size:12.5px;padding:7px 12px;border:var(--rule);border-radius:20px;background:#fff;cursor:pointer;margin:3px;user-select:none}
+.chip.on{background:var(--accent);color:#fff;border-color:var(--accent-deep)}
+.chip.lock{background:var(--ink);color:var(--paper);border-color:var(--ink);cursor:default}
+.chip:disabled,.chip.dis{opacity:.4;cursor:not-allowed}
+.log{border:var(--rule);border-radius:var(--r);background:var(--ink);color:#CFE0E6;font-family:var(--mono);font-size:11.5px;padding:14px 16px;max-height:210px;overflow-y:auto;line-height:1.8}
+.log b{color:#fff}.log .ok{color:#9FD0B7}.log .warn{color:#E8C9A0}.log .seal{color:#E7A9A9}
+.kpi{display:flex;gap:14px;flex-wrap:wrap}
+.pill{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border:var(--rule);border-radius:12px;color:var(--graphite);background:#fff}
+.pill.mod{border-color:var(--seal);color:var(--seal)}
+.bar{height:12px;background:var(--panel);border:var(--rule);border-radius:8px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .5s ease}
+.bar.seal i{background:var(--seal)}.bar.gold i{background:var(--lavender)}
+.tl2{border-left:2px solid var(--line);margin:14px 0 6px 8px;padding-left:22px}
+.tl2 .ev{position:relative;padding-bottom:14px;cursor:pointer}
+.tl2 .ev::before{content:"";position:absolute;left:-27px;top:6px;width:8px;height:8px;border-radius:50%;background:var(--line)}
+.tl2 .ev.on::before{background:var(--accent);box-shadow:0 0 0 3px var(--wash)}
+.tl2 .ev.seal.on::before{background:var(--seal)}
+.tl2 .when{font-family:var(--mono);font-size:11px;color:var(--graphite);letter-spacing:.08em;text-transform:uppercase}
+.tl2 .what{font-family:var(--display);font-size:14.5px;font-weight:600}
+.tl2 .ev.on .what{color:var(--accent-deep)}
+details.assume{border:var(--rule);border-radius:var(--r);background:#fff;max-width:900px;margin-top:14px}
+details.assume summary{font-family:var(--display);font-weight:700;font-size:13.5px;padding:12px 16px;cursor:pointer;list-style:none}
+details.assume summary::before{content:"▸ ";color:var(--accent)}details.assume[open] summary::before{content:"▾ "}
+details.assume .in{padding:0 16px 14px;font-family:var(--display);font-size:13.2px;color:var(--graphite);line-height:1.65}
+details.assume .in li{margin-bottom:6px;margin-left:16px}
+.hint{font-family:var(--mono);font-size:10.5px;color:var(--graphite);letter-spacing:.06em;margin-top:8px}
+.flash{animation:fl .6s ease}@keyframes fl{0%{background:var(--wash)}100%{background:transparent}}
+.pulse{animation:pu 1.4s ease infinite}@keyframes pu{0%,100%{opacity:1}50%{opacity:.45}}
+.dot{width:13px;height:13px;border-radius:50%;background:var(--graphite);opacity:.55;display:inline-block;margin:3px;cursor:pointer;transition:all .35s}
+.dot.hot{background:var(--seal);opacity:.9}.dot.named{background:var(--accent);opacity:1;transform:scale(1.15)}
+.dot.sel{outline:2px solid var(--ink);outline-offset:1px}
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:18px}@media(max-width:760px){.twocol{grid-template-columns:1fr}}
+.feed{border:var(--rule);border-radius:var(--r);background:#fff;padding:0;overflow:hidden}
+.feed .fi{padding:11px 14px;border-bottom:var(--rule);font-family:var(--display);font-size:13.5px}
+.feed .fi:last-child{border-bottom:none}
+.feed .fi .t{font-family:var(--mono);font-size:10px;color:var(--graphite);letter-spacing:.06em;text-transform:uppercase;display:block;margin-bottom:2px}
+.verdictbox{border:var(--rule);border-left:3px solid var(--accent);border-radius:var(--r);background:#fff;padding:18px 20px;max-width:880px}
+
+@media(max-width:560px){table.tls{display:block;overflow-x:auto}table.tls th{width:auto!important}}
+</style></head><body><div class="wrap"><header><div class="mark"><div class="tile">TL</div><div class="word">TRENCH LOGIC STUDIO<span>VIP v3.17 · Demo Guide</span></div></div>
+<span class="eyebrow">Demo Guide · registry slot 05 · start here</span>
+<h1>Four windows onto one contract</h1>
+<p class="lede">The VIP demo layer is interactive: the contract fires to your clicks. This guide routes each reader to the demo they will trust first — and names which figures are modeled and which are empirical, before anyone asks.</p>
+<div class="asis"><p><b>SOLD AS-IS · SYNTHETIC BY DECLARATION.</b> Every figure on this page is synthetic — a model output generated for demonstration, or a modelled assumption — except the one marked empirical. No live resort data exists. Assumptions are printed beside each model; the buyer integrates and validates independently.</p></div></header>
+<div class="wrap"><div class="dim"></div></div>
+<section class="wrap"><span class="eyebrow">Choose your seat</span><h2>Recommended path by role</h2>
+<div class="seg" style="max-width:560px" id="roles"><button class="on" data-r="0">Decision-maker</button><button data-r="1">VIP operations</button><button data-r="2">Engineering</button></div>
+<div class="card" style="margin-top:14px"><h3 id="rt">Decision-maker · 12 minutes</h3><p id="rp" style="font-family:var(--display);font-size:14.5px;color:var(--graphite)">05d Narrative Proof (play the quarter) → 05c Ledger Model (drag the preserved budget, watch the redirect answer) → 01 Executive Brief.</p></div>
+<script>var R=[["Decision-maker · 12 minutes","05d Narrative Proof (play the quarter) → 05c Ledger Model (drag the preserved budget, watch the redirect answer) → 01 Executive Brief."],["VIP operations · 15 minutes","05a Host Console (run one VIP to a fired contract) → 05b Policy Engine (set the stop-loss yourself, watch it hold) → 03a/03b modes."],["Engineering · 20 minutes","05b Policy Engine (read the ledger log) → 04 API spec → 04b integration reference → 04c compose."]];
+document.querySelectorAll("#roles button").forEach(function(x){x.onclick=function(){document.querySelectorAll("#roles button").forEach(function(y){y.classList.remove("on")});x.classList.add("on");var d=R[+x.dataset.r];document.getElementById("rt").textContent=d[0];document.getElementById("rp").textContent=d[1];};});</script>
+</section>
+<section class="wrap" style="margin-top:34px"><span class="eyebrow">The four demos</span><h2>What each one proves</h2>
+<div class="grid g2">
+<div class="ann"><h3>05a · Host Console</h3><p>The host’s screen, six clickable steps: flag, consent, policy, arm, trigger, redirect — one VIP walked from risk to retained.</p></div>
+<div class="ann l2"><h3>05b · Policy Engine</h3><p>A live session against a real policy: set the stop-loss, deal the shoe, watch the policy fire and the preserved budget settle into resort credit, rollover and the guest’s own residual — then flip to the hard-stop-only baseline and watch retention pay the difference.</p></div>
+<div class="ann l3"><h3>05c · Ledger Model</h3><p>The quarter economics, recomputable. The reference preset reproduces the canon's quarter figures exactly: 84% vs 61% retention of limited VIPs, €214K redirected at 70% capture of preserved budget.</p></div>
+<div class="ann lg"><h3>05d · Narrative Proof</h3><p>One synthetic resort quarter, event by event. Click any point and the KPI board morphs to that week’s state.</p></div>
+</div></section>
+<section class="wrap" style="margin-top:34px"><span class="eyebrow">Canon · v3.17 reference block</span><h2>The numbers every document shares</h2>
+<div class="grid g4">
+<div class="metric"><div class="v">84% v 61%</div><div class="l">quarter retention of limited VIPs · incentive vs hard-stop-only</div><span class="src">MODELED · see empirical anchor →</span></div>
+<div class="metric lav"><div class="v">2.92×</div><div class="l">odds of limit-setters remaining active at 1 year</div><span class="src">EMPIRICAL · peer-reviewed RG literature</span></div>
+<div class="metric roz"><div class="v">€214K</div><div class="l">preserved budget redirected in the synthetic quarter</div><span class="src">70% of €306K preserved · modeled</span></div>
+<div class="metric"><div class="v">~30%</div><div class="l">of GGR from the top 1% of players (concentration)</div><span class="src">industry analyst estimate</span></div>
+</div>
+<p class="note">Method: modeled figures are labeled MODELED on every frame; the empirical anchor — limit-setters at 2.92× odds of remaining active at one year — is what makes the modeled quarter believable. Regulatory direction of travel (UK high-value customer rules, US affordability proposals) is context, not a model input.</p></section>
+<footer class="wrap"><div class="titleblock">
+<div class="tb-row"><div class="k">Studio</div><div class="v2">Trench Logic Studio — Miloš Petrović · milos@trench-logic.com · trenchlogicstudio.com</div></div>
+<div class="tb-row"><div class="k">Project</div><div class="v2">VIP SmartContract — Compliance-as-Revenue Layer</div></div>
+<div class="tb-row"><div class="k">Document</div><div class="v2 mono">05_Demo_Guide.html</div></div>
+<div class="tb-row"><div class="k">Revision</div><div class="v2 mono">v3.17 · 2026</div></div>
+<div class="tb-row"><div class="k">Proof chain</div><div class="v2 mono">GPG 9078 8B14 00C2 C2EC … EE0B B22B → SHA-256 → OpenTimestamps → Bitcoin</div></div>
+<div class="tb-row"><div class="k">Status</div><div class="v2 seal">AS-IS · STRICTLY CONFIDENTIAL · DISTRIBUTION UNDER NDA ONLY</div></div>
+</div></footer></body></html>

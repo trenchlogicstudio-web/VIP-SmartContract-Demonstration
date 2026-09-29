@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIP v3.17 · 11</title><style>
+:root{--paper:#F3F5F4;--panel:#E9EEEC;--ink:#122B33;--accent:#1E5A78;--accent-deep:#143E54;--accent-light:#7FB0C4;--seal:#973A3A;--graphite:#54646A;--line:#C7D2D1;--wash:#D8E2E4;--lavender:#D6D3E6;--rose:#DFB3BE;--display:"Schibsted Grotesk",Arial,sans-serif;--body:"Source Serif 4",Georgia,serif;--mono:"Fragment Mono","Courier New",monospace;--r:3px;--rule:1px solid var(--line)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+h1,h2,h3,h4{font-family:var(--display);line-height:1.12;letter-spacing:-.015em}
+h1{font-size:clamp(30px,4.6vw,46px);font-weight:800}
+h2{font-size:25px;font-weight:700;margin-bottom:14px}
+h3{font-size:17px;font-weight:700;margin:20px 0 8px}
+p{max-width:70ch;margin-bottom:13px}
+.lede{font-size:18.5px;color:var(--graphite);max-width:64ch}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:12px}
+.dim{position:relative;border-top:var(--rule);margin:44px 0 38px}
+.dim::before,.dim::after{content:"";position:absolute;top:-5px;width:1px;height:11px;background:var(--line)}
+.dim::before{left:0}.dim::after{right:0}
+header{padding:54px 0 0}
+.mark{display:inline-flex;align-items:center;gap:13px;margin-bottom:26px}
+.mark .tile{width:42px;height:42px;background:var(--ink);color:var(--paper);font-family:var(--display);font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;border-radius:var(--r)}
+.mark .word{font-family:var(--display);font-weight:700;font-size:15.5px}
+.mark .word span{display:block;font-family:var(--mono);font-weight:400;font-size:11px;color:var(--graphite);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
+.asis{border:1.5px solid var(--seal);border-radius:var(--r);background:#fff;padding:13px 16px 13px 48px;position:relative;max-width:880px;margin-top:6px}
+.asis::before{content:"§";position:absolute;left:15px;top:10px;font-family:var(--display);font-weight:800;font-size:21px;color:var(--seal)}
+.asis p{font-size:13.5px;margin:0;font-family:var(--display)}
+.asis b{color:var(--seal)}
+.card{border:var(--rule);border-radius:var(--r);background:#fff;padding:18px 20px;margin-bottom:16px}
+.card h3{margin-top:0}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+table.tls{width:100%;border-collapse:collapse;background:#fff;border:var(--rule);font-size:14.5px}
+table.tls th{font-family:var(--display);font-weight:700;font-size:13px;text-align:left;background:var(--panel);padding:10px 13px;border-bottom:var(--rule)}
+table.tls td{padding:10px 13px;border-bottom:var(--rule);vertical-align:top;font-family:var(--display);font-size:14px}
+table.tls tr:last-child td{border-bottom:none}
+table.tls td.num,table.tls td.mono{font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+.metric{border:var(--rule);border-left:3px solid var(--accent);border-radius:var(--r);background:#fff;padding:16px 18px}
+.metric .v{font-family:var(--display);font-weight:800;font-size:30px;letter-spacing:-.02em}
+.metric .l{font-family:var(--display);font-size:12.5px;color:var(--graphite);margin-top:4px}
+.metric .src{font-family:var(--mono);font-size:10.5px;color:var(--graphite);margin-top:9px;display:block}
+.ann{border:var(--rule);border-left:3px solid var(--accent);border-radius:var(--r);background:#fff;padding:15px 18px;margin-bottom:12px}
+.ann h3{font-size:15.5px;margin:0 0 5px}
+.ann p{font-family:var(--display);font-size:13.9px;color:var(--graphite);margin:0;max-width:none}
+.ann.l2{border-left-color:var(--lavender)}.ann.l3{border-left-color:var(--rose)}.ann.lw{border-left-color:var(--wash)}.ann.lg{border-left-color:var(--graphite)}.ann.ls{border-left-color:var(--seal)}
+.chartwrap{border:var(--rule);border-radius:var(--r);background:#fff;padding:20px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;font-family:var(--display);font-size:12.5px;color:var(--graphite)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.dark{background:var(--ink);color:var(--paper);border-radius:var(--r);padding:22px 24px}
+.dark .eyebrow{color:var(--accent-light)}
+.note{font-family:var(--mono);font-size:11.5px;color:var(--graphite);line-height:1.7;margin-top:12px;max-width:900px}
+.tl{border-left:2px solid var(--line);margin:14px 0 6px 8px;padding-left:22px}
+.tl .ev{position:relative;padding-bottom:16px}
+.tl .ev::before{content:"";position:absolute;left:-27px;top:6px;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.tl .ev.seal::before{background:var(--seal)}
+.tl .ev .when{font-family:var(--mono);font-size:11px;color:var(--graphite);letter-spacing:.08em;text-transform:uppercase}
+.tl .ev .what{font-family:var(--display);font-size:14.5px}
+.quote{border:var(--rule);border-left:3px solid var(--accent);border-radius:var(--r);background:#fff;padding:20px 24px;font-size:19px;font-style:italic;max-width:760px}
+.quote .who{display:block;font-family:var(--mono);font-size:11px;font-style:normal;color:var(--graphite);margin-top:10px;letter-spacing:.08em;text-transform:uppercase}
+.titleblock{border:1.5px solid var(--ink);border-radius:var(--r);background:#fff;overflow:hidden;font-size:13px;max-width:760px}
+.tb-row{display:grid;grid-template-columns:170px 1fr;border-bottom:1px solid var(--ink)}
+.tb-row:last-child{border-bottom:none}
+.tb-row .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--graphite);padding:8px 12px;border-right:1px solid var(--ink);background:var(--panel);display:flex;align-items:center}
+.tb-row .v2{font-family:var(--display);font-weight:500;padding:8px 12px}
+.tb-row .v2.mono{font-family:var(--mono);font-size:12px;font-weight:400}
+.tb-row .v2.seal{color:var(--seal);font-weight:700}
+.tb-row .v2{min-width:0;overflow-wrap:anywhere}
+@media(max-width:560px){.tb-row{grid-template-columns:118px 1fr}}
+footer{padding:44px 0 64px}
+
+.bcard{border:var(--rule);border-radius:var(--r);background:#fff;margin-bottom:20px;overflow:hidden}
+.bcard .head{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:14px 20px;background:var(--panel);border-bottom:var(--rule);flex-wrap:wrap}
+.bcard .head h3{font-size:18px;font-weight:800;margin:0}
+.bcard .head .cls{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--graphite)}
+.bcard .body{padding:18px 20px}
+.brow{display:grid;grid-template-columns:150px 1fr;gap:14px;padding:10px 0;border-bottom:var(--rule)}
+.brow:last-child{border-bottom:none}
+.brow .k{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--graphite);padding-top:3px}
+.brow .v{font-family:var(--display);font-size:15px;line-height:1.55}
+.brow.line .v{font-family:var(--body);font-size:16px;border-left:3px solid var(--accent);padding-left:14px;font-style:italic}
+@media(max-width:560px){.brow{grid-template-columns:1fr}}
+
+@media(max-width:560px){table.tls{display:block;overflow-x:auto}table.tls th{width:auto!important}}
+</style></head>
+<body>
+<header class="wrap">
+  <div class="mark"><div class="tile">TL</div><div class="word">TRENCH LOGIC STUDIO<span>VIP SmartContract · Battlecard</span></div></div>
+  <span class="eyebrow">11 · Competitive Battlecard — including the patent landscape, named first</span>
+  <h1>Named competitors, exact lines</h1>
+  <p class="lede">Wallets that already enforce, platforms that already limit, CRMs that already campaign, detection that already flags, crypto operators that already verify — and the patents. Every boundary stated by us before the buyer's diligence states it back.</p>
+  <div class="asis"><p><b>SHIPS IN THE PACKAGE.</b> Name, ownership and status of IGT, Sightline, Optimove, Mindway and Kambi re-verified 23 September 2026; OpenBet, Fast Track and Future Anthem carry no check of that date and stand for their class only. Capabilities are those of the June 2026 scan. Re-verify before each wave. Sold as-is.</p></div>
+</header>
+<div class="wrap"><div class="dim"></div></div>
+
+<section class="wrap">
+ <div class="bcard"><div class="head"><h3>Cashless wallets (IGT / Sightline class)</h3><span class="cls">Limits + non-gaming spend exist here · enforcement without economics</span></div><div class="body">
+  <div class="brow"><div class="k">What they do</div><div class="v">Unified funding across gaming and non-gaming with spending-limit management — limit enforcement and resort-wide spend are real, shipped capabilities in this class.</div></div>
+  <div class="brow"><div class="k">Where the line sits</div><div class="v">Their limits are hard stops inside a payments product; none pays the player for respecting the limit, and none converts preserved budget into scheduled non-gaming revenue. Enforcement exists; the economics do not — that sentence is the asset's whole position, and it survives an informed buyer because it concedes everything true first.</div></div>
+  <div class="brow line"><div class="k">Your line</div><div class="v">"Wallets can already stop a player. Nothing on the floor pays them for stopping and books the evening with what they kept. We sell the second sentence — and we work beside any wallet you run."</div></div>
+ </div></div>
+ <div class="bcard"><div class="head"><h3>Platform limit stacks (Kambi / OpenBet class)</h3><span class="cls">Deposit & loss limits at platform level</span></div><div class="body">
+  <div class="brow"><div class="k">What they do</div><div class="v">Mandated limit tooling in regulated platform stacks — table stakes, jurisdiction-driven.</div></div>
+  <div class="brow"><div class="k">Where the line sits</div><div class="v">Limits as compliance cost, experienced as punishment. The middleware here turns the identical threshold into a hospitality event with a rollover attached.</div></div>
+  <div class="brow line"><div class="k">Your line</div><div class="v">"You already have the threshold. We change what crossing it means — from 'you're done' to 'here's what you earned by stopping.'"</div></div>
+ </div></div>
+ <div class="bcard"><div class="head"><h3>Gaming CRM journeys (Optimove / Fast Track class)</h3><span class="cls">Post-hoc campaigns on registered behaviour</span></div><div class="body">
+  <div class="brow"><div class="k">What they do</div><div class="v">Lifecycle campaigns reacting to behaviour after it lands in the warehouse — excellent retention machinery, hours-to-days latency. The class is consolidating: Optimove announced the acquisition of Smartico on 6 April 2026, with both platforms continuing to operate independently (verified 23 September 2026).</div></div>
+  <div class="brow"><div class="k">Where the line sits</div><div class="v">This engine acts in the transaction path at the moment of threshold, not the morning after. For a CRM-vendor buyer (02b) that real-time policy layer is the missing product line, not the rival.</div></div>
+  <div class="brow line"><div class="k">Your line</div><div class="v">"Your journeys start when the data lands. This acts while the player is still at the table — and then hands your journeys a cleaner, retained customer."</div></div>
+ </div></div>
+ <div class="bcard"><div class="head"><h3>Risk-detection AI (Mindway / Future Anthem class)</h3><span class="cls">Detection without transaction-path economics</span></div><div class="body">
+  <div class="brow"><div class="k">What they do</div><div class="v">Real-time behavioural risk scoring and early-warning flags — strong science, advisory output.</div></div>
+  <div class="brow"><div class="k">Where the line sits</div><div class="v">Detection tells the operator something is wrong; it does not stop, pay, or redirect. The two layers compose: their flag can raise this engine's policy.</div></div>
+  <div class="brow line"><div class="k">Your line</div><div class="v">"Detection is the smoke alarm. This is the sprinkler that also comps the dinner. Run both."</div></div>
+ </div></div>
+ <div class="bcard"><div class="head"><h3>Provably-fair crypto operators</h3><span class="cls">Verifiable trust exists here — different market, different claim</span></div><div class="body">
+  <div class="brow"><div class="k">What they do</div><div class="v">Crypto-native operators have competed on verifiable trust for years — provably fair outcomes, on-chain transparency. The concept of trust-by-verification is not new and this package does not claim to have invented it.</div></div>
+  <div class="brow"><div class="k">Where the line sits</div><div class="v">Their verification covers game fairness for a crypto-native audience. This asset's verification covers policy decisions for regulated land-based and omni operators whose players never see a chain — middleware anchoring proofs, never funds.</div></div>
+  <div class="brow line"><div class="k">Your line</div><div class="v">"Provably fair proved players value verification. We bring the verification to the regulated floor without bringing the crypto — proofs anchored, funds untouched."</div></div>
+ </div></div>
+ <div class="bcard"><div class="head"><h3>Patent landscape — stated, not discovered</h3><span class="cls">On-chain RG limit enforcement is patent-encumbered</span></div><div class="body">
+  <div class="brow"><div class="k">What exists</div><div class="v">Granted US patents cover blockchain-based management and enforcement of responsible-gaming limits across properties. Any buyer's counsel will find them in minutes — which is why this card names the landscape first.</div></div>
+  <div class="brow"><div class="k">Where this asset stands</div><div class="v">Scoped to the incentive-economics layer; enforcement and funds deliberately off-chain; only proofs hash-anchored. The rejection of on-chain enforcement is a documented design decision (10), not an omission.</div></div>
+  <div class="brow line"><div class="k">Your line</div><div class="v">"The on-chain enforcement space is patented — so we don't live there, on purpose. Our claims sit in the economics layer, and we recommend your counsel run FTO before any exclusivity. You're hearing that from us, not finding it after the LOI."</div></div>
+ </div></div>
+</section>
+<div class="wrap"><div class="dim"></div></div>
+<section class="wrap"><span class="eyebrow">Objection quick-fire · verbatim answers</span>
+ <h2>When the buyer says —</h2>
+ <table class="tls">
+  <tr><th>Objection</th><th>Answer</th></tr>
+  <tr><td style="width:34%;font-family:var(--display);font-weight:700">"Blockchain in regulated gaming is a non-starter."</td><td>Agreed — which is why funds and rules never touch a chain here. This is middleware; the chain only timestamps proofs of decisions already made. Your regulator reads an audit trail, not a wallet.</td></tr>
+  <tr><td style="font-family:var(--display);font-weight:700">"Wallets already enforce limits."</td><td>They do, and the card above says so by name. What no wallet does is pay the player for stopping and convert the preserved budget into spa, dinner, and retail revenue. Enforcement is commodity; the economics are the asset.</td></tr>
+  <tr><td style="font-family:var(--display);font-weight:700">"What about the patents?"</td><td>Named in this package before you asked. On-chain enforcement is encumbered; this asset is scoped to the incentive layer and keeps enforcement off-chain by documented design. FTO before exclusivity is our recommendation, in writing, in 01 and here.</td></tr>
+  <tr><td style="font-family:var(--display);font-weight:700">"VIPs will walk when stopped."</td><td>In the baseline they do — in the model, 39% of the players who hit a stop are lost within the quarter. The rollover and the booked evening cut that to 16% of them. The stop that pays is the retention mechanism, not the threat to it.</td></tr>
+  <tr><td style="font-family:var(--display);font-weight:700">"Isn't redirecting gaming budget revenue suicide?"</td><td>The baseline alternative isn't the player losing the rest — it's the player leaving with it. 70% of preserved budget captured in the building beats 0% in a taxi, and the lifetime stays on your book.</td></tr>
+  <tr><td style="font-family:var(--display);font-weight:700">"Where's the pilot?"</td><td>None, by declaration — figures labelled synthetic, parameters printed, policy engine running in your browser (05b). Interrogate it.</td></tr>
+ </table>
+ <p class="note">Apollo combined IGT&rsquo;s gaming and digital business with Everi on 1 July 2025 and the combined enterprise operates as IGT &mdash; name and ownership re-verified 23 September 2026, as were Sightline, Optimove, Mindway and Kambi. Optimove announced the acquisition of Smartico on 6 April 2026, both platforms continuing independently. Every other name stands for its class rather than for a company&rsquo;s current capabilities. Re-verify before each wave. This card ships in the package by design.</p>
+</section>
+
+<footer class="wrap"><div class="dim"></div><div class="titleblock">
+<div class="tb-row"><div class="k">Studio</div><div class="v2">Trench Logic Studio — Miloš Petrović · milos@trench-logic.com · trenchlogicstudio.com</div></div>
+<div class="tb-row"><div class="k">Project</div><div class="v2">VIP SmartContract · Compliance-as-Revenue Layer</div></div>
+<div class="tb-row"><div class="k">Document</div><div class="v2 mono">11_Competitive_Battlecard.html</div></div>
+<div class="tb-row"><div class="k">Revision</div><div class="v2 mono">v3.17 · 2026</div></div>
+<div class="tb-row"><div class="k">Proof chain</div><div class="v2 mono">GPG 9078 8B14 00C2 C2EC … EE0B B22B → SHA-256 → OpenTimestamps → Bitcoin</div></div>
+<div class="tb-row"><div class="k">Status</div><div class="v2 seal">AS-IS · STRICTLY CONFIDENTIAL · DISTRIBUTION UNDER NDA ONLY</div></div>
+</div></footer>
+
+</body></html>

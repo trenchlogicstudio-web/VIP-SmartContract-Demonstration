@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VIP v3.17 · Demo B · Policy Engine</title><style>
+:root{--paper:#F3F5F4;--panel:#E9EEEC;--ink:#122B33;--accent:#1E5A78;--accent-deep:#143E54;--accent-light:#7FB0C4;--seal:#973A3A;--graphite:#54646A;--line:#C7D2D1;--wash:#D8E2E4;--lavender:#D6D3E6;--rose:#DFB3BE;--display:"Schibsted Grotesk",Arial,sans-serif;--body:"Source Serif 4",Georgia,serif;--mono:"Fragment Mono","Courier New",monospace;--r:3px;--rule:1px solid var(--line)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+h1,h2,h3,h4{font-family:var(--display);line-height:1.12;letter-spacing:-.015em}
+h1{font-size:clamp(30px,4.6vw,46px);font-weight:800}h2{font-size:25px;font-weight:700;margin-bottom:14px}h3{font-size:17px;font-weight:700;margin:20px 0 8px}
+p{max-width:70ch;margin-bottom:13px}.lede{font-size:18.5px;color:var(--graphite);max-width:64ch}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:12px}
+.dim{position:relative;border-top:var(--rule);margin:44px 0 38px}.dim::before,.dim::after{content:"";position:absolute;top:-5px;width:1px;height:11px;background:var(--line)}.dim::before{left:0}.dim::after{right:0}
+header{padding:54px 0 0}
+.mark{display:inline-flex;align-items:center;gap:13px;margin-bottom:26px}
+.mark .tile{width:42px;height:42px;background:var(--ink);color:var(--paper);font-family:var(--display);font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;border-radius:var(--r)}
+.mark .word{font-family:var(--display);font-weight:700;font-size:15.5px}
+.mark .word span{display:block;font-family:var(--mono);font-weight:400;font-size:11px;color:var(--graphite);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
+.asis{border:1.5px solid var(--seal);border-radius:var(--r);background:#fff;padding:13px 16px 13px 48px;position:relative;max-width:880px;margin-top:6px}
+.asis::before{content:"§";position:absolute;left:15px;top:10px;font-family:var(--display);font-weight:800;font-size:21px;color:var(--seal)}
+.asis p{font-size:13.5px;margin:0;font-family:var(--display)}.asis b{color:var(--seal)}
+.card{border:var(--rule);border-radius:var(--r);background:#fff;padding:18px 20px;margin-bottom:16px}.card h3{margin-top:0}
+.grid{display:grid;gap:16px}.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}.g3{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}.g4{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+table.tls{width:100%;border-collapse:collapse;background:#fff;border:var(--rule);font-size:14.5px}
+table.tls th{font-family:var(--display);font-weight:700;font-size:13px;text-align:left;background:var(--panel);padding:10px 13px;border-bottom:var(--rule)}
+table.tls td{padding:10px 13px;border-bottom:var(--rule);vertical-align:top;font-family:var(--display);font-size:14px}
+table.tls tr:last-child td{border-bottom:none}table.tls td.num,table.tls td.mono{font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+.metric{border:var(--rule);border-left:3px solid var(--accent);border-radius:var(--r);background:#fff;padding:16px 18px}
+.metric .v{font-family:var(--display);font-weight:800;font-size:30px;letter-spacing:-.02em}
+.metric .l{font-family:var(--display);font-size:12.5px;color:var(--graphite);margin-top:4px}
+.metric .src{font-family:var(--mono);font-size:10px;color:var(--graphite);margin-top:8px;display:block;letter-spacing:.04em}
+.metric.lav{border-left-color:var(--lavender)}.metric.roz{border-left-color:var(--rose)}.metric.sea{border-left-color:var(--seal)}
+.ann{border:var(--rule);border-left:3px solid var(--accent);border-radius:var(--r);background:#fff;padding:15px 18px;margin-bottom:12px}
+.ann h3{font-size:15.5px;margin:0 0 5px}.ann p{font-family:var(--display);font-size:13.9px;color:var(--graphite);margin:0;max-width:none}
+.ann.l2{border-left-color:var(--lavender)}.ann.l3{border-left-color:var(--rose)}.ann.lg{border-left-color:var(--graphite)}.ann.ls{border-left-color:var(--seal)}
+.chartwrap{border:var(--rule);border-radius:var(--r);background:#fff;padding:20px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;font-family:var(--display);font-size:12.5px;color:var(--graphite)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.dark{background:var(--ink);color:var(--paper);border-radius:var(--r);padding:22px 24px}.dark .eyebrow{color:var(--accent-light)}
+.note{font-family:var(--mono);font-size:11.5px;color:var(--graphite);line-height:1.7;margin-top:12px;max-width:900px}
+.titleblock{border:1.5px solid var(--ink);border-radius:var(--r);background:#fff;overflow:hidden;font-size:13px;max-width:760px}
+.tb-row{display:grid;grid-template-columns:170px 1fr;border-bottom:1px solid var(--ink)}.tb-row:last-child{border-bottom:none}
+.tb-row .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--graphite);padding:8px 12px;border-right:1px solid var(--ink);background:var(--panel);display:flex;align-items:center}
+.tb-row .v2{font-family:var(--display);font-weight:500;padding:8px 12px}.tb-row .v2.mono{font-family:var(--mono);font-size:12px;font-weight:400}.tb-row .v2.seal{color:var(--seal);font-weight:700}
+.tb-row .v2{min-width:0;overflow-wrap:anywhere}
+@media(max-width:560px){.tb-row{grid-template-columns:118px 1fr}}
+footer{padding:44px 0 64px}
+/* v3.17 interactive layer */
+.calcgrid{display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start}@media(max-width:860px){.calcgrid{grid-template-columns:1fr}}
+.ctrlcard{border:var(--rule);border-radius:var(--r);background:#fff;padding:20px;position:sticky;top:16px}
+label{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--graphite);display:block;margin:14px 0 5px}label:first-of-type{margin-top:0}label b{color:var(--accent-deep);font-size:13px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.seg{display:flex;gap:6px;margin-top:4px}.seg button{flex:1;font-family:var(--display);font-weight:700;font-size:12.5px;padding:9px 4px;border:var(--rule);border-radius:var(--r);background:#fff;cursor:pointer;color:var(--ink)}
+.seg button.on{background:var(--wash);border-color:var(--accent)}
+.btn{font-family:var(--display);font-weight:700;font-size:13.5px;padding:10px 16px;border:var(--rule);border-radius:var(--r);background:#fff;cursor:pointer;color:var(--ink)}
+.btn.pri{background:var(--accent);border-color:var(--accent-deep);color:#fff}.btn.seal{background:var(--seal);border-color:var(--seal);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.resetb{width:100%;font-family:var(--display);font-weight:700;font-size:13px;padding:10px;border:var(--rule);border-radius:var(--r);background:transparent;cursor:pointer;margin-top:16px;color:var(--graphite)}
+.steps{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 18px}
+.steps button{font-family:var(--mono);font-size:11px;letter-spacing:.06em;padding:9px 12px;border:var(--rule);border-radius:var(--r);background:#fff;cursor:pointer;color:var(--graphite)}
+.steps button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.steps button.done{border-color:var(--accent);color:var(--accent-deep)}
+.screen{border:1.5px solid var(--ink);border-radius:6px;background:#fff;overflow:hidden;box-shadow:6px 6px 0 var(--wash)}
+.sbar{display:flex;align-items:center;gap:8px;background:var(--panel);border-bottom:var(--rule);padding:8px 12px;font-family:var(--mono);font-size:10.5px;color:var(--graphite);letter-spacing:.08em}
+.sbar i{width:9px;height:9px;border-radius:50%;background:var(--line);display:inline-block}
+.sbody{padding:20px;min-height:300px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--display);font-weight:700;font-size:12.5px;padding:7px 12px;border:var(--rule);border-radius:20px;background:#fff;cursor:pointer;margin:3px;user-select:none}
+.chip.on{background:var(--accent);color:#fff;border-color:var(--accent-deep)}
+.chip.lock{background:var(--ink);color:var(--paper);border-color:var(--ink);cursor:default}
+.chip:disabled,.chip.dis{opacity:.4;cursor:not-allowed}
+.log{border:var(--rule);border-radius:var(--r);background:var(--ink);color:#CFE0E6;font-family:var(--mono);font-size:11.5px;padding:14px 16px;max-height:210px;overflow-y:auto;line-height:1.8}
+.log b{color:#fff}.log .ok{color:#9FD0B7}.log .warn{color:#E8C9A0}.log .seal{color:#E7A9A9}
+.kpi{display:flex;gap:14px;flex-wrap:wrap}
+.pill{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border:var(--rule);border-radius:12px;color:var(--graphite);background:#fff}
+.pill.mod{border-color:var(--seal);color:var(--seal)}
+.bar{height:12px;background:var(--panel);border:var(--rule);border-radius:8px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .5s ease}
+.bar.seal i{background:var(--seal)}.bar.gold i{background:var(--lavender)}
+.tl2{border-left:2px solid var(--line);margin:14px 0 6px 8px;padding-left:22px}
+.tl2 .ev{position:relative;padding-bottom:14px;cursor:pointer}
+.tl2 .ev::before{content:"";position:absolute;left:-27px;top:6px;width:8px;height:8px;border-radius:50%;background:var(--line)}
+.tl2 .ev.on::before{background:var(--accent);box-shadow:0 0 0 3px var(--wash)}
+.tl2 .ev.seal.on::before{background:var(--seal)}
+.tl2 .when{font-family:var(--mono);font-size:11px;color:var(--graphite);letter-spacing:.08em;text-transform:uppercase}
+.tl2 .what{font-family:var(--display);font-size:14.5px;font-weight:600}
+.tl2 .ev.on .what{color:var(--accent-deep)}
+details.assume{border:var(--rule);border-radius:var(--r);background:#fff;max-width:900px;margin-top:14px}
+details.assume summary{font-family:var(--display);font-weight:700;font-size:13.5px;padding:12px 16px;cursor:pointer;list-style:none}
+details.assume summary::before{content:"▸ ";color:var(--accent)}details.assume[open] summary::before{content:"▾ "}
+details.assume .in{padding:0 16px 14px;font-family:var(--display);font-size:13.2px;color:var(--graphite);line-height:1.65}
+details.assume .in li{margin-bottom:6px;margin-left:16px}
+.hint{font-family:var(--mono);font-size:10.5px;color:var(--graphite);letter-spacing:.06em;margin-top:8px}
+.flash{animation:fl .6s ease}@keyframes fl{0%{background:var(--wash)}100%{background:transparent}}
+.pulse{animation:pu 1.4s ease infinite}@keyframes pu{0%,100%{opacity:1}50%{opacity:.45}}
+.dot{width:13px;height:13px;border-radius:50%;background:var(--graphite);opacity:.55;display:inline-block;margin:3px;cursor:pointer;transition:all .35s}
+.dot.hot{background:var(--seal);opacity:.9}.dot.named{background:var(--accent);opacity:1;transform:scale(1.15)}
+.dot.sel{outline:2px solid var(--ink);outline-offset:1px}
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:18px}@media(max-width:760px){.twocol{grid-template-columns:1fr}}
+.feed{border:var(--rule);border-radius:var(--r);background:#fff;padding:0;overflow:hidden}
+.feed .fi{padding:11px 14px;border-bottom:var(--rule);font-family:var(--display);font-size:13.5px}
+.feed .fi:last-child{border-bottom:none}
+.feed .fi .t{font-family:var(--mono);font-size:10px;color:var(--graphite);letter-spacing:.06em;text-transform:uppercase;display:block;margin-bottom:2px}
+.verdictbox{border:var(--rule);border-left:3px solid var(--accent);border-radius:var(--r);background:#fff;padding:18px 20px;max-width:880px}
+
+@media(max-width:560px){table.tls{display:block;overflow-x:auto}table.tls th{width:auto!important}}
+</style></head><body><div class="wrap"><header><div class="mark"><div class="tile">TL</div><div class="word">TRENCH LOGIC STUDIO<span>VIP v3.17 · Demo B</span></div></div>
+<span class="eyebrow">Demo B · registry slot 05b · the engine, running</span>
+<h1>Policy Engine</h1>
+<p class="lede">One VIP session against a live policy. Set the stop-loss, deal the shoe, watch the policy fire — then flip to the hard-stop-only baseline and read, in the retention line, what the incentive layer is for.</p>
+<div class="asis"><p><b>SOLD AS-IS · SYNTHETIC BY DECLARATION.</b> Every figure on this page is synthetic — a model output generated for demonstration, or a modelled assumption — except the one marked empirical. No live resort data exists. Assumptions are printed beside each model; the buyer integrates and validates independently.</p></div></header>
+<div class="wrap"><div class="dim"></div></div>
+<section class="wrap"><div class="calcgrid">
+<div class="ctrlcard">
+<label>mode</label><div class="seg"><button class="on" id="mI">Incentive</button><button id="mH">Hard-stop only</button></div>
+<label style="margin-top:14px">stop-loss · <b id="vS">50%</b> of pre-committed budget <span style="opacity:.6">· reference preset</span></label><input type="range" id="s" min="20" max="80" value="50" step="1">
+<label>redirect to non-gaming · <b id="vR">70%</b> of preserved budget <span style="opacity:.6">· with the rollover at 20% of the preserved budget, the ceiling the engine accepts here is 80%</span></label><input type="range" id="r" min="40" max="80" value="70" step="1">
+<label style="margin-top:14px">run the session</label>
+<button class="btn pri" id="deal" style="width:100%;margin-bottom:8px">DEAL · next hand</button>
+<button class="btn" id="auto" style="width:100%">AUTO-PLAY SHOE</button>
+<button class="resetb" id="reset">reset session</button>
+</div>
+<div>
+<div class="grid g4" style="margin-bottom:16px">
+<div class="metric"><div class="v" id="kB">€20,000</div><div class="l">session bankroll</div></div>
+<div class="metric sea"><div class="v" id="kD">€0</div><div class="l">consumed vs stop-line <span id="kL">€10,000</span></div></div>
+<div class="metric lav"><div class="v" id="kP">€0</div><div class="l">preserved on trigger</div></div>
+<div class="metric roz"><div class="v" id="kQ">84%</div><div class="l">quarter retention of limited VIPs at this mode (modeled)</div></div>
+</div>
+<div class="bar seal" style="margin-bottom:6px"><i id="bar"></i></div>
+<p class="hint" id="barh">consumption toward stop-line</p>
+<h3>After the trigger · resort credit issued</h3>
+<div id="alloc" style="margin-bottom:10px"><span class="chip dis">Spa</span><span class="chip dis">F&amp;B</span><span class="chip dis">Retail</span></div>
+<h3>Ledger log</h3><div class="log" id="log"><b>engine</b> policy armed · hard-stop · policy hash 0x7f3a…c412 · proofs anchored, funds off chain</div>
+</div></div>
+<p class="note">Model: the deterministic shoe loses on a fixed pattern so every buyer sees the same trigger. Incentive mode retains 84% of limited VIPs across the quarter vs 61% under hard-stop-only — MODELED, with the empirical anchor (limit-setters at 2.92× odds of remaining active at 1 year) doing the believing. Full quarter economics: 05c. Contract suite: 04 / 04b / 04c.</p>
+</section>
+<script>
+function el(i){return document.getElementById(i)}
+var BR=20000,dd=0,fired=false,mode="I",hand=0,timer=null;
+var ROLLOVER=20,SPA=30,FNB=25,RETAIL=15; /* 12_Canon.json · thresholds */
+/* the same allocation 04b_Integration_Reference.js settles with, on integers:
+   c is a whole number of cents, w are whole-number weights (millionths); every
+   share is c*w/sum floored, the leftover cents go to the largest remainders,
+   ties by position. The parts close on the whole, always, and a zero weight
+   receives nothing. */
+var MICRO=1000000;function micro(x){return Math.round(x*MICRO)}
+function allocate(c,w){var sum=w.reduce(function(a,b){return a+b},0);if(c<=0||sum===0)return w.map(function(){return 0});
+var raw=w.map(function(x){return c*x});var out=raw.map(function(r){return Math.floor(r/sum)});
+var left=c-out.reduce(function(a,b){return a+b},0);
+var ord=raw.map(function(r,i){return {i:i,rem:r-out[i]*sum}}).sort(function(a,b){return (b.rem-a.rem)||(a.i-b.i)});
+for(var k=0;left>0;k++,left--)out[ord[k%ord.length].i]+=1;return out}
+/* the settlement of a stop in incentive mode, as 04b would settle it with the
+   three venue shares scaled together to `red` percent of the preserved budget:
+   each share in whole millionths, redirect total = their sum, residual = what
+   is left after it and the rollover. Pure, so it can be compared with 04b. */
+function settleDemo(pres,red){var k=red/(SPA+FNB+RETAIL);
+ var sS=micro(SPA/100*k),sF=micro(FNB/100*k),sR=micro(RETAIL/100*k),rt=sS+sF+sR,ro=micro(ROLLOVER/100);
+ var L=allocate(Math.round(pres*100),[rt,ro,MICRO-ro-rt]),C=allocate(L[0],[sS,sF,sR]);
+ return {legs:L.map(function(x){return x/100}),credits:C.map(function(x){return x/100})}}
+function fmc(e){return "€"+e.toLocaleString("en-US",{minimumFractionDigits:(Math.round(e*100)%100?2:0),maximumFractionDigits:2})}
+var SEQ=[-1200,-800,600,-1500,-900,-1300,700,-1600,-1100,-1400,-900,-1200];
+function lg(h){var L=el("log");L.innerHTML+="<br>"+h;L.scrollTop=1e6}
+function fm(x){return "€"+Math.round(x).toLocaleString("en-US")}
+function upd(){var lim=BR*(+el("s").value)/100;el("kL").textContent=fm(lim);el("kD").textContent=fm(dd);
+el("bar").style.width=Math.min(100,100*dd/lim)+"%";el("vS").textContent=el("s").value+"%";el("vR").textContent=el("r").value+"%";
+el("kQ").textContent=mode=="I"?"84%":"61%";}
+function deal(){if(fired){lg("<span class=seal>policy.stop</span> gaming locked · no further hands");stop();return}
+var v=SEQ[hand%SEQ.length];hand++;
+if(v<0)dd-=v; /* a loss is consumption; a win is not and gives nothing back, as in the engine: consumption only goes up */
+lg("<b>hand "+hand+"</b> "+(v<0?"loss ":"win +")+fm(Math.abs(v))+(v<0?"":" · not counted, consumption only goes up")+" · consumed "+fm(dd));
+var lim=BR*(+el("s").value)/100;
+if(dd>=lim){fired=true;
+/* preserved = what is actually unspent when the policy fires, NOT BR-lim.
+   The crossing tick can overshoot the line, and 04b_Integration_Reference.js
+   settles on budget - consumed. Before v3.11 this read BR-lim and agreed with
+   the reference only when the sequence landed exactly on the line. */
+var pres=Math.max(0,BR-dd);
+el("kP").textContent=fm(pres);
+lg("<span class=seal>POLICY STOP</span> threshold "+el("s").value+"% · session locked · no human in the loop");
+if(mode=="I"){var red=+el("r").value,resid=Math.round((100-red-ROLLOVER)*100)/100;
+ var S=settleDemo(pres,red),L=S.legs,C=S.credits;
+ var sp=C[0],fb=C[1],rt=C[2],rol=L[1],res=L[2];
+ lg("<span class=ok>redirect.issue</span> "+fmc(pres)+" preserved · resort credit "+red+"% of the preserved budget ("+fmc(L[0])+": spa "+fmc(sp)+" · F&amp;B "+fmc(fb)+" · retail "+fmc(rt)+") · rollover "+ROLLOVER+"% ("+fmc(rol)+") · back to the guest "+resid+"% ("+fmc(res)+") · closes to "+fmc(L[0]+rol+res));
+ var lab=["Spa "+fmc(sp),"F&amp;B "+fmc(fb),"Retail "+fmc(rt)];
+ el("alloc").querySelectorAll(".chip").forEach(function(c,i){c.classList.remove("dis");c.classList.add("lock");c.innerHTML=lab[i];});}
+else{lg("<span class=warn>hard-stop</span> session ends · nothing offered · modeled quarter retention of limited VIPs at this mode: 61% — the difference is the product");}
+stop();}
+upd();}
+function stop(){if(timer){clearInterval(timer);timer=null;el("auto").textContent="AUTO-PLAY SHOE";}}
+el("deal").onclick=deal;
+el("auto").onclick=function(){if(timer){stop();return}el("auto").textContent="STOP";timer=setInterval(deal,650);};
+el("mI").onclick=function(){mode="I";el("mI").classList.add("on");el("mH").classList.remove("on");lg("<b>engine</b> mode → INCENTIVE (redirect + rollover armed)");upd();};
+el("mH").onclick=function(){mode="H";el("mH").classList.add("on");el("mI").classList.remove("on");lg("<span class=warn>engine</span> comparison → HARD-STOP ONLY (the no-incentive baseline, not the Hard-Stop mode of 03a)");upd();};
+["s","r"].forEach(function(i){el(i).oninput=upd});
+el("reset").onclick=function(){stop();dd=0;hand=0;fired=false;el("kP").textContent="€0";el("log").innerHTML="<b>engine</b> policy armed · hard-stop · policy hash 0x7f3a…c412 · proofs anchored, funds off chain";el("alloc").innerHTML='<span class="chip dis">Spa</span><span class="chip dis">F&amp;B</span><span class="chip dis">Retail</span>';upd();};
+upd();
+</script><footer class="wrap"><div class="titleblock">
+<div class="tb-row"><div class="k">Studio</div><div class="v2">Trench Logic Studio — Miloš Petrović · milos@trench-logic.com · trenchlogicstudio.com</div></div>
+<div class="tb-row"><div class="k">Project</div><div class="v2">VIP SmartContract — Compliance-as-Revenue Layer</div></div>
+<div class="tb-row"><div class="k">Document</div><div class="v2 mono">05b_Demo_B_Policy_Engine.html</div></div>
+<div class="tb-row"><div class="k">Revision</div><div class="v2 mono">v3.17 · 2026</div></div>
+<div class="tb-row"><div class="k">Proof chain</div><div class="v2 mono">GPG 9078 8B14 00C2 C2EC … EE0B B22B → SHA-256 → OpenTimestamps → Bitcoin</div></div>
+<div class="tb-row"><div class="k">Status</div><div class="v2 seal">AS-IS · STRICTLY CONFIDENTIAL · DISTRIBUTION UNDER NDA ONLY</div></div>
+</div></footer></body></html>

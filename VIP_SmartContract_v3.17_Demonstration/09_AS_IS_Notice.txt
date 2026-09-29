@@ -1,0 +1,34 @@
+TRENCH LOGIC STUDIO · VIP SMARTCONTRACT · COMPLIANCE-AS-REVENUE LAYER · v3.17
+09 · AS-IS NOTICE — GOVERNS THE ENTIRE PACKAGE REGISTRY (00–15)
+
+SOLD AS-IS. NO WARRANTIES. NO PILOT DATA.
+
+This policy architecture and all associated documentation, demonstrations,
+specifications, and reference code are sold strictly as-is.
+
+- No warranties, guarantees, or representations of fitness for any purpose.
+- All performance figures are synthetic simulations, declared as such.
+  No live deployment has occurred.
+- No implementation services, integration support, developer training,
+  or ongoing involvement of any kind is provided by Trench Logic Studio
+  after acquisition.
+- Integration, testing, deployment, and operation are solely the
+  licensee's responsibility.
+- Reference code and specifications are a guide for feasibility
+  evaluation only — not a deployable production system.
+- 15_Security_and_Boundaries.html states what is implemented and
+  verified, and what is deliberately left to the integrator. Read it
+  before any technical review: authentication, authorisation, transport
+  security, event idempotency, durability and scale are NOT in scope.
+- 14_Regulatory_Parameter_Map.html maps configuration to regulatory
+  concern. It is not legal advice and Trench Logic Studio gives none.
+  Whether any configuration is lawful in any jurisdiction, and whether a
+  deployment requires certification or regulatory approval, is solely the
+  licensee's determination to make with its own counsel and regulator.
+
+Strictly Confidential. Intellectual property of Miloš Petrović,
+d.b.a. Trench Logic Studio. Do not copy or distribute without
+explicit permission.
+
+Document: 09_AS_IS_Notice.txt · Revision v3.17 · 2026
+Proof chain: GPG 9078 8B14 00C2 C2EC … EE0B B22B → SHA-256 → OpenTimestamps → Bitcoin

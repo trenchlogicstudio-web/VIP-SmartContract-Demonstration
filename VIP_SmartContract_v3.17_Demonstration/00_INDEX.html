@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIP v3.17 · 00 · Index</title><style>
+:root{--paper:#F3F5F4;--panel:#E9EEEC;--ink:#122B33;--accent:#1E5A78;--accent-deep:#143E54;--accent-light:#7FB0C4;--seal:#973A3A;--graphite:#54646A;--line:#C7D2D1;--wash:#D8E2E4;--lavender:#D6D3E6;--rose:#DFB3BE;--display:"Schibsted Grotesk",Arial,sans-serif;--body:"Source Serif 4",Georgia,serif;--mono:"Fragment Mono","Courier New",monospace;--r:3px;--rule:1px solid var(--line)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+h1,h2,h3,h4{font-family:var(--display);line-height:1.12;letter-spacing:-.015em}
+h1{font-size:clamp(30px,4.6vw,46px);font-weight:800}
+h2{font-size:25px;font-weight:700;margin-bottom:14px}
+h3{font-size:17px;font-weight:700;margin:20px 0 8px}
+p{max-width:70ch;margin-bottom:13px}
+.lede{font-size:18.5px;color:var(--graphite);max-width:64ch}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:12px}
+.dim{position:relative;border-top:var(--rule);margin:44px 0 38px}
+.dim::before,.dim::after{content:"";position:absolute;top:-5px;width:1px;height:11px;background:var(--line)}
+.dim::before{left:0}.dim::after{right:0}
+header{padding:54px 0 0}
+.mark{display:inline-flex;align-items:center;gap:13px;margin-bottom:26px}
+.mark .tile{width:42px;height:42px;background:var(--ink);color:var(--paper);font-family:var(--display);font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;border-radius:var(--r)}
+.mark .word{font-family:var(--display);font-weight:700;font-size:15.5px}
+.mark .word span{display:block;font-family:var(--mono);font-weight:400;font-size:11px;color:var(--graphite);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
+.asis{border:1.5px solid var(--seal);border-radius:var(--r);background:#fff;padding:13px 16px 13px 48px;position:relative;max-width:880px;margin-top:6px}
+.asis::before{content:"§";position:absolute;left:15px;top:10px;font-family:var(--display);font-weight:800;font-size:21px;color:var(--seal)}
+.asis p{font-size:13.5px;margin:0;font-family:var(--display)}
+.asis b{color:var(--seal)}
+.card{border:var(--rule);border-radius:var(--r);background:#fff;padding:18px 20px;margin-bottom:16px}
+.card h3{margin-top:0}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+table.tls{width:100%;border-collapse:collapse;background:#fff;border:var(--rule);font-size:14.5px}
+table.tls th{font-family:var(--display);font-weight:700;font-size:13px;text-align:left;background:var(--panel);padding:10px 13px;border-bottom:var(--rule)}
+table.tls td{padding:10px 13px;border-bottom:var(--rule);vertical-align:top;font-family:var(--display);font-size:14px}
+table.tls tr:last-child td{border-bottom:none}
+table.tls td.num,table.tls td.mono{font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+.metric{border:var(--rule);border-left:3px solid var(--accent);border-radius:var(--r);background:#fff;padding:16px 18px}
+.metric .v{font-family:var(--display);font-weight:800;font-size:30px;letter-spacing:-.02em}
+.metric .l{font-family:var(--display);font-size:12.5px;color:var(--graphite);margin-top:4px}
+.metric .src{font-family:var(--mono);font-size:10.5px;color:var(--graphite);margin-top:9px;display:block}
+.ann{border:var(--rule);border-left:3px solid var(--accent);border-radius:var(--r);background:#fff;padding:15px 18px;margin-bottom:12px}
+.ann h3{font-size:15.5px;margin:0 0 5px}
+.ann p{font-family:var(--display);font-size:13.9px;color:var(--graphite);margin:0;max-width:none}
+.ann.l2{border-left-color:var(--lavender)}.ann.l3{border-left-color:var(--rose)}.ann.lw{border-left-color:var(--wash)}.ann.lg{border-left-color:var(--graphite)}.ann.ls{border-left-color:var(--seal)}
+.chartwrap{border:var(--rule);border-radius:var(--r);background:#fff;padding:20px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;font-family:var(--display);font-size:12.5px;color:var(--graphite)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.dark{background:var(--ink);color:var(--paper);border-radius:var(--r);padding:22px 24px}
+.dark .eyebrow{color:var(--accent-light)}
+.note{font-family:var(--mono);font-size:11.5px;color:var(--graphite);line-height:1.7;margin-top:12px;max-width:900px}
+.tl{border-left:2px solid var(--line);margin:14px 0 6px 8px;padding-left:22px}
+.tl .ev{position:relative;padding-bottom:16px}
+.tl .ev::before{content:"";position:absolute;left:-27px;top:6px;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.tl .ev.seal::before{background:var(--seal)}
+.tl .ev .when{font-family:var(--mono);font-size:11px;color:var(--graphite);letter-spacing:.08em;text-transform:uppercase}
+.tl .ev .what{font-family:var(--display);font-size:14.5px}
+.quote{border:var(--rule);border-left:3px solid var(--accent);border-radius:var(--r);background:#fff;padding:20px 24px;font-size:19px;font-style:italic;max-width:760px}
+.quote .who{display:block;font-family:var(--mono);font-size:11px;font-style:normal;color:var(--graphite);margin-top:10px;letter-spacing:.08em;text-transform:uppercase}
+.titleblock{border:1.5px solid var(--ink);border-radius:var(--r);background:#fff;overflow:hidden;font-size:13px;max-width:760px}
+.tb-row{display:grid;grid-template-columns:170px 1fr;border-bottom:1px solid var(--ink)}
+.tb-row:last-child{border-bottom:none}
+.tb-row .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--graphite);padding:8px 12px;border-right:1px solid var(--ink);background:var(--panel);display:flex;align-items:center}
+.tb-row .v2{font-family:var(--display);font-weight:500;padding:8px 12px}
+.tb-row .v2.mono{font-family:var(--mono);font-size:12px;font-weight:400}
+.tb-row .v2.seal{color:var(--seal);font-weight:700}
+.tb-row .v2{min-width:0;overflow-wrap:anywhere}
+@media(max-width:560px){.tb-row{grid-template-columns:118px 1fr}}
+footer{padding:44px 0 64px}
+
+@media(max-width:560px){table.tls{display:block;overflow-x:auto}table.tls th{width:auto!important}}
+</style></head>
+<body>
+<header class="wrap">
+  <div class="mark"><div class="tile">TL</div><div class="word">TRENCH LOGIC STUDIO<span>VIP SmartContract · v3.17</span></div></div>
+  <span class="eyebrow">00 · Index & Reading Paths</span>
+  <h1>VIP SmartContract — Compliance-as-Revenue Layer</h1>
+  <p class="lede">A middleware policy engine that turns the stop-loss into a hospitality event: pre-committed budgets, a stop that pays the player, preserved spend redirected to the resort, every decision hash-anchored — funds never on chain. Licensed annually and operated entirely by the buyer; perpetual transfer by negotiation, after the buyer&rsquo;s own freedom-to-operate review.</p>
+  <div class="asis"><p><b>SOLD AS-IS · NO PILOT DATA.</b> All metrics synthetic. No implementation services, no warranties, no ongoing involvement.</p></div>
+</header>
+<div class="wrap"><div class="dim"></div></div>
+
+<section class="wrap"><span class="eyebrow">Reading paths · start where your role starts</span>
+ <h2>Five readers, five routes</h2>
+ <div class="ann"><h3>Decision-maker</h3><p>01 Executive Brief → 05d Demo D → 07 Strategic Value.</p></div>
+ <div class="ann l2"><h3>Compliance & legal</h3><p>01 scope note → 03a/03b thresholds & controls → 11 patent row → 09 AS-IS → 08/08b/08d. The FTO recommendation is stated in writing.</p></div>
+ <div class="ann l2"><h3>Technical</h3><p>05b policy engine → 04 API Spec → 04b Integration Reference → 04c compose.</p></div>
+ <div class="ann l3"><h3>Hosts & operations</h3><p>05a screens → 05d → 03b Advisory script.</p></div>
+ <div class="ann lg"><h3>Finance</h3><p>06 (the rollover liability is printed there) → 06b (NDA) → 05c for the quarter model.</p></div>
+</section>
+<div class="wrap"><div class="dim"></div></div>
+<section class="wrap"><span class="eyebrow">File registry · canon v3.17</span>
+ <h2>What the package contains</h2>
+ <table class="tls">
+  <tr><th style="width:110px">Slot</th><th>Artifact</th></tr>
+  <tr><td class="num">00 · 01</td><td>Index · Executive Brief (with scope &amp; FTO note)</td></tr>
+  <tr><td class="num">02a · 02b</td><td>Buyer Briefs — Resort &amp; Casino Operators · Platform &amp; CRM Vendors</td></tr>
+  <tr><td class="num">03a · 03b</td><td>Modes — Hard-Stop · Advisory</td></tr>
+  <tr><td class="num">04 · 04b · 04c</td><td>API Spec · Integration Reference · docker-compose</td></tr>
+  <tr><td class="num">05</td><td>Demo Guide — the connecting thread through A · B · C · D (start here)</td></tr>
+    <tr><td class="num">05a–d</td><td>Demos: screens · policy engine · synthetic quarter · narrative proof</td></tr>
+  <tr><td class="num">06 · 06b · 07</td><td>Value Justification · Pricing (NDA) · Strategic Value</td></tr>
+  <tr><td class="num">08 · 08b · 08c · 08d</td><td>LOI · Licence Agreement · Master Pitch Deck · NDA</td></tr>
+  <tr><td class="num">09 · 10 · 11</td><td>AS-IS Notice · Design Rationale (incl. on-chain rejection) · Battlecard (incl. patent row)</td></tr>
+    <tr><td class="num">12</td><td>Canon — the authoritative source for every fixed value, definition and term in this package</td></tr>
+      <tr><td class="num">13</td><td>VIP MVP — the runnable evaluation build: six contract routes, guest and host console, hash-anchored audit, dormant downstream</td></tr>
+  <tr><td class="num">14</td><td>Regulatory Parameter Map — which restriction each parameter answers, and what the reference configuration is</td></tr>
+  <tr><td class="num">15</td><td>Security and Production Boundaries — what is implemented and verified, and what is deliberately the integrator's</td></tr>
+ </table>
+ <p style="font-family:var(--display);font-size:13.5px;color:var(--graphite);margin-top:10px">Commercial terms only in 06/06b and legal slots. All metrics synthetic; 09 governs the registry (00–15). The responsible-gaming eligibility gate and the reward cap ship at their reference settings — 14 maps every lever to the restriction it answers.</p>
+</section>
+
+<footer class="wrap"><div class="dim"></div><div class="titleblock">
+<div class="tb-row"><div class="k">Studio</div><div class="v2">Trench Logic Studio — Miloš Petrović · milos@trench-logic.com · trenchlogicstudio.com</div></div>
+<div class="tb-row"><div class="k">Project</div><div class="v2">VIP SmartContract · Compliance-as-Revenue Layer</div></div>
+<div class="tb-row"><div class="k">Document</div><div class="v2 mono">00_INDEX.html</div></div>
+<div class="tb-row"><div class="k">Revision</div><div class="v2 mono">v3.17 · 2026</div></div>
+<div class="tb-row"><div class="k">Proof chain</div><div class="v2 mono">GPG 9078 8B14 00C2 C2EC … EE0B B22B → SHA-256 → OpenTimestamps → Bitcoin</div></div>
+<div class="tb-row"><div class="k">Status</div><div class="v2 seal">AS-IS · STRICTLY CONFIDENTIAL · DISTRIBUTION UNDER NDA ONLY</div></div>
+</div></footer>
+
+</body></html>

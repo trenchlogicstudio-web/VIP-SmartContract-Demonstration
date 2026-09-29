@@ -1,0 +1,17 @@
+{
+  "name": "vip-mvp",
+  "version": "0.2.11",
+  "private": true,
+  "description": "VIP SmartContract · MVP v0.2.11 · runnable evaluation MVP of the pre-commitment policy engine: threshold stop, rollover and redirect settlement, hash-anchored audit. AS-IS evaluation artifact — see 09_AS_IS_Notice in the VIP SmartContract v3.17 package.",
+  "main": "server.js",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test.js",
+    "reset": "node -e \"require('fs').rmSync(process.env.VIP_DB||'./vip-mvp.db',{force:true});console.log('db removed — reseeds on next start')\""
+  },
+  "dependencies": {}
+}

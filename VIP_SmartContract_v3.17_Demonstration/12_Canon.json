@@ -1,0 +1,378 @@
+{
+  "_what_this_is": "The authoritative source for every fixed value, definition and term in this package. Every figure, metric and denominator used in any other file resolves here. If a document and this file disagree, this file is correct. Machine-readable on purpose: a reviewer, an engineer or an automated agent can validate the whole package against it without reading prose.",
+  "_stability": "The canon is the project. Presentation, wording, styling and reference code may improve in any later revision; the values below do not change with them. A change here is a deliberate decision recorded in canon_version, never a side effect of a rebuild.",
+  "_dual_form_rule": "Every quantity appears twice and never once: the typed value carries the number, a parallel map carries the sentence. Figures resolve in model_figures with their prose in model_figures._figure_kinds; prices carry numeric bounds with a prose field beside them. A label never replaces a value and a value never replaces its explanation — a machine must be able to compute from this file and a person must be able to read it.",
+  "project": "VIP SmartContract — Compliance-as-Revenue Layer",
+  "package": "VIP SmartContract, single package",
+  "buyer_segments": {
+    "02a": "Resort and casino operators, direct",
+    "02b": "Platform and CRM vendors"
+  },
+  "package_version": "v3.17",
+  "canon_version": "1.12",
+  "canon_established": "2026-07-27",
+  "canon_change_log": "1.0 — first canon for this package. No value is invented: every figure is lifted from the package's own demo layer (05, 05a, 05b, 05c, 05d), its API specification (04), its reference implementation (04b), its mode documents (03a, 03b) and its pricing model (06b). The document layer and the demo layer already agreed — 84% / 61% / 70% / €306K / €214K / 2.92× carry the same values in 01, 02a, 02b, 06, 07, 08c and 11 as in the demos — so nothing had to be reconciled.",
+  "studio": "Trench Logic Studio — Miloš Petrović · milos@trench-logic.com · trenchlogicstudio.com",
+  "terms": "Sold AS-IS under an annual licence: no warranty, no implementation services, no support, no ongoing involvement. The licence structure governs payment cadence only — it does not alter the AS-IS position. See 09_AS_IS_Notice.txt, which governs registry 00–15.",
+  "mechanism": {
+    "definition": "A policy engine that turns a responsible-gambling limit into a revenue event: the guest pre-commits a budget, the engine watches the session, and at the threshold it stops gaming and converts the preserved budget into non-gaming spend and rollover credit.",
+    "flow": "pre-commit → session ticks → policy stop at threshold → rollover + redirect issuance → hash-anchored audit",
+    "position": "Middleware. Funds never go on chain, rules stay off chain, only proofs are hash-anchored.",
+    "behavioural_inversion": "A limit imposed is churn; a limit chosen is loyalty. The guest sets the numbers and the host witnesses — that inversion is the asset, not the enforcement.",
+    "what_it_is_not": "Not a wallet or payments rail, not a detection or risk-scoring model, not a CRM journey engine. It consumes risk signals and produces a policy decision and a revenue event."
+  },
+  "modes": {
+    "03a": {
+      "name": "Hard-Stop",
+      "trigger": "50% of pre-committed budget consumed",
+      "action": "Gaming locked for the day, engine-enforced, no override. Restated in canon 1.12: the session the policy stopped is locked — every further tick is refused and nothing lifts it. The budget is the day's by agreement, but the engine keeps no calendar: a new pre-commit for the same guest opens a new session, and whether one is allowed the same day is the operator's rule, applied where it takes the pre-commit.",
+      "status": "canonical, audit-first deployment"
+    },
+    "03b": {
+      "name": "Advisory",
+      "trigger": "nudge with live incentive preview at 40%, escalate to the host at 85%",
+      "action": "Host carries the moment with a script; no lock",
+      "trade": "Fewer enforced stops and weaker audit uniformity, in exchange for relationship. The trade is stated in the specification rather than discovered in production."
+    },
+    "_rule": "Both modes run the SAME engine. Incentive mechanics are identical on a voluntary stop. Mode is chosen per deployment and carried on the pre-commit call. A call that leaves the mode out runs the deployment's configured mode, VIP_MODE, and the response names the mode it armed."
+  },
+  "thresholds": {
+    "hard_stop_fraction": 0.5,
+    "advisory_nudge_fraction": 0.4,
+    "advisory_escalate_fraction": 0.85,
+    "rollover_fraction": 0.2,
+    "redirect_split": {
+      "spa": 0.3,
+      "fnb": 0.25,
+      "retail": 0.15
+    },
+    "_prose": {
+      "hard_stop_fraction": "50% of the pre-committed budget. Chosen over 30% (stops too many sessions too early — resentment without protection value) and 70% (preserves too little to fund a meaningful incentive). Remains a per-jurisdiction configurable.",
+      "advisory_nudge_fraction": "40% — the player sees a nudge showing exactly what stopping now would earn.",
+      "advisory_escalate_fraction": "85% — the engine escalates to the host with the script in hand.",
+      "rollover_fraction": "20% of preserved budget issued as rollover credit toward a future session.",
+      "redirect_split": "70% of preserved budget in total, issued as resort credit: spa 30%, F&B 25%, retail 15%. This is the non-gaming capture figure every document quotes.",
+      "_configurability_rule": "Every threshold above — including each of the three redirect shares — is a per-jurisdiction configurable, not a hard constant, and each is read from its own environment variable named in config_authority. A regulator that caps F&B credit or bars retail vouchers is accommodated by configuration, not by a fork of the engine. A conforming implementation must validate them at startup and refuse to run on a value that is not a finite number in range — a bare comparison against a non-finite threshold admits everything.",
+      "_money_rule": "Every decision that involves money is taken on integer cents, and every configured fraction is read as an integer number of millionths, rounded to the nearest. Each line — stop, nudge, escalation — is the first whole cent at or above its fraction of the budget and fires on that cent; armed_at_eur publishes the stop line, so the number the guest is told is the number at which the engine acts. The settlement divides the preserved budget by the largest-remainder method on integer cents, a tie going to the earlier position: first across redirect, rollover and residual, then across spa, F&B and retail inside the redirect. A budget is accepted from €0.01 to €10,000,000 and a single tick up to €10,000,000, the range in which every product the engine forms is an exact integer. A budget that carries a fraction of a cent is taken to the nearest cent on arrival; consumption is kept as the exact total of the ticks reported, so ticks below a cent still add up, and every decision reads that total in whole cents — the stop, the display and the settlement alike — so while consumption is within the budget, consumed plus preserved is the budget to the cent.",
+      "residual_to_guest_fraction": "10% of preserved budget is neither redirected nor rolled over — it is the guest's own residual and is returned to them. Named explicitly so the model closes: redirect 70% + rollover 20% + residual 10% = the whole preserved budget. This was unstated in v3.2 and is a decision, not a discovery — if the intended split differs, this is the value to change."
+    },
+    "residual_to_guest_fraction": 0.1,
+    "eligibility_gate": {
+      "_what_it_is": "A gate in front of the incentive, not in front of the stop. It decides whether a settlement may ISSUE, never whether a guest is at risk. This engine performs no risk assessment and holds no harm model.",
+      "_why_it_is_an_input": "The operator's responsible-gaming determination arrives as an input, per session, or as a programme-level suppression. A policy layer that classified harm would be a responsible-gaming system and would fall inside the certification perimeter of every jurisdiction that has one. This one stays a policy layer.",
+      "values": [
+        "permitted",
+        "suppressed"
+      ],
+      "composition_rule": "The stricter of the configured default and the per-session input always wins, and a programme-level suppression overrides both. A jurisdiction that forbids the incentive outright sets the default to suppressed and no session can re-enable it.",
+      "reference_value": "permitted",
+      "_reference_note": "Every metric and model figure in this canon was computed at the reference value, which is the gate open. A stricter setting lowers realised retention and realised redirect in that deployment; it does not make any figure here wrong, because the figures state what the mechanism produces at the stated configuration. This is the same rule the redirect split already follows.",
+      "suppressed_settlement": "The stop still fires and the budget is still preserved. Nothing is issued: redirect 0, rollover 0, and the whole preserved amount returns to the guest as residual. Suppression removes the incentive, never the protection."
+    },
+    "reward_cap_eur": {
+      "_what_it_is": "An absolute euro ceiling on the operator-funded part of a settlement — redirect plus rollover.",
+      "_why_it_exists": "Without a ceiling the incentive grows with the pre-committed budget, so a larger declared budget earns a larger reward. That is an incentive to declare a larger budget, and it is the one attack on this design the mechanism does not answer by itself.",
+      "reference_value": null,
+      "_reference_note": "Unset means uncapped, which is the configuration every figure in this canon was computed under.",
+      "binding_behaviour": "When the cap binds, the excess is not retained by the operator. It goes to the guest as residual, so a capped settlement returns more of the guest's own money, never less, and the model still closes: redirect + rollover + residual = preserved."
+    },
+    "eligibility_lifetime_days": {
+      "_what_it_is": "How long the operator's responsible-gaming determination stays good for, in days.",
+      "_why_it_exists": "A determination taken once and never revisited is the weakest form of a control. Supervisory expectations in several regimes include periodic review of a high-value customer's account, and a policy layer that honours a two-year-old assessment as though it were today's is honouring a memory of a control rather than the control.",
+      "reference_value": null,
+      "_reference_note": "Unset means the determination never expires, which is the configuration every figure in this canon was computed under.",
+      "fail_direction": "CLOSED. When the lifetime elapses the incentive is withheld until the operator supplies a fresh determination; the stop and the preserved budget are unaffected and the whole preserved amount returns to the guest. An ABSENT or unparseable determination date is treated as expired rather than as fresh, because an unknown age is not a young age. Failing open would mean issuing value on stale grounds, which is the thing the lifetime exists to prevent.",
+      "recorded_separately": "An expiry writes eligibility.expired, distinct from incentive.suppressed. A decision to withhold and a failure to refresh are different facts and a reader of the chain must be able to tell them apart."
+    },
+    "_settlement_closure": "The settlement is allocated in integer CENTS by the largest-remainder method, not by rounding each leg independently. Two invariants hold for every amount, and the suite asserts them exhaustively from €0.01 to €2,000.00 rather than on a sample: spa + fnb + retail === redirect, and redirect + rollover + residual === preserved. No leg is ever negative. Before v3.10 the legs were rounded independently and failed to close on 52,205 of the 200,000 amounts from €0.01 to €2,000.00 — 26.1%, roughly one in four — by one cent in either direction; every figure printed in this canon is unchanged by the correction, because at these figures the shares divide exactly. Closing is necessary and not sufficient: v3.16 closed on every one of those amounts and still put a cent into a different venue than the largest-remainder rule on 6,553 of them, because a floating-point remainder decided ties that position should decide. From v3.17 money is decided on integers (_prose._money_rule), and the suite recomputes the rule itself, independently, on every amount in the same range."
+  },
+  "api_surface": [
+    "POST /v3/precommit",
+    "POST /v3/session/tick",
+    "GET /v3/policy/state",
+    "POST /v3/redirect/issue",
+    "GET /v3/audit/{session_id}",
+    "POST /v3/programme/suppress"
+  ],
+  "status_codes": {
+    "precommit_armed": 201,
+    "tick_accepted": 200,
+    "hard_stop_fired": 423,
+    "_prose": {
+      "hard_stop_fired": "423 Locked is the contract's own signal that the Hard-Stop fired: gaming is locked for the day and rollover plus redirect have been issued. It is a state, not an error — the stop is the product working. Restated in canon 1.12: 423 means the session is locked and its settlement computed; the credits and the rollover are issued by POST /v3/redirect/issue, which can still refuse — INCENTIVE_SUPPRESSED when the incentive is withheld."
+    }
+  },
+  "error_identifiers": {
+    "_rule": "Byte-exact in slot 04b and in any conforming implementation; every non-2xx error response is {\"error\": \"<identifier>\"}. Parity runs in both directions: every identifier the code can return is named here, and this block names nothing the code cannot return.",
+    "NO_LIVE_SESSION": 409,
+    "_prose": {
+      "NO_LIVE_SESSION": "A tick arrived for a VIP with no armed session, or for a session already stopped. Correction in canon 1.12: a tick for a session the policy has already stopped is answered ALREADY_STOPPED, as both implementations have always done. NO_LIVE_SESSION answers a vip_id with no session on record — including one that is not a string, which names none — on tick, state and redirect/issue.",
+      "INVALID_VIP": "Missing or non-string vip_id on the pre-commit call. The suppression call refuses the same way.",
+      "INVALID_BUDGET": "Budget absent, non-numeric, zero or negative. A budget that is not a finite positive number cannot arm a threshold. From v3.17 a budget below one cent or above €10,000,000 is refused too: outside that range the engine cannot arm a line it decides exactly.",
+      "INVALID_MODE": "Mode is neither hard_stop nor advisory.",
+      "INVALID_DELTA": "The consumption delta is absent, null, non-numeric, or NEGATIVE. A tick reports consumption, which only goes up; a negative delta was accepted by slot 04b until v3.11 and silently reduced consumption, which lets a caller walk a session back from its stop line. Validated at the boundary so a malformed tick can never move consumption. Corrections, if an integration needs them, belong on their own route with their own link in the chain. From v3.17 a delta above €10,000,000 is refused too.",
+      "ALREADY_STOPPED": "A tick arrived for a session the policy has already stopped.",
+      "NOT_STOPPED": "Redirect requested before the policy fired. Credits are issued from preserved budget, which only exists after a stop.",
+      "ALREADY_ISSUED": "Redirect requested twice for the same session. Credits are issued once.",
+      "SESSION_UNKNOWN": "No audit rows exist for that session id.",
+      "NO_ROUTE": "No route matches the request; the response names the six spec routes.",
+      "BAD_REQUEST": "The request line is not a parseable URL. Returned by the transport layer before any route is chosen. From v3.17 the audit route answers it as well, for a session_id that is not valid percent-encoding, which both implementations had answered with a 500.",
+      "BAD_JSON": "The request body is not parseable JSON. Returned by the transport layer before any handler runs. From v3.17 it also answers a body that parses to anything but a JSON object — null, an array, a bare string or number — before any route reads it; until then such a body reached the route, where a null was answered with a 500.",
+      "INVALID_ELIGIBILITY": "the eligibility value supplied at pre-commit is not one of permitted | suppressed.",
+      "INVALID_REASON": "the suppression reason is not one of exclusion | player_request | rg_determination.",
+      "INCENTIVE_SUPPRESSED": "a redirect was requested on a session whose incentive is withheld. The stop and the preserved budget are unaffected.",
+      "ALREADY_SUPPRESSED": "this guest is already out of the programme. Suppression is not reversible by this engine.",
+      "INVALID_ELIGIBILITY_AT": "the determination timestamp supplied at pre-commit is not a parseable date."
+    },
+    "_status": "COMPLETE as of v3.11, and now complete in the specification too. The v3.2 reference implemented only NO_LIVE_SESSION because it was a module rather than a service. The five-route implementation delivered in v3.4 returned ten; BAD_REQUEST and BAD_JSON were named in v3.5; the eligibility gate and the suppression route added five more in v3.7 and v3.8. Until v3.11 04_API_Spec.yaml still enumerated only twelve, so the specification declared the reference beside it non-conforming. All seventeen are now named in both files, and every one is confirmed by a live negative probe. Every value in this block is an integer HTTP code; the sentence for each sits in _prose, because a label written over a value destroys the machine-readability this file exists to provide.",
+    "INVALID_VIP": 400,
+    "INVALID_BUDGET": 400,
+    "INVALID_MODE": 400,
+    "INVALID_DELTA": 400,
+    "ALREADY_STOPPED": 409,
+    "NOT_STOPPED": 409,
+    "ALREADY_ISSUED": 409,
+    "SESSION_UNKNOWN": 404,
+    "NO_ROUTE": 404,
+    "BAD_REQUEST": 400,
+    "BAD_JSON": 400,
+    "_scope": "This block enumerates the identifiers a caller of the /v3 contract surface can observe, and it is byte-exact in slot 04b and in the MVP at slot 13. It is deliberately not the full set of strings in the package: the MVP raises six further identifiers — ALREADY_ERASED, CREDIT_REDEEMED, CREDIT_UNKNOWN, GUEST_UNKNOWN, NO_ROLLOVER, UNAUTHORIZED — only on its /vip/* routes, which its own CANON.json enumerates and which are not part of the specification. A conforming implementation owes the buyer this list, not those. From v3.11 all seventeen are carried in 04_API_Spec.yaml as well, with a map of which route raises which identifier, and the enum there matches this block exactly in both directions. Restated in canon 1.12: UNAUTHORIZED is also answered on the MVP's GET /admin page without its token, which is not a /v3 route either.",
+    "INVALID_ELIGIBILITY": 400,
+    "INVALID_REASON": 400,
+    "INCENTIVE_SUPPRESSED": 409,
+    "ALREADY_SUPPRESSED": 409,
+    "INVALID_ELIGIBILITY_AT": 400
+  },
+  "event_vocabulary": [
+    "precommit",
+    "policy.stop",
+    "redirect.issue",
+    "incentive.suppressed",
+    "eligibility.expired"
+  ],
+  "_event_scope": {
+    "_rule": "Parity runs in both directions: every event named here is emitted by the reference implementation, and every event the reference emits is named here. The MVP in slot 13 emits these five with the same meaning plus five of its own, which are enumerated in its own CANON.json and belong to that build alone.",
+    "precommit": "emitted when a budget is armed; carries vip_id, budget and mode",
+    "policy.stop": "emitted when the threshold fires; carries preserved, rollover and the credit split, and returns the chain fingerprint; it is also emitted when a programme suppression stops a live session, with the trigger suppression",
+    "_note": "Five events. The audit chain is a SHA-256 fold of the previous chain value with each new event, so altering any earlier row breaks every fingerprint after it; each event returns the leading 16 hex characters as its fingerprint.",
+    "redirect.issue": "emitted when resort credits are issued from preserved budget; carries the split, the rollover and the residual"
+  },
+  "metric_rule": "Every ratio is published with its numerator, its denominator, and the denominator's definition — in documents and in code.",
+  "metrics": [
+    {
+      "name": "non_gaming_capture",
+      "formula": "redirected resort credit ÷ preserved budget",
+      "denominator_definition": "preserved budget — the slice of the pre-committed budget still unspent when the policy fires, NOT the guest's whole theoretical",
+      "note": "This is the 70% frame. It is never computed against total handle or theoretical win."
+    },
+    {
+      "name": "quarter_retention",
+      "formula": "limited VIPs still active at quarter close ÷ limited VIPs in the cohort",
+      "denominator_definition": "the limited-VIP cohort for that quarter, not the whole VIP book",
+      "note": "Always published as the pair 84% incentive vs 61% hard-stop-only. The single number alone is meaningless — the comparison is the claim."
+    },
+    {
+      "name": "post_stop_churn",
+      "formula": "stopped players lost within the quarter ÷ stopped players",
+      "denominator_definition": "players who hit a stop in that quarter",
+      "note": "Baseline 39%, with the incentive layer 16%."
+    },
+    {
+      "name": "host_hours_index",
+      "formula": "indexed, baseline = 100",
+      "denominator_definition": "not a ratio — an index against the buyer's own pre-deployment baseline",
+      "note": "Reported as Index 38 against baseline 100. Never presented as a percentage saving."
+    }
+  ],
+  "model_figures": {
+    "_status": "Synthetic by declaration. A reference model of one resort quarter, not a measurement of any operator. The reference preset in 05c reproduces every figure below exactly. Restated in canon 1.12: 05c recomputes the preserved and redirected budget and the retained counts from its sliders and shows the retention pair and the anchors beside them; the rollover liability, the residual, the churn pair and the host-hours index are carried by this canon and are not recomputed there.",
+    "limited_vips_per_quarter": 60,
+    "preserved_per_vip_eur": 5100,
+    "non_gaming_capture": 0.7,
+    "retention_incentive": 0.84,
+    "retention_hard_stop_only": 0.61,
+    "preserved_quarter_eur": 306000,
+    "redirected_quarter_eur": 214200,
+    "rollover_liability_quarter_eur": 61200,
+    "residual_to_guests_quarter_eur": 30600,
+    "retained_incentive_count": 50,
+    "retained_hard_stop_only_count": 37,
+    "post_stop_churn_baseline": 0.39,
+    "post_stop_churn_incentive": 0.16,
+    "host_hours_index": 38,
+    "limit_setter_odds_ratio": 2.92,
+    "ggr_share_top_1pct": 0.3,
+    "_figure_kinds": {
+      "_rule": "Labelling kept in a parallel map so every figure above stays the same JSON type it has always been. A label must never be written over a value — that destroys the machine-readability this file exists to provide.",
+      "limited_vips_per_quarter": "ANCHORED — modelled count of VIPs who set a limit in the quarter. Demo slider band 20–150.",
+      "preserved_per_vip_eur": "ANCHORED — modelled preserved budget per limited VIP per quarter. Demo slider band €2,000–€12,000.",
+      "non_gaming_capture": "ANCHORED — modelled share of preserved budget captured as resort spend. Demo slider band 40–90%. Assumes integrated resort amenities; a gaming-only property sits near the bottom of the band.",
+      "retention_incentive": "ANCHORED — modelled quarter retention of limited VIPs under incentive mode. Demo slider band 61–92%. Above 90% the model prints its own warning that the figure strains even the incentive story, and the slider stops at the top of the band.",
+      "retention_hard_stop_only": "ANCHORED — the fixed baseline the incentive figure is compared against. Not a slider; it is the comparison point and the lower bound of the retention band.",
+      "preserved_quarter_eur": "DERIVED — limited_vips_per_quarter × preserved_per_vip_eur (60 × 5,100), reported as €306K",
+      "redirected_quarter_eur": "DERIVED — preserved_quarter_eur × non_gaming_capture (306,000 × 0.70), reported as €214,200 in full, or as €214K where the K carries the rounding. A figure written to the euro is the euro figure.",
+      "rollover_liability_quarter_eur": "DERIVED — preserved_quarter_eur × thresholds.rollover_fraction (306,000 × 0.20), reported as €61,200 in full, or as €61K where the K carries the rounding.",
+      "residual_to_guests_quarter_eur": "DERIVED — preserved_quarter_eur × thresholds.residual_to_guest_fraction (306,000 × 0.10). The fourth leg of the same settlement: the guest's own residual, returned rather than captured. The MVP canon has carried it since v0.2.0 and the admin console prints it beside the other three; this file named only three of the four until v3.16.",
+      "retained_incentive_count": "DERIVED — round(limited_vips_per_quarter × retention_incentive) = round(60 × 0.84)",
+      "retained_hard_stop_only_count": "DERIVED — round(limited_vips_per_quarter × retention_hard_stop_only) = round(60 × 0.61)",
+      "post_stop_churn_baseline": "ANCHORED — modelled share of stopped players lost within the quarter with no incentive layer",
+      "post_stop_churn_incentive": "ANCHORED — the same measure with the incentive layer",
+      "host_hours_index": "ANCHORED — modelled host time spent on limit conflicts, indexed against the buyer's own baseline of 100",
+      "limit_setter_odds_ratio": "EMPIRICAL — odds of limit-setters remaining active at one year, from peer-reviewed responsible-gambling literature. The ONLY non-synthetic figure in this package: it is what carries the plausibility of everything above, and it must never be presented as this package's own result.",
+      "ggr_share_top_1pct": "ANCHORED — industry concentration estimate, the reason the VIP cohort is worth protecting"
+    },
+    "boundary": "Preserved budget is not new revenue. These figures price money the guest had already committed and would otherwise have taken out of the building; they are not a claim of incremental spend created.",
+    "_superseded": {
+      "_rule": "Values once published and now wrong. Listed so they cannot return through a copied paragraph.",
+      "_scope": "Empty at canon_version 1.0. Five forms are withdrawn at canon_version 1.8 and named below, each against the canon value that governs it.",
+      "€214,000": "Not the value. redirected_quarter_eur is 214,200; a figure written to the euro states that euro, and €214K is the rounded form.",
+      "€61,000": "Not the value. rollover_liability_quarter_eur is 61,200, with €61K as the rounded form.",
+      "~5% of players carrying outsized revenue": "Not a canon figure and carries no source. The concentration figure is ggr_share_top_1pct, stated as ~30% of GGR from the top 1% of players.",
+      "+12.8pp retention among the highest-intensity cohort": "Not a canon figure and carries no source. limit_setter_odds_ratio is the only non-synthetic figure in this package and stands alone.",
+      "€4-8K/month theoretical band": "Not a canon figure, and a monthly band does not bound a quarterly value. The band that governs preserved_per_vip_eur is the demo slider band, €2,000-€12,000 per limited VIP per quarter."
+    }
+  },
+  "market_frame": {
+    "regulatory_direction": "UK high-value-customer rules and US affordability pressure move toward mandated intervention; the asset converts that obligation into a revenue line rather than a compliance cost",
+    "patent_position": "The limit-enforcement space adjacent to this asset is patented. This package avoids it by documented design, and a freedom-to-operate review is recommended before exclusive acquisition — stated in writing in 01 rather than discovered later"
+  },
+  "licensed_ip": "The pre-commitment policy architecture; the engine-enforced threshold with its two operating modes; the responsible-gaming eligibility gate that decides whether a settlement may issue, including programme-level suppression and the determination lifetime after which the gate fails closed; the reward cap on the operator-funded part of a settlement; the rollover-and-redirect economics that convert preserved budget into non-gaming revenue; and the hash-anchored audit trail, including its record of the occasions on which nothing was issued.",
+  "competitor_classes": {
+    "_refresh_rule": "Every third party named in any shipped artifact is re-checked against current corporate records and carries the date it was checked. Nothing older than 90 days is published. As of v3.16 the IGT, Sightline, Optimove, Mindway and Kambi entries carry a 23 September 2026 check of name, ownership and status; OpenBet, Fast Track and Future Anthem carry no check of that date and are named as CLASS EXEMPLARS only — a partial check is written as partial, never presented as complete. Capability statements remain those of the June 2026 capability scan and are re-verified before each outreach wave.",
+    "classes": [
+      "Cashless wallets (IGT / Sightline class)",
+      "Platform limit stacks (Kambi / OpenBet class)",
+      "Gaming CRM journeys (Optimove / Fast Track class)",
+      "Risk-detection AI (Mindway / Future Anthem class)",
+      "Provably-fair crypto operators"
+    ],
+    "_naming_map": {
+      "_rule": "Dual form applied to competitor naming: the prose says what changed, this map is what a tool can check. Any key below is a banned form; the value replaces it. A check that reads this block must skip the map's own keys, or the canon reports itself.",
+      "Everi / IGT Resort Wallet": "IGT",
+      "Everi / IGT": "IGT",
+      "Everi/IGT": "IGT",
+      "IGT / Everi": "IGT",
+      "IGT-Everi": "IGT",
+      "Joingo · Sightline": "Sightline Mobile+",
+      "Joingo / Sightline": "Sightline Mobile+",
+      "_note_igt": "Apollo closed the consolidation of IGT Gaming & Digital with Everi on 1 July 2025 and the combined enterprise operates and trades as IGT, which is what the closing announcement says. Re-verified 23 September 2026. Everi's payments line sits inside that company, so the two are never listed as separate peers — and the transitional hyphenated form is not the company's name, which is why it is a banned form above and the class is named IGT.",
+      "_note_joingo": "Sightline acquired Joingo in June 2021 and rebranded it Mobile+ in September 2022. The name Joingo may appear only when the acquisition itself is being described."
+    },
+    "_market_events": {
+      "_rule": "Third-party events that move a class name or a class boundary, each with its own date and the date it was verified. Capability claims are not recorded here; they belong to the capability scan.",
+      "2025-07-01": "Apollo completed the acquisition of IGT's Gaming & Digital business and Everi; the combined enterprise operates as IGT (verified 2026-09-23).",
+      "2026-04-06": "Optimove announced the acquisition of Smartico, both platforms continuing to operate independently under their own brands — the CRM class is consolidating as that market matures (verified 2026-09-23)."
+    },
+    "_composition_note": "Risk-detection AI is a COMPLEMENT, not a competitor: behavioural-risk flags from detection vendors can raise this engine's policy. Detection decides who is at risk; this decides what happens next. The battlecard must keep that distinction."
+  },
+  "pricing": "This is the public demonstration of VIP SmartContract v3.17; it carries no commercial terms and no transaction figures, so this section is not included here.",
+  "implementation": {
+    "reference_service": "04b_Integration_Reference.js — registry slot 04b. Six spec routes, zero dependencies, in memory by design, Node >= 18. The smallest readable statement of the mechanism, and it is still shipped.",
+    "mvp": "Slot 13_VIP_MVP — VIP MVP v0.2.10, the runnable evaluation build. Node >= 22.13 for the built-in node:sqlite, no dependencies, no build step. Adds persistence, the guest and host surfaces, credit and rollover as first-class objects, the audit chain, erasure and a dormant downstream around the same policy. Current build in the slot: VIP MVP v0.2.11, from package v3.17.",
+    "mvp_relationship": "The MVP does not replace the reference and does not reimplement it. Its policy core is the reference arithmetic in pure form, and its six /v3 routes are byte-compatible with the reference: same paths, same status codes, same error identifiers, same response fields. The MVP test suite asserts that identity by loading slot 04b and comparing both on the same inputs, so the claim is checked rather than believed. Restated in canon 1.12: the paths, status codes, error identifiers and response fields are the same on every route except inside the events the audit route returns, which are each implementation's own record, and a request outside /v3 that matches nothing, which the MVP answers with spec_routes where the reference names the same list routes. The parity block checks the arithmetic both share; the MVP's README lists these differences among its documented divergences.",
+    "stack": "04c_docker-compose.yml runs both as shipped: the reference on port 8080 and the MVP on port 3400.",
+    "test_suite": "node test.js inside slot 13 — 139 checks in the package registry, 126 with one declared skip when the MVP runs as a standalone archive, because the parity block needs the reference beside it. The count is restated at every revision that changes it; v3.6 through v3.10 carried a stale 78. Restated for v3.17: 308 checks in the package registry, 283 with one declared skip standalone. The suite is measured as well as run: every comparison, boolean, rounding call and named-error guard in the MVP's src/ outside the HTML page templates was broken one at a time — 235 mutants — and the suite failed on 234 of them. The one it cannot fail on is equivalent: in allocate(), a total of exactly zero takes the general path to the same all-zero answer the guard returns.",
+    "standalone_copy": "The same tree also ships separately as the VIP MVP archive; the two are byte-identical by rule. Any change to one is made to both in the same revision.",
+    "adoption": "Package v3.16 adopts VIP MVP v0.2.10. Package v3.17 adopts VIP MVP v0.2.11.",
+    "_status_v3_2": "The v3.2 reference is NOT a service. It is a 30-line module exporting precommit, tick and _state, with a require.main walkthrough; it has no HTTP listener, reads no environment variable, and does not export the stop path even though the stop is the mechanism being sold. Its 04c is a copy of another product's compose file. Both are replaced in the same revision that seals this canon."
+  },
+  "runtime_floors": {
+    "_rule": "This package holds artifacts with different runtime requirements. Each is stated here so a buyer reads one number per artifact and never a wrong one. A floor that appears anywhere in the package and is NOT listed here is a defect.",
+    "04b_Integration_Reference.js": "Node >= 18.0.0. Imports no node: builtins, so any maintained Node runs it.",
+    "13_VIP_MVP": "Node >= 22.13.0. Uses the built-in node:sqlite, which exists from 22.5.0 but needs --experimental-sqlite until 22.13.0 and 23.4.0 on the 23 line. The import is guarded: on an older runtime the process explains what is needed and exits rather than printing a stack trace. No dependencies and no build step.",
+    "_package_as_a_whole": "A buyer evaluating everything in this package needs Node >= 22.13.0, because the MVP is in it."
+  },
+  "registry": {
+    "00": "INDEX",
+    "01": "Executive Brief",
+    "02a": "Buyer Brief — Resort & Casino Operators",
+    "02b": "Buyer Brief — Platform & CRM Vendors",
+    "03a": "Mode — Hard-Stop",
+    "03b": "Mode — Advisory",
+    "04": "API Specification",
+    "04b": "Integration Reference",
+    "04c": "Reference Stack (compose)",
+    "05": "Demo Guide",
+    "05a": "Demo A — Screens",
+    "05b": "Demo B — Policy Engine",
+    "05c": "Demo C — Synthetic Case Study",
+    "05d": "Demo D — Narrative Proof",
+    "06": "Value Justification",
+    "06b": "Pricing Model",
+    "07": "Strategic Value",
+    "08": "LOI Template",
+    "08b": "Licence Agreement Template",
+    "08c": "Master Pitch Deck",
+    "08d": "NDA Template",
+    "09": "AS-IS Notice",
+    "10": "Design Rationale",
+    "11": "Competitive Battlecard",
+    "12": "Canon (this file)",
+    "13": "VIP MVP — the runnable evaluation build",
+    "14": "Regulatory Parameter Map",
+    "15": "Security and Production Boundaries"
+  },
+  "as_is_scope": "00–15",
+  "_slot_convention": "Canon sits at slot 12. The MVP takes slot 13, after the canon, because slot 04b keeps the in-memory reference rather than being replaced by the MVP: the reference is the shortest readable statement of the mechanism and the MVP is the runnable one, and both are worth shipping.",
+  "canon_change_log_2": "1.1 — the package gains a runnable MVP at registry slot 13, and the canon records it: the implementation block now names both artifacts and their relationship, runtime_floors states one floor per artifact because they genuinely differ, and the AS-IS range moves to 00-13 so the code a buyer actually executes is inside the notice that governs it. Two identifiers the transport layer returns rather than raises, BAD_REQUEST and BAD_JSON, are named for the first time, and a scope note separates the contract identifiers from the six the MVP raises on its own product routes. The pricing window is anchored to the date the pricing document already carried. No model figure, threshold, split or event changed value or type in this revision.",
+  "canon_change_log_3": "1.2 — the redirect split becomes a per-jurisdiction configurable in fact and not only in prose. Both implementations read each share from its own environment variable, validated by the same rule as every other threshold, and both still refuse to start if the shares plus rollover would exceed the preserved budget. A config_authority block is added, which this canon lacked: the package declared environment variables in 04c and in the MVP without naming them anywhere authoritative. 04_API_Spec.yaml names the twelve error identifiers for the first time, with a map of which route raises which — until now a buyer implementing from the spec alone could not know them. The licence template moves to the annual structure the pricing block already carried, and perpetual becomes an optional rider conditioned on the buyer's freedom-to-operate review. No threshold, split, model figure or event changed VALUE in this revision.",
+  "config_authority": {
+    "note": "Environment variables named in 04c_docker-compose.yml and in 13_VIP_MVP/.env.example override at runtime within the canon ranges. Every value resolves to this file. A variable the code reads and this block does not name is a defect.",
+    "env_names": [
+      "PORT",
+      "VIP_MODE",
+      "VIP_THRESHOLD",
+      "VIP_NUDGE",
+      "VIP_ESCALATE",
+      "VIP_ROLLOVER",
+      "VIP_SPLIT_SPA",
+      "VIP_SPLIT_FNB",
+      "VIP_SPLIT_RETAIL",
+      "VIP_DB",
+      "VIP_ADMIN_TOKEN",
+      "VIP_DOWNSTREAM_URL",
+      "VIP_DOWNSTREAM_KEY",
+      "VIP_ELIGIBILITY_DEFAULT",
+      "VIP_REWARD_CAP_EUR",
+      "VIP_ELIGIBILITY_TTL_DAYS"
+    ],
+    "_scope": "PORT and the six policy variables are read by both slot 04b and slot 13. VIP_DB, VIP_ADMIN_TOKEN and the two downstream variables belong to slot 13 alone, which is the only artifact with storage, an admin surface and a boundary. VIP_ELIGIBILITY_DEFAULT, VIP_REWARD_CAP_EUR and VIP_ELIGIBILITY_TTL_DAYS are read by both artifacts as well, and are the three parameters 14_Regulatory_Parameter_Map points a compliance function at. They entered the code at v3.7 and v3.8 and are named here by the rule stated above. Restated in canon 1.12: the policy variables both slots read are eight — VIP_MODE, VIP_THRESHOLD, VIP_NUDGE, VIP_ESCALATE, VIP_ROLLOVER, VIP_SPLIT_SPA, VIP_SPLIT_FNB and VIP_SPLIT_RETAIL."
+  },
+  "_event_suppression_note": "incentive.suppressed is the engine declining to issue. scope=programme when a guest was removed from the programme, scope=settlement when a stop settled without an incentive. It is written as its own link in the chain because a regulator asking this system to prove itself needs the occasions it did NOT reward, and an absent row proves nothing. From v3.17 scope=settlement is also written when a programme suppression lands on a stopped session whose settlement was not yet issued, and at the issue call when the determination lapsed between the stop and that call: that settlement will never issue, and the refusal is its own link, written once per session.",
+  "_api_suppression_note": "POST /v3/programme/suppress removes a guest from the incentive programme and stops any live session immediately under the suppressed settlement. Three reasons: exclusion, player_request, rg_determination. Accepts a vip_id the engine has never seen, so an exclusion register can pre-empt enrolment rather than racing it. Not reversible by this engine. From v3.17 a suppression also reaches what was issued before it: both implementations refuse redirect/issue for a session whose guest was suppressed after its stop, and the evaluation build refuses to redeem a credit or apply a rollover for a suppressed guest, whatever the reason — INCENTIVE_SUPPRESSED in each case.",
+  "regulatory_frame": {
+    "_what_this_is": "The regulatory concerns this architecture has to survive, and the parameter that answers each one. It is a map for the buyer's compliance function, not legal advice, and Trench Logic Studio gives none. 14_Regulatory_Parameter_Map.html is the readable form of this block.",
+    "_the_central_objection": "The incentive arrives at the moment the budget is exhausted, which is the moment a regulator watches most closely. The answer is that the incentive is earned by STOPPING, not by playing: it cannot reward chasing losses, extended play or accelerating frequency, because every one of those moves the guest away from it. That is the distinction the package must make in writing, in front of the objection rather than behind it.",
+    "_certification": "In jurisdictions that require independent laboratory certification of gaming systems, a deployment touching player limits enters that perimeter and a certification or change-management review applies before go-live. The buyer owns that path and should budget for it. Stating it is not a weakness of the package; failing to state it is.",
+    "parameters": {
+      "VIP_ELIGIBILITY_DEFAULT": "Jurisdictions that restrict or forbid incentives to high-value or at-risk customers.",
+      "per-session eligibility": "The operator's own responsible-gaming determination for this guest, this session.",
+      "POST /v3/programme/suppress · exclusion": "Exclusion and self-exclusion registers, where an excluded patron must not receive credit, comps or redeemable value.",
+      "POST /v3/programme/suppress · player_request": "The duty to stop personalised incentives promptly when the customer asks to leave the scheme.",
+      "POST /v3/programme/suppress · rg_determination": "Withdrawal of eligibility on the operator's own assessment, including a scheme review.",
+      "VIP_REWARD_CAP_EUR": "The objection that a larger declared budget buys a larger reward.",
+      "VIP_SPLIT_SPA / FNB / RETAIL": "Jurisdictions that restrict a category of non-gaming benefit.",
+      "VIP_ROLLOVER": "Jurisdictions that treat credit toward future play differently from non-gaming value. Set it to 0 to remove that leg entirely.",
+      "hash-anchored audit chain": "Record-keeping and audit-trail expectations, including evidence of refusals.",
+      "VIP_ELIGIBILITY_TTL_DAYS": "Supervisory expectations for periodic review of a customer's account, and the general weakness of a control that is set once and never revisited."
+    },
+    "_known_limits_of_this_release": {
+      "_why_this_block_exists": "A package that names its own limits reads as prepared. A package that leaves them for the buyer's reviewer to find reads as unexamined. These are stated as properties, not as warnings about any one market.",
+      "advisory_mode_notifies_rather_than_enforces": "Advisory mode raises a nudge and an escalation at the thresholds and leaves the decision with the guest and the host. That is a property of the mode, not a defect — but a notification without enforcement has been held insufficient by at least one supervisory authority, and a licensee choosing advisory mode should satisfy itself that notification meets its own obligations. Hard-stop mode enforces. Both run the same engine and the same thresholds.",
+      "the_engine_forms_no_view_of_risk": "This layer performs no risk assessment and holds no harm model. It consumes the operator's determination and records that it honoured it. Whatever produces that determination remains the licensee's, and so does its quality.",
+      "automated_decision_expectations": "Governance expectations for automated decision-making are tightening across regulated industries — decision provenance, human ownership, constrained behaviour and retained logs. This engine is deterministic, canon-fixed and writes an append-only chain including its refusals, which is the shape those expectations describe. NOTHING IS CLAIMED ABOUT WHETHER ANY SPECIFIC REGIME CLASSIFIES THIS SYSTEM, and no such claim should be made on the package's behalf."
+    }
+  },
+  "canon_change_log_4": "1.3 — the responsible-gaming eligibility gate, the reward cap, and POST /v3/programme/suppress. No threshold, split, model figure or metric changed value: the gate ships at its reference setting, which is the configuration every existing figure was computed under, and the cap ships unset. Four error identifiers and one event were added, and the AS-IS scope moved 00–13 to 00–14 for the Regulatory Parameter Map.",
+  "_event_expiry_note": "eligibility.expired records that a determination outlived its configured lifetime. It is written in addition to incentive.suppressed, never instead of it: the first says nobody refreshed the assessment, the second says nothing was issued.",
+  "canon_change_log_5": "1.4 — the eligibility lifetime, its fail-closed direction, the eligibility.expired event, the INVALID_ELIGIBILITY_AT identifier, and a known-limits block in the regulatory frame. The lifetime ships UNSET, which is the configuration every existing figure was computed under, so no threshold, split, model figure or metric changed value.",
+  "canon_change_log_6": "1.5 — cent-exact settlement closure by largest-remainder allocation, a non-negative guard on the consumption delta, the schema migration running at server start so the documented upgrade path is real, adversarial ordering checks across cap, suppression, lifetime and issue, and slot 15 stating what is implemented and what is deliberately the integrator's. No threshold, split, model figure or metric changed value.",
+  "canon_change_log_7": "1.6 — the non-negative consumption guard reaches slot 04b, which v3.10 gave to the MVP alone; the sixth route moves into paths in 04_API_Spec.yaml, where it had been nested under x-error-identifiers and so was invisible to every OpenAPI reader; the specification's identifier enum goes from twelve to all seventeen; GUEST_UNKNOWN and ALREADY_ERASED return the 404 and 409 this canon declares instead of 500; Demo B settles on the budget actually unspent rather than on the stop line and ships at the reference threshold; config_authority names the three environment variables the code has read since v3.7; every HTTP code in error_identifiers is an integer again. No threshold, split, model figure, metric or event changed VALUE in this revision.",
+  "_licensed_ip_rule": "08_LOI, 08b_License and 08d_NDA state the mechanism in their own words and MUST mirror this field. It is the cause; they are the copies. The definition here carries the threshold and the two modes from v3.4, and the eligibility gate, the suppression route, the determination lifetime and the reward cap from v3.7 and v3.8. Any revision that changes what the engine does changes this field in the same pass, and the three instruments in the same revision.",
+  "canon_change_log_8": "1.7 — the legal set states the mechanism it transfers. licensed_ip names the responsible-gaming eligibility gate, programme suppression, the determination lifetime and the reward cap, which entered the engine at v3.7 and v3.8, and 08_LOI, 08b_License and 08d_NDA mirror it word for word. Their asset lists name slots 14 and 15, which the buyer receives and the AS-IS notice governs. Schedule A of the licence states one fee cadence, annual, in its header and in its fee row. This field is the cause and the three documents are its copies, so it is written here first. No threshold, split, model figure, metric, event or route changed value.",
+  "canon_change_log_9": "1.8 — the edition that puts every artifact on the mechanism this canon defines, without moving a value. The licence template's AS-IS clause names the figures this package carries: quarter retention, post-stop churn, non-gaming capture, preserved and redirected budget, the host-hours index, and every figure derived from them. Build hygiene — the list of vocabulary that must not appear in this package — lives with the build tools, where a buyer's canon has no business carrying it, and two fields that described the slot convention now state it in this package's own terms. Slide 8 of the deck reads REGISTRY 00-15, the range this package occupies. Three comments that record when a fix landed, in 04, 04b and 05b, name v3.11, which is when those fixes were made. The MVP's guest screen offers only controls the engine accepts, and its suite reads every served page and fails on any control that would send a negative tick. The demo layer states the middleware flow this canon defines and nothing else: precommit, policy.stop, redirect.issue, a hash-anchored proof, funds off chain and rules off chain. 05a pre-commits a budget and stops at 50% of the pre-committed budget, the threshold this canon sets and a deployment configures, then settles the preserved budget in the canon shares — 70% of the preserved budget as resort credit in spa 30, F&B 25 and retail 15, 20% of the preserved budget as next-visit rollover, 10% of the preserved budget back to the guest — allocated in cents so the three legs close on the preserved budget exactly. 05b issues that same split and holds the redirect inside what the engine accepts beside the rollover. 05d names the same events. Every figure in every document is the canon figure to the euro: EUR 214,200 redirected and EUR 61,200 rollover liability in the synthetic quarter, with the K form carrying any rounding. The concentration claim on slide 2 is ggr_share_top_1pct. limit_setter_odds_ratio remains the only non-synthetic figure in the package, standing alone, and 04b is named for what it is, an integration reference. model_figures._superseded lists the forms withdrawn at this revision so a copied paragraph cannot bring them back. No threshold, split, model figure, metric, event or route changed value. Restated in canon 1.12: the canon figures are carried to the euro wherever a document states them; the illustrative amounts of one demonstrated guest or week — 05a's guest, 05b's shoe, 05d's weekly frames — are synthetic by the banner on their page and are not canon figures.",
+  "canon_change_log_10": "1.9 — the release notes shipped with the MVP state what each edition defines. A note that travels with the package is read by the buyer, so it carries the definition, never an assessment of an earlier edition. The parent pointer in 13_VIP_MVP/CANON.json and the adoption line here follow the package to v3.15 and the build to v0.2.9. No threshold, split, model figure, metric, event or route changed value, and nothing in the runnable build changed behaviour.",
+  "canon_change_log_11": "1.10 — the edition in which every artifact was read line by line against this canon, so that every claim a document makes about the package matches what the package is. The contract surface is six /v3 routes in every file that counts them, which is what 04_API_Spec.yaml declares and what both implementations serve. The specification is implementable as written: each route documents its request body or its parameters, and the pre-commit schema names the eligibility fields the engine reads and the same file's error map already referred to. The commercial language states the licence this package grants — annual, non-transferable, non-exclusive unless Schedule A says otherwise, with perpetual transfer available after the buyer's own freedom-to-operate review — and the registry list in 01 names every slot the buyer receives, as clause 1 of 08b does. The settlement reads the same everywhere: 70% of the preserved budget as resort credit, 20% as rollover, 10% back to the guest, and both mode specifications say so. Every figure carries its label and its denominator at the point of use. The battlecard states what was verified and when, and names a class wherever this canon names a class. 14_Regulatory_Parameter_Map maps the threshold parameters beside the eligibility ones. No threshold, split, model figure, metric, event or route changed value, and nothing in the runnable build changed behaviour. Restated in canon 1.12: the registry block of this canon and 00_INDEX name every slot; 01 and clause 1 of 08b name what the buyer evaluates and licenses, in words.",
+  "canon_change_log_12": "1.11 — two decisions, neither of which moves a threshold, a split or a model output. First: the quarter settlement is named in full. model_figures carried preserved, redirected and rollover for the reference quarter but not the fourth leg — the guest’s own residual of €30,600 — although the MVP canon has carried it since v0.2.0 and the admin console prints it beside the other three. It is added as DERIVED with its formula, so the four legs of the quarter close in this file exactly as they close in the engine. Second: the cashless-wallet class is named IGT. Apollo combined IGT Gaming & Digital with Everi on 1 July 2025 and the combined enterprise operates as IGT; the transitional hyphenated form is now a banned form in the naming map, which the scanner reads from V4.20 onward, so a stale third-party name cannot return through a copied paragraph. A market-events block records both third-party events with their dates and the date each was verified.",
+  "canon_change_log_13": "1.12 — money is decided in integer cents and every configured fraction in integer millionths, so the stated rule and the published numbers hold on every amount. Measured on v3.16 across every amount from €0.01 to €2,000.00: the settlement closed on all of them, but it put a cent into a different venue than the largest-remainder rule on 6,553 of the 200,000, because a floating-point remainder decided ties that position should decide; and on 4,588 of the 200,000 budgets armed_at_eur — the amount the pre-commit response publishes — was one cent below the amount at which the engine fired. armed_at_eur is now the first whole cent at or above the threshold share of the budget, and the stop, nudge and escalation lines are all that one computation, so the published number is the enforced number (thresholds._prose._money_rule). A budget is at least €0.01 and at most €10,000,000 (INVALID_BUDGET) and a tick above €10,000,000 is INVALID_DELTA: within those bounds every product the engine forms is an exact integer. Malformed input is answered with an identifier instead of a server error: a body that parses to anything but a JSON object is BAD_JSON, and a session_id that is not valid percent-encoding is BAD_REQUEST. Every configuration the startup validation accepts now also runs: a redirect split of zero — all three shares at zero — issues nothing, where slot 04b had answered null credits and the MVP had failed to start; shares that sum to exactly the preserved budget are accepted however floating point adds them, where 2,026 such two-decimal configurations had been refused as exceeding it; and the MVP's seed replays the published stop line, so a stop line at its lower bound or a jurisdiction-wide suppression no longer stops it at startup. The mode on the pre-commit call is optional, as both implementations always treated it — absent means the deployment's configured mode — and the specification now says so. The MVP at slot 13 moves to v0.2.11 with the same arithmetic, identical to slot 04b on every amount in that range; its own canon records what else that build changed. The event scope now names the second occasion on which policy.stop is written — a programme suppression that stops a live session — and the prose of NO_LIVE_SESSION carries a correction: a tick for a stopped session was always ALREADY_STOPPED. A pre-commit that sends no determination date is recorded without one, so a configured lifetime fails closed on it, as eligibility_lifetime_days states. A suppression reaches what was issued before it: both implementations refuse redirect/issue for a session whose guest was suppressed after its stop, and the evaluation build refuses to redeem a credit or apply a rollover for a suppressed guest. The Hard-Stop lock is stated as what it is — the session the policy stopped, with no gaming day — and 423 as a computed settlement that POST /v3/redirect/issue then issues. The legal set conditions every exclusive licence type on the buyer's freedom-to-operate review, as pricing.perpetual_and_exclusivity requires; 08d binds each party that receives confidential information; and all three templates describe the performance figures of the architecture as synthetic — modelled assumptions and the figures computed from them — which is how model_figures labels them, ANCHORED and DERIVED, and name the one EMPIRICAL figure as cited literature. A budget is taken to the nearest cent on arrival and consumption is read in whole cents from its exact total, in both implementations, so consumed plus preserved closes on the budget and ticks below a cent still add up; a suppression that lands on a stopped, unissued settlement, and a determination that lapses between the stop and the issue call, each write incentive.suppressed with scope settlement once, in both; and a port that is not a whole number is refused in one sentence by both. Corrections and additions to existing entries are appended to them, never written over them, so the sentence each earlier edition carried stays readable where it stood. No threshold, split, model figure, metric, event or route changed value."
+}

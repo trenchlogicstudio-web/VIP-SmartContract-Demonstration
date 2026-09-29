@@ -1,0 +1,111 @@
+# VIP SmartContract · Reference Stack · v3.17 · registry slot 04c
+# Trench Logic Studio · AS-IS: runs what the package ships, unchanged.
+#
+# Two services, no database container. Both artifacts hold their own state —
+# slot 04b in memory, slot 13 in a single SQLite file created by the built-in
+# node:sqlite module — so nothing else is declared here. A compose file that
+# starts infrastructure the code never touches is a promise the stack does not
+# keep.
+#
+# Every threshold below resolves in 12_Canon.json and is validated at startup
+# by both services: a value that is not a finite number in range stops the
+# process rather than degrading it silently.
+#
+#   docker compose up
+#   curl -X POST localhost:8080/v3/precommit \
+#        -H 'Content-Type: application/json' \
+#        -d '{"vip_id":"V1","budget_eur":3000,"mode":"hard_stop"}'
+#   open http://localhost:3400/            (the MVP console)
+#
+# Endpoint contracts: see 04_API_Spec.yaml
+#   POST /v3/precommit · POST /v3/session/tick · GET /v3/policy/state
+#   POST /v3/redirect/issue · GET /v3/audit/{session_id}
+#   POST /v3/programme/suppress
+# Both services answer all six at the same paths with the same status codes.
+
+services:
+
+  # The reference: zero dependencies, state in memory, runs on any Node >= 18.
+  vip-reference:
+    image: node:20-alpine
+    working_dir: /srv
+    volumes:
+      - ./04b_Integration_Reference.js:/srv/reference.js:ro
+    command: node reference.js
+    ports:
+      - "8080:8080"
+    environment:
+      VIP_MODE: hard_stop        # hard_stop | advisory — canon modes
+      VIP_THRESHOLD: "0.50"      # canon thresholds.hard_stop_fraction
+      VIP_NUDGE: "0.40"          # canon thresholds.advisory_nudge_fraction
+      VIP_ESCALATE: "0.85"       # canon thresholds.advisory_escalate_fraction
+      VIP_ROLLOVER: "0.20"          # canon thresholds.rollover_fraction
+      # canon thresholds.redirect_split — per-jurisdiction configurable
+      VIP_SPLIT_SPA: "0.30"
+      VIP_SPLIT_FNB: "0.25"
+      VIP_SPLIT_RETAIL: "0.15"
+      # ── RG eligibility gate · canon thresholds.eligibility_gate ──────────
+      # permitted = the reference configuration every canon figure was computed
+      # under. A jurisdiction that forbids the incentive sets this to
+      # suppressed: the stop still fires, nothing is issued, and the whole
+      # preserved budget returns to the guest.
+      VIP_ELIGIBILITY_DEFAULT: permitted
+      # Absolute euro ceiling on redirect + rollover. Commented out = uncapped,
+      # which is the reference configuration. When it binds, the excess goes to
+      # the guest, not to the operator.
+      # VIP_REWARD_CAP_EUR: "500"
+      # How many days an operator's eligibility determination stays good for.
+      # Commented out = never expires, the reference configuration. When set and
+      # the determination is older, the gate FAILS CLOSED: nothing is issued and
+      # the whole preserved budget returns to the guest until a fresh
+      # determination arrives.
+      # VIP_ELIGIBILITY_TTL_DAYS: "90"
+      PORT: "8080"
+    restart: "no"
+
+  # The MVP: persistence, the guest and host console, the audit chain.
+  # The image is pinned at the runtime floor recorded in canon.runtime_floors,
+  # because node:sqlite runs unflagged only from 22.13.0.
+  # The source is mounted read-only, so the database is written to a writable
+  # path outside the mount rather than beside the code.
+  vip-mvp:
+    image: node:22.13-alpine
+    working_dir: /srv
+    volumes:
+      - ./13_VIP_MVP:/srv:ro
+    command: node server.js
+    ports:
+      - "3400:3400"
+    environment:
+      PORT: "3400"
+      VIP_DB: "/tmp/vip-mvp.db"  # the mount is read-only; the database lives outside it
+      VIP_ADMIN_TOKEN: evaluation-only   # evaluation auth only — change it even for a demo
+      VIP_MODE: hard_stop
+      VIP_THRESHOLD: "0.50"
+      VIP_NUDGE: "0.40"
+      VIP_ESCALATE: "0.85"
+      VIP_ROLLOVER: "0.20"          # canon thresholds.rollover_fraction
+      # canon thresholds.redirect_split — per-jurisdiction configurable
+      VIP_SPLIT_SPA: "0.30"
+      VIP_SPLIT_FNB: "0.25"
+      VIP_SPLIT_RETAIL: "0.15"
+      # ── RG eligibility gate · canon thresholds.eligibility_gate ──────────
+      # permitted = the reference configuration every canon figure was computed
+      # under. A jurisdiction that forbids the incentive sets this to
+      # suppressed: the stop still fires, nothing is issued, and the whole
+      # preserved budget returns to the guest.
+      VIP_ELIGIBILITY_DEFAULT: permitted
+      # Absolute euro ceiling on redirect + rollover. Commented out = uncapped,
+      # which is the reference configuration. When it binds, the excess goes to
+      # the guest, not to the operator.
+      # VIP_REWARD_CAP_EUR: "500"
+      # How many days an operator's eligibility determination stays good for.
+      # Commented out = never expires, the reference configuration. When set and
+      # the determination is older, the gate FAILS CLOSED: nothing is issued and
+      # the whole preserved budget returns to the guest until a fresh
+      # determination arrives.
+      # VIP_ELIGIBILITY_TTL_DAYS: "90"
+      # Path 2 stays dormant unless BOTH of these are set — see 13_VIP_MVP/INTEGRATION.md
+      # VIP_DOWNSTREAM_URL: "https://your-endpoint.example/events"
+      # VIP_DOWNSTREAM_KEY: "replace-me"
+    restart: "no"

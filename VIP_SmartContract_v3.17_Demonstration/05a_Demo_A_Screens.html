@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VIP v3.17 · Demo A · Screens</title><style>
+:root{--paper:#F3F5F4;--panel:#E9EEEC;--ink:#122B33;--accent:#1E5A78;--accent-deep:#143E54;--accent-light:#7FB0C4;--seal:#973A3A;--graphite:#54646A;--line:#C7D2D1;--wash:#D8E2E4;--lavender:#D6D3E6;--rose:#DFB3BE;--display:"Schibsted Grotesk",Arial,sans-serif;--body:"Source Serif 4",Georgia,serif;--mono:"Fragment Mono","Courier New",monospace;--r:3px;--rule:1px solid var(--line)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+h1,h2,h3,h4{font-family:var(--display);line-height:1.12;letter-spacing:-.015em}
+h1{font-size:clamp(30px,4.6vw,46px);font-weight:800}h2{font-size:25px;font-weight:700;margin-bottom:14px}h3{font-size:17px;font-weight:700;margin:20px 0 8px}
+p{max-width:70ch;margin-bottom:13px}.lede{font-size:18.5px;color:var(--graphite);max-width:64ch}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:12px}
+.dim{position:relative;border-top:var(--rule);margin:44px 0 38px}.dim::before,.dim::after{content:"";position:absolute;top:-5px;width:1px;height:11px;background:var(--line)}.dim::before{left:0}.dim::after{right:0}
+header{padding:54px 0 0}
+.mark{display:inline-flex;align-items:center;gap:13px;margin-bottom:26px}
+.mark .tile{width:42px;height:42px;background:var(--ink);color:var(--paper);font-family:var(--display);font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;border-radius:var(--r)}
+.mark .word{font-family:var(--display);font-weight:700;font-size:15.5px}
+.mark .word span{display:block;font-family:var(--mono);font-weight:400;font-size:11px;color:var(--graphite);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
+.asis{border:1.5px solid var(--seal);border-radius:var(--r);background:#fff;padding:13px 16px 13px 48px;position:relative;max-width:880px;margin-top:6px}
+.asis::before{content:"§";position:absolute;left:15px;top:10px;font-family:var(--display);font-weight:800;font-size:21px;color:var(--seal)}
+.asis p{font-size:13.5px;margin:0;font-family:var(--display)}.asis b{color:var(--seal)}
+.card{border:var(--rule);border-radius:var(--r);background:#fff;padding:18px 20px;margin-bottom:16px}.card h3{margin-top:0}
+.grid{display:grid;gap:16px}.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}.g3{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}.g4{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+table.tls{width:100%;border-collapse:collapse;background:#fff;border:var(--rule);font-size:14.5px}
+table.tls th{font-family:var(--display);font-weight:700;font-size:13px;text-align:left;background:var(--panel);padding:10px 13px;border-bottom:var(--rule)}
+table.tls td{padding:10px 13px;border-bottom:var(--rule);vertical-align:top;font-family:var(--display);font-size:14px}
+table.tls tr:last-child td{border-bottom:none}table.tls td.num,table.tls td.mono{font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+.metric{border:var(--rule);border-left:3px solid var(--accent);border-radius:var(--r);background:#fff;padding:16px 18px}
+.metric .v{font-family:var(--display);font-weight:800;font-size:30px;letter-spacing:-.02em}
+.metric .l{font-family:var(--display);font-size:12.5px;color:var(--graphite);margin-top:4px}
+.metric .src{font-family:var(--mono);font-size:10px;color:var(--graphite);margin-top:8px;display:block;letter-spacing:.04em}
+.metric.lav{border-left-color:var(--lavender)}.metric.roz{border-left-color:var(--rose)}.metric.sea{border-left-color:var(--seal)}
+.ann{border:var(--rule);border-left:3px solid var(--accent);border-radius:var(--r);background:#fff;padding:15px 18px;margin-bottom:12px}
+.ann h3{font-size:15.5px;margin:0 0 5px}.ann p{font-family:var(--display);font-size:13.9px;color:var(--graphite);margin:0;max-width:none}
+.ann.l2{border-left-color:var(--lavender)}.ann.l3{border-left-color:var(--rose)}.ann.lg{border-left-color:var(--graphite)}.ann.ls{border-left-color:var(--seal)}
+.chartwrap{border:var(--rule);border-radius:var(--r);background:#fff;padding:20px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;font-family:var(--display);font-size:12.5px;color:var(--graphite)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.dark{background:var(--ink);color:var(--paper);border-radius:var(--r);padding:22px 24px}.dark .eyebrow{color:var(--accent-light)}
+.note{font-family:var(--mono);font-size:11.5px;color:var(--graphite);line-height:1.7;margin-top:12px;max-width:900px}
+.titleblock{border:1.5px solid var(--ink);border-radius:var(--r);background:#fff;overflow:hidden;font-size:13px;max-width:760px}
+.tb-row{display:grid;grid-template-columns:170px 1fr;border-bottom:1px solid var(--ink)}.tb-row:last-child{border-bottom:none}
+.tb-row .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--graphite);padding:8px 12px;border-right:1px solid var(--ink);background:var(--panel);display:flex;align-items:center}
+.tb-row .v2{font-family:var(--display);font-weight:500;padding:8px 12px}.tb-row .v2.mono{font-family:var(--mono);font-size:12px;font-weight:400}.tb-row .v2.seal{color:var(--seal);font-weight:700}
+.tb-row .v2{min-width:0;overflow-wrap:anywhere}
+@media(max-width:560px){.tb-row{grid-template-columns:118px 1fr}}
+footer{padding:44px 0 64px}
+/* v3.17 interactive layer */
+.calcgrid{display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start}@media(max-width:860px){.calcgrid{grid-template-columns:1fr}}
+.ctrlcard{border:var(--rule);border-radius:var(--r);background:#fff;padding:20px;position:sticky;top:16px}
+label{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--graphite);display:block;margin:14px 0 5px}label:first-of-type{margin-top:0}label b{color:var(--accent-deep);font-size:13px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.seg{display:flex;gap:6px;margin-top:4px}.seg button{flex:1;font-family:var(--display);font-weight:700;font-size:12.5px;padding:9px 4px;border:var(--rule);border-radius:var(--r);background:#fff;cursor:pointer;color:var(--ink)}
+.seg button.on{background:var(--wash);border-color:var(--accent)}
+.btn{font-family:var(--display);font-weight:700;font-size:13.5px;padding:10px 16px;border:var(--rule);border-radius:var(--r);background:#fff;cursor:pointer;color:var(--ink)}
+.btn.pri{background:var(--accent);border-color:var(--accent-deep);color:#fff}.btn.seal{background:var(--seal);border-color:var(--seal);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.resetb{width:100%;font-family:var(--display);font-weight:700;font-size:13px;padding:10px;border:var(--rule);border-radius:var(--r);background:transparent;cursor:pointer;margin-top:16px;color:var(--graphite)}
+.steps{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 18px}
+.steps button{font-family:var(--mono);font-size:11px;letter-spacing:.06em;padding:9px 12px;border:var(--rule);border-radius:var(--r);background:#fff;cursor:pointer;color:var(--graphite)}
+.steps button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.steps button.done{border-color:var(--accent);color:var(--accent-deep)}
+.screen{border:1.5px solid var(--ink);border-radius:6px;background:#fff;overflow:hidden;box-shadow:6px 6px 0 var(--wash)}
+.sbar{display:flex;align-items:center;gap:8px;background:var(--panel);border-bottom:var(--rule);padding:8px 12px;font-family:var(--mono);font-size:10.5px;color:var(--graphite);letter-spacing:.08em}
+.sbar i{width:9px;height:9px;border-radius:50%;background:var(--line);display:inline-block}
+.sbody{padding:20px;min-height:300px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--display);font-weight:700;font-size:12.5px;padding:7px 12px;border:var(--rule);border-radius:20px;background:#fff;cursor:pointer;margin:3px;user-select:none}
+.chip.on{background:var(--accent);color:#fff;border-color:var(--accent-deep)}
+.chip.lock{background:var(--ink);color:var(--paper);border-color:var(--ink);cursor:default}
+.chip:disabled,.chip.dis{opacity:.4;cursor:not-allowed}
+.log{border:var(--rule);border-radius:var(--r);background:var(--ink);color:#CFE0E6;font-family:var(--mono);font-size:11.5px;padding:14px 16px;max-height:210px;overflow-y:auto;line-height:1.8}
+.log b{color:#fff}.log .ok{color:#9FD0B7}.log .warn{color:#E8C9A0}.log .seal{color:#E7A9A9}
+.kpi{display:flex;gap:14px;flex-wrap:wrap}
+.pill{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;padding:4px 9px;border:var(--rule);border-radius:12px;color:var(--graphite);background:#fff}
+.pill.mod{border-color:var(--seal);color:var(--seal)}
+.bar{height:12px;background:var(--panel);border:var(--rule);border-radius:8px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .5s ease}
+.bar.seal i{background:var(--seal)}.bar.gold i{background:var(--lavender)}
+.tl2{border-left:2px solid var(--line);margin:14px 0 6px 8px;padding-left:22px}
+.tl2 .ev{position:relative;padding-bottom:14px;cursor:pointer}
+.tl2 .ev::before{content:"";position:absolute;left:-27px;top:6px;width:8px;height:8px;border-radius:50%;background:var(--line)}
+.tl2 .ev.on::before{background:var(--accent);box-shadow:0 0 0 3px var(--wash)}
+.tl2 .ev.seal.on::before{background:var(--seal)}
+.tl2 .when{font-family:var(--mono);font-size:11px;color:var(--graphite);letter-spacing:.08em;text-transform:uppercase}
+.tl2 .what{font-family:var(--display);font-size:14.5px;font-weight:600}
+.tl2 .ev.on .what{color:var(--accent-deep)}
+details.assume{border:var(--rule);border-radius:var(--r);background:#fff;max-width:900px;margin-top:14px}
+details.assume summary{font-family:var(--display);font-weight:700;font-size:13.5px;padding:12px 16px;cursor:pointer;list-style:none}
+details.assume summary::before{content:"▸ ";color:var(--accent)}details.assume[open] summary::before{content:"▾ "}
+details.assume .in{padding:0 16px 14px;font-family:var(--display);font-size:13.2px;color:var(--graphite);line-height:1.65}
+details.assume .in li{margin-bottom:6px;margin-left:16px}
+.hint{font-family:var(--mono);font-size:10.5px;color:var(--graphite);letter-spacing:.06em;margin-top:8px}
+.flash{animation:fl .6s ease}@keyframes fl{0%{background:var(--wash)}100%{background:transparent}}
+.pulse{animation:pu 1.4s ease infinite}@keyframes pu{0%,100%{opacity:1}50%{opacity:.45}}
+.dot{width:13px;height:13px;border-radius:50%;background:var(--graphite);opacity:.55;display:inline-block;margin:3px;cursor:pointer;transition:all .35s}
+.dot.hot{background:var(--seal);opacity:.9}.dot.named{background:var(--accent);opacity:1;transform:scale(1.15)}
+.dot.sel{outline:2px solid var(--ink);outline-offset:1px}
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:18px}@media(max-width:760px){.twocol{grid-template-columns:1fr}}
+.feed{border:var(--rule);border-radius:var(--r);background:#fff;padding:0;overflow:hidden}
+.feed .fi{padding:11px 14px;border-bottom:var(--rule);font-family:var(--display);font-size:13.5px}
+.feed .fi:last-child{border-bottom:none}
+.feed .fi .t{font-family:var(--mono);font-size:10px;color:var(--graphite);letter-spacing:.06em;text-transform:uppercase;display:block;margin-bottom:2px}
+.verdictbox{border:var(--rule);border-left:3px solid var(--accent);border-radius:var(--r);background:#fff;padding:18px 20px;max-width:880px}
+
+@media(max-width:560px){table.tls{display:block;overflow-x:auto}table.tls th{width:auto!important}}
+</style></head><body><div class="wrap"><header><div class="mark"><div class="tile">TL</div><div class="word">TRENCH LOGIC STUDIO<span>VIP v3.17 · Demo A</span></div></div>
+<span class="eyebrow">Demo A · registry slot 05a · interactive walkthrough</span>
+<h1>The host console, live</h1>
+<p class="lede">Six steps from risk flag to retained VIP. Click what the host would click. Toggle annotations for the design intent — including why consent comes before the contract, always.</p>
+<div class="asis"><p><b>SOLD AS-IS · SYNTHETIC BY DECLARATION.</b> Every figure on this page is synthetic — a model output generated for demonstration, or a modelled assumption — except the one marked empirical. No live resort data exists. Assumptions are printed beside each model; the buyer integrates and validates independently.</p></div></header>
+<div class="wrap"><div class="dim"></div></div>
+<section class="wrap">
+<div class="steps" id="rail"></div>
+<div style="display:flex;gap:10px;align-items:center;margin-bottom:14px"><button class="btn" id="prev">← Back</button><button class="btn pri" id="next">Next step →</button><label style="margin:0 0 0 auto;display:flex;align-items:center;gap:8px;text-transform:none;font-size:12px"><input type="checkbox" id="anno"> annotation layer</label></div>
+<div class="screen"><div class="sbar"><i></i><i></i><i></i><span id="crumb">VIP · HOST CONSOLE</span></div><div class="sbody" id="stage"></div></div>
+<div class="ann l2" id="annbox" style="display:none;margin-top:14px"><h3>Design intent</h3><p id="anntext"></p></div>
+</section>
+<script>
+var step=0,consent=false,bud=3000,armed=false,fired=false,redirected=false;
+var THRESHOLD=50,SPA=30,FNB=25,RETAIL=15,ROLLOVER=20,RESIDUAL=10; /* 12_Canon.json · thresholds */
+function el(i){return document.getElementById(i)}
+/* the same allocation 04b_Integration_Reference.js settles with, on integers:
+   c is a whole number of cents, w are whole-number weights (millionths); every
+   share is c*w/sum floored, the leftover cents go to the largest remainders,
+   ties by position. The parts close on the whole, always, and a zero weight
+   receives nothing. */
+var MICRO=1000000;function micro(x){return Math.round(x*MICRO)}
+function allocate(c,w){var sum=w.reduce(function(a,b){return a+b},0);if(c<=0||sum===0)return w.map(function(){return 0});
+var raw=w.map(function(x){return c*x});var out=raw.map(function(r){return Math.floor(r/sum)});
+var left=c-out.reduce(function(a,b){return a+b},0);
+var ord=raw.map(function(r,i){return {i:i,rem:r-out[i]*sum}}).sort(function(a,b){return (b.rem-a.rem)||(a.i-b.i)});
+for(var k=0;left>0;k++,left--)out[ord[k%ord.length].i]+=1;return out}
+/* the weights are built exactly as 04b builds them — each share in whole
+   millionths, the redirect total their SUM, the residual what is left after it
+   and the rollover; the stop line is the first cent at or above the threshold
+   share of the budget, which is also the amount the engine publishes */
+function shares(){return {spa:micro(SPA/100),fnb:micro(FNB/100),retail:micro(RETAIL/100)}}
+function redirectTotal(){var s=shares();return s.spa+s.fnb+s.retail}
+function preservedC(){var b=Math.round(bud*100);return b-Math.ceil(b*micro(THRESHOLD/100)/MICRO)}
+function preserved(){return preservedC()/100}
+function legsC(){var rt=redirectTotal(),ro=micro(ROLLOVER/100);return allocate(preservedC(),[rt,ro,MICRO-ro-rt])}
+function legs(){return legsC().map(function(x){return x/100})}
+function credits(){var s=shares();return allocate(legsC()[0],[s.spa,s.fnb,s.retail]).map(function(x){return x/100})}
+function fm(e){return "€"+e.toLocaleString("en-US",{minimumFractionDigits:(Math.round(e*100)%100?2:0),maximumFractionDigits:2})}
+var STEPS=[
+{c:"STEP 1 · THE FLAG",a:"Concentration is the fragility: with ~30% of GGR in the top 1%, one burned-out whale is a P&L event. The flag is velocity-based, not moralizing, and it is the property's own — from its analytics or a detection vendor; this engine forms no view of risk.",r:function(){return "<h3>Guest V-1108 · velocity flag</h3><table class=tls style=max-width:560px><tr><th>Signal</th><th>Read</th></tr><tr><td>Monthly theoretical</td><td class=mono>€5,500 · +38% vs the prior month</td></tr><tr><td>Session length</td><td class=mono>outlier · 97th pct</td></tr><tr><td>Cool-off pattern</td><td class=mono>collapsing</td></tr><tr><td>Status</td><td class=mono>1 of 60 flagged this quarter</td></tr></table>"}},
+{c:"STEP 2 · CONSENT",a:"The contract is opt-in, framed as a private banking instrument — discipline as privilege, never punishment. No consent, no policy: the pre-commit is sent only after the guest says yes.",r:function(){return "<h3>Offer the instrument</h3>"+(consent?"<div class=log><span class=ok>guest</span> V-1108 accepts · \"stop-loss like my brokerage, finally\"</div>":"<div class=\"card\" style=max-width:560px><p style=\"font-family:var(--display);font-size:14px;margin:0 0 10px\">\"We can put a floor under your season — your limits, on rails no one can quietly move, us included.\"</p><button class=\"btn pri\" id=cons>GUEST CONSENTS</button></div>")}},
+{c:"STEP 3 · SET POLICY",a:"The guest sets the numbers, the host witnesses. A limit imposed is churn; a limit chosen is loyalty — the empirical anchor: limit-setters carry 2.92× odds of staying active at one year.",r:function(){if(!consent)return "<p style=\"font-family:var(--display);color:var(--seal)\">Consent required in Step 2 first.</p>";return "<h3>Policy terms · guest-authored</h3><label>pre-committed budget · <b id=slv>"+fm(bud)+"</b></label><input type=range id=slr min=1000 max=10000 step=100 value="+bud+" style=max-width:380px><p style=\"font-family:var(--display);font-size:13px;color:var(--graphite)\">Hard-Stop fires at "+THRESHOLD+"% of the pre-committed budget — the reference threshold, configured per jurisdiction, never per guest. The preserved budget then settles: "+(SPA+FNB+RETAIL)+"% as resort credit (spa "+SPA+" · F&B "+FNB+" · retail "+RETAIL+"), "+ROLLOVER+"% as next-visit rollover, "+RESIDUAL+"% back to the guest.</p>"}},
+{c:"STEP 4 · ARM THE POLICY",a:"Middleware, not a chain: funds never go on chain and the rules stay off it — only the proof is anchored. In Hard-Stop there is no override, so the limit is not a setting anyone can talk their way out of at 2am, and either way the attempt leaves a record.",r:function(){if(!consent)return "<p style=\"font-family:var(--display);color:var(--seal)\">Complete Steps 2–3 first.</p>";return armed?"<h3>Armed.</h3><div class=log><span class=ok>precommit</span> hard_stop · stop at "+THRESHOLD+"% of "+fm(bud)+" · no override<br><b>audit</b> policy hash 0x7f3a…c412 · hash-anchored · funds stay off chain</div>":"<button class=\"btn seal\" id=arm>ARM THE POLICY</button>"}},
+{c:"STEP 5 · THE TRIGGER",a:"When the threshold hits, the policy fires without a human in the loop — the host arrives after, as concierge, never as enforcer.",r:function(){if(!armed)return "<p style=\"font-family:var(--display);color:var(--seal)\">Arm the policy in Step 4 first.</p>";return fired?"<h3>Policy stop · gaming locked</h3><div class=log><span class=seal>policy.stop</span> "+THRESHOLD+"% of "+fm(bud)+" consumed · session locked, further stakes refused<br><b>ledger</b> preserved "+fm(preserved())+" this session · recorded, not held</div>":"<button class=\"btn seal\" id=fire>SIMULATE THRESHOLD HIT</button>"}},
+{c:"STEP 6 · THE REDIRECT",a:"The preserved budget stays in the building: 70% captured as non-gaming spend in the model — €214K across the synthetic quarter. Quarter retention of limited VIPs with the incentive layer: 84% vs 61% hard-stop-only. MODELED, and labeled.",r:function(){if(!fired)return "<p style=\"font-family:var(--display);color:var(--seal)\">Fire the policy in Step 5 first.</p>";var cr=credits(),lg3=legs(),sp=cr[0],fb=cr[1],rt=cr[2],ro=lg3[1],rs=lg3[2];return "<h3>Concierge screen · spend it here</h3><div style=\"display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px\"><span class=\"chip "+(redirected?"lock":"")+"\" id=r1>Spa "+fm(sp)+"</span><span class=\"chip "+(redirected?"lock":"")+"\" id=r2>F&B "+fm(fb)+"</span><span class=\"chip "+(redirected?"lock":"")+"\" id=r3>Retail "+fm(rt)+"</span></div><p style=\"font-family:var(--display);font-size:13px;color:var(--graphite)\">Next-visit rollover "+fm(ro)+" · back to the guest "+fm(rs)+" — the three legs close to "+fm(preserved())+", the whole preserved budget.</p>"+(redirected?"<div class=log><span class=ok>redirect.issue</span> "+fm(lg3[0])+" resort credit · "+fm(ro)+" rollover · "+fm(rs)+" returned · guest keeps the night, house keeps the guest</div>":"<p class=hint>click any credit to issue the settlement</p>")}}];
+function draw(){el("rail").innerHTML=STEPS.map(function(s,i){return "<button class=\""+(i==step?"on":(i<step?"done":""))+"\" data-s="+i+">"+(i+1)+"</button>"}).join("");
+el("crumb").textContent=STEPS[step].c;el("stage").innerHTML=STEPS[step].r();el("anntext").textContent=STEPS[step].a;bind();}
+function bind(){var c=document.getElementById("cons");if(c)c.onclick=function(){consent=true;draw();};
+var s=document.getElementById("slr");if(s)s.oninput=function(){bud=+this.value;document.getElementById("slv").textContent=fm(bud);};
+var d=document.getElementById("arm");if(d)d.onclick=function(){armed=true;draw();};
+var f=document.getElementById("fire");if(f)f.onclick=function(){fired=true;draw();};
+["r1","r2","r3"].forEach(function(id){var x=document.getElementById(id);if(x)x.onclick=function(){redirected=true;draw();};});
+el("rail").querySelectorAll("button").forEach(function(b){b.onclick=function(){step=+b.dataset.s;draw();};});}
+el("next").onclick=function(){if(step<5){step++;draw();}};
+el("prev").onclick=function(){if(step>0){step--;draw();}};
+el("anno").onchange=function(){el("annbox").style.display=this.checked?"block":"none";};
+draw();
+</script><footer class="wrap"><div class="titleblock">
+<div class="tb-row"><div class="k">Studio</div><div class="v2">Trench Logic Studio — Miloš Petrović · milos@trench-logic.com · trenchlogicstudio.com</div></div>
+<div class="tb-row"><div class="k">Project</div><div class="v2">VIP SmartContract — Compliance-as-Revenue Layer</div></div>
+<div class="tb-row"><div class="k">Document</div><div class="v2 mono">05a_Demo_A_Screens.html</div></div>
+<div class="tb-row"><div class="k">Revision</div><div class="v2 mono">v3.17 · 2026</div></div>
+<div class="tb-row"><div class="k">Proof chain</div><div class="v2 mono">GPG 9078 8B14 00C2 C2EC … EE0B B22B → SHA-256 → OpenTimestamps → Bitcoin</div></div>
+<div class="tb-row"><div class="k">Status</div><div class="v2 seal">AS-IS · STRICTLY CONFIDENTIAL · DISTRIBUTION UNDER NDA ONLY</div></div>
+</div></footer></body></html>

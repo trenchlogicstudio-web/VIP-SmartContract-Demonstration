@@ -1,0 +1,177 @@
+# VIP SmartContract API Specification · v3.17 · Trench Logic Studio · registry slot 04
+# AS-IS: guide for feasibility evaluation only — not a deployable production system.
+# Middleware: funds never on chain; rules off-chain; only proofs hash-anchored.
+openapi: 3.0.3
+info: {title: VIP SmartContract — Compliance-as-Revenue API, version: "3.17",
+  description: "Pre-commit -> session ticks -> policy stop at threshold -> rollover + redirect issuance -> hash-anchored audit."}
+paths:
+  /v3/precommit:
+    post:
+      summary: "Register a pre-committed daily budget for a VIP (agreed with host)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [vip_id, budget_eur]
+              properties:
+                vip_id: {type: string}
+                budget_eur:
+                  type: number
+                  minimum: 0.01
+                  maximum: 10000000
+                  description: >
+                    The daily budget agreed with the host, in euro. At least one cent and
+                    at most 10,000,000: every amount is decided in integer cents, and the
+                    bound keeps each product an exact integer. INVALID_BUDGET otherwise. A
+                    fraction of a cent is counted to the nearest cent on arrival.
+                mode:
+                  type: string
+                  enum: [hard_stop, advisory]
+                  description: >
+                    Optional. Absent means the deployment's configured mode (VIP_MODE),
+                    which the response echoes. INVALID_MODE if it is neither value.
+                eligibility:
+                  type: string
+                  enum: [permitted, suppressed]
+                  description: >
+                    The operator's responsible-gaming determination for this guest at the
+                    moment the session opens. Optional; the process default applies when it
+                    is absent, and the stricter of the two always wins. INVALID_ELIGIBILITY
+                    if it is neither value.
+                eligibility_at:
+                  type: string
+                  format: date-time
+                  description: >
+                    When that determination was made. Optional, and only meaningful where a
+                    determination lifetime is configured — an absent date then counts as
+                    expired, and the response echoes it as null. A date that does not parse
+                    is refused with INVALID_ELIGIBILITY_AT.
+      responses: {"201": {description: "Policy armed; thresholds per jurisdiction config. armed_at_eur is the first cent at or above the threshold share of the budget — the amount at which the policy fires."}}
+  /v3/session/tick:
+    post:
+      summary: "Report a session delta into the transaction path"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [vip_id, delta_eur]
+              properties:
+                vip_id: {type: string}
+                delta_eur:
+                  type: number
+                  minimum: 0
+                  maximum: 10000000
+                  description: >
+                    Consumption since the last tick. A tick REPORTS consumption and
+                    consumption only goes up, so a negative or non-finite delta is refused
+                    with INVALID_DELTA rather than walking a session back from its stop,
+                    as is a delta above 10,000,000. Consumption is kept as the exact total
+                    of the deltas reported and read in whole cents, so deltas below a cent
+                    still add up.
+      responses: {"200": {description: "Policy state after tick"}, "423": {description: "Hard-Stop fired — the session is locked and its settlement computed; POST /v3/redirect/issue issues the credits and the rollover. The budget is the day's by agreement, but the engine keeps no calendar: a new pre-commit opens a new session."}}
+  /v3/policy/state:
+    get:
+      summary: "Live policy state — consumed share of budget, distance to threshold, incentive preview"
+      parameters:
+        - {name: vip_id, in: query, required: true, schema: {type: string}}
+      responses: {"200": {description: "State payload incl. live rollover preview"}}
+  /v3/redirect/issue:
+    post:
+      summary: "Issue resort credits from preserved budget (spa/F&B/retail split per config)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [vip_id]
+              properties:
+                vip_id: {type: string}
+      responses: {"200": {description: "Credits issued; the issuance is written to the chain as redirect.issue"}}
+  /v3/audit/{session_id}:
+    get:
+      summary: "Hash-anchored audit trail for a session — every decision, in order"
+      parameters:
+        - {name: session_id, in: path, required: true, schema: {type: string}}
+      responses: {"200": {description: "Event chain with fingerprints"}}
+  /v3/programme/suppress:
+    post:
+      summary: Remove a guest from the incentive programme
+      description: >
+        Stops issuing to this guest, now and from now on, and stops any live
+        session immediately under the suppressed settlement. The stop is not
+        cancelled and the budget is not forfeited: the whole preserved amount
+        returns to the guest as residual. Suppression removes the incentive,
+        never the protection. A vip_id the engine has never seen is accepted,
+        so an exclusion register can pre-empt enrolment rather than race it.
+        Not reversible by this engine.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [vip_id, reason]
+              properties:
+                vip_id: {type: string}
+                reason:
+                  type: string
+                  enum: [exclusion, player_request, rg_determination]
+      responses:
+        "200":
+          description: Suppressed. session_stopped reports whether a live session was ended.
+        "400":
+          description: INVALID_VIP · INVALID_REASON · BAD_JSON
+        "409":
+          description: ALREADY_SUPPRESSED
+
+# ── Error identifiers ────────────────────────────────────────────────────────
+# Every non-2xx response is {"error": "<identifier>"}. The seventeen below are
+# the whole contract surface: an implementation that returns an identifier not
+# named here, or omits one it can raise, is not conforming. They resolve in
+# 12_Canon.json, which is authoritative. BAD_JSON answers a body that does not
+# parse and a body that parses to anything but a JSON object; BAD_REQUEST
+# answers a request target that cannot be read, including a session_id that is
+# not valid percent-encoding.
+#
+# v3.11 note: until this revision the enum named twelve and the sixth route sat
+# under x-error-identifiers rather than under paths, so an OpenAPI reader saw
+# five routes and five identifiers fewer than the reference implementation
+# beside it actually returns — the spec declared the shipped code non-conforming.
+components:
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          enum: [NO_LIVE_SESSION, INVALID_VIP, INVALID_BUDGET, INVALID_MODE,
+                 INVALID_DELTA, ALREADY_STOPPED, NOT_STOPPED, ALREADY_ISSUED,
+                 SESSION_UNKNOWN, NO_ROUTE, BAD_JSON, BAD_REQUEST,
+                 INVALID_ELIGIBILITY, INVALID_ELIGIBILITY_AT, INVALID_REASON,
+                 INCENTIVE_SUPPRESSED, ALREADY_SUPPRESSED]
+  responses:
+    BadRequest:
+      description: "400 — INVALID_VIP · INVALID_BUDGET · INVALID_MODE · INVALID_DELTA · BAD_JSON · BAD_REQUEST · INVALID_ELIGIBILITY · INVALID_ELIGIBILITY_AT · INVALID_REASON"
+      content: {application/json: {schema: {$ref: "#/components/schemas/Error"}}}
+    Conflict:
+      description: "409 — NO_LIVE_SESSION · ALREADY_STOPPED · NOT_STOPPED · ALREADY_ISSUED · INCENTIVE_SUPPRESSED · ALREADY_SUPPRESSED"
+      content: {application/json: {schema: {$ref: "#/components/schemas/Error"}}}
+    NotFound:
+      description: "404 — SESSION_UNKNOWN · NO_ROUTE"
+      content: {application/json: {schema: {$ref: "#/components/schemas/Error"}}}
+
+# Which route raises which identifier. A caller implements against this map.
+x-error-identifiers:
+  POST /v3/precommit:          [INVALID_VIP, INVALID_BUDGET, INVALID_MODE, INVALID_ELIGIBILITY, INVALID_ELIGIBILITY_AT, BAD_JSON]
+  POST /v3/session/tick:       [NO_LIVE_SESSION, ALREADY_STOPPED, INVALID_DELTA, BAD_JSON]
+  GET /v3/policy/state:        [NO_LIVE_SESSION]
+  POST /v3/redirect/issue:     [NO_LIVE_SESSION, NOT_STOPPED, ALREADY_ISSUED, INCENTIVE_SUPPRESSED, BAD_JSON]
+  GET /v3/audit/{session_id}:  [SESSION_UNKNOWN, BAD_REQUEST]
+  POST /v3/programme/suppress: [INVALID_VIP, INVALID_REASON, ALREADY_SUPPRESSED, BAD_JSON]
+  any unmatched request:       [NO_ROUTE, BAD_REQUEST]

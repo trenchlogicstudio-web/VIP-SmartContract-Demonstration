@@ -1,0 +1,19 @@
+MVP v0.2.11 — LICENSE NOTE
+
+This evaluation artifact is part of the VIP SmartContract package by Trench
+Logic Studio and is governed by the same terms as the package it accompanies:
+see 09_AS_IS_Notice.txt in the VIP SmartContract package.
+
+In short: sold AS-IS. No warranties, no guarantees, no implementation
+services, no integration support, no developer training, no ongoing
+involvement. The buyer/licensee is solely responsible for integration,
+deployment, testing, and operation. Documentation is provided as a guide
+only.
+
+This artifact is for evaluation of the licensed mechanism. It is not a
+product, not production software, and carries no fitness claim. Every guest,
+session, budget and euro amount it seeds is synthetic by declaration and
+reproduces the reference preset recorded in the package canon. It is not a
+measurement of any operator, and no live deployment has occurred.
+
+Trench Logic Studio

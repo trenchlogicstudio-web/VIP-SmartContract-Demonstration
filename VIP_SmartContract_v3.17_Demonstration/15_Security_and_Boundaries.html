@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIP v3.17 · 15 · Security and Production Boundaries</title><style>
+:root{--paper:#F3F5F4;--panel:#E9EEEC;--ink:#122B33;--accent:#1E5A78;--accent-deep:#143E54;--accent-light:#7FB0C4;--seal:#973A3A;--graphite:#54646A;--line:#C7D2D1;--wash:#D8E2E4;--lavender:#D6D3E6;--rose:#DFB3BE;--display:"Schibsted Grotesk",Arial,sans-serif;--body:"Source Serif 4",Georgia,serif;--mono:"Fragment Mono","Courier New",monospace;--r:3px;--rule:1px solid var(--line)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+h1,h2,h3,h4{font-family:var(--display);line-height:1.12;letter-spacing:-.015em}
+h1{font-size:clamp(30px,4.6vw,46px);font-weight:800}
+h2{font-size:25px;font-weight:700;margin-bottom:14px}
+h3{font-size:17px;font-weight:700;margin:20px 0 8px}
+p{max-width:70ch;margin-bottom:13px}
+.lede{font-size:18.5px;color:var(--graphite);max-width:64ch}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:12px}
+.dim{position:relative;border-top:var(--rule);margin:44px 0 38px}
+.dim::before,.dim::after{content:"";position:absolute;top:-5px;width:1px;height:11px;background:var(--line)}
+.dim::before{left:0}.dim::after{right:0}
+header{padding:54px 0 0}
+.mark{display:inline-flex;align-items:center;gap:13px;margin-bottom:26px}
+.mark .tile{width:42px;height:42px;background:var(--ink);color:var(--paper);font-family:var(--display);font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;border-radius:var(--r)}
+.mark .word{font-family:var(--display);font-weight:700;font-size:15.5px}
+.mark .word span{display:block;font-family:var(--mono);font-weight:400;font-size:11px;color:var(--graphite);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
+.asis{border:1.5px solid var(--seal);border-radius:var(--r);background:#fff;padding:13px 16px 13px 48px;position:relative;max-width:880px;margin-top:6px}
+.asis::before{content:"§";position:absolute;left:15px;top:10px;font-family:var(--display);font-weight:800;font-size:21px;color:var(--seal)}
+.asis p{font-size:13.5px;margin:0;font-family:var(--display)}
+.asis b{color:var(--seal)}
+.card{border:var(--rule);border-radius:var(--r);background:#fff;padding:18px 20px;margin-bottom:16px}
+.card h3{margin-top:0}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+table.tls{width:100%;border-collapse:collapse;background:#fff;border:var(--rule);font-size:14.5px}
+table.tls th{font-family:var(--display);font-weight:700;font-size:13px;text-align:left;background:var(--panel);padding:10px 13px;border-bottom:var(--rule)}
+table.tls td{padding:10px 13px;border-bottom:var(--rule);vertical-align:top;font-family:var(--display);font-size:14px}
+table.tls tr:last-child td{border-bottom:none}
+table.tls td.num,table.tls td.mono{font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+.metric{border:var(--rule);border-left:3px solid var(--accent);border-radius:var(--r);background:#fff;padding:16px 18px}
+.metric .v{font-family:var(--display);font-weight:800;font-size:30px;letter-spacing:-.02em}
+.metric .l{font-family:var(--display);font-size:12.5px;color:var(--graphite);margin-top:4px}
+.metric .src{font-family:var(--mono);font-size:10.5px;color:var(--graphite);margin-top:9px;display:block}
+.ann{border:var(--rule);border-left:3px solid var(--accent);border-radius:var(--r);background:#fff;padding:15px 18px;margin-bottom:12px}
+.ann h3{font-size:15.5px;margin:0 0 5px}
+.ann p{font-family:var(--display);font-size:13.9px;color:var(--graphite);margin:0;max-width:none}
+.ann.l2{border-left-color:var(--lavender)}.ann.l3{border-left-color:var(--rose)}.ann.lw{border-left-color:var(--wash)}.ann.lg{border-left-color:var(--graphite)}.ann.ls{border-left-color:var(--seal)}
+.chartwrap{border:var(--rule);border-radius:var(--r);background:#fff;padding:20px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;font-family:var(--display);font-size:12.5px;color:var(--graphite)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.dark{background:var(--ink);color:var(--paper);border-radius:var(--r);padding:22px 24px}
+.dark .eyebrow{color:var(--accent-light)}
+.note{font-family:var(--mono);font-size:11.5px;color:var(--graphite);line-height:1.7;margin-top:12px;max-width:900px}
+.tl{border-left:2px solid var(--line);margin:14px 0 6px 8px;padding-left:22px}
+.tl .ev{position:relative;padding-bottom:16px}
+.tl .ev::before{content:"";position:absolute;left:-27px;top:6px;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.tl .ev.seal::before{background:var(--seal)}
+.tl .ev .when{font-family:var(--mono);font-size:11px;color:var(--graphite);letter-spacing:.08em;text-transform:uppercase}
+.tl .ev .what{font-family:var(--display);font-size:14.5px}
+.quote{border:var(--rule);border-left:3px solid var(--accent);border-radius:var(--r);background:#fff;padding:20px 24px;font-size:19px;font-style:italic;max-width:760px}
+.quote .who{display:block;font-family:var(--mono);font-size:11px;font-style:normal;color:var(--graphite);margin-top:10px;letter-spacing:.08em;text-transform:uppercase}
+.titleblock{border:1.5px solid var(--ink);border-radius:var(--r);background:#fff;overflow:hidden;font-size:13px;max-width:760px}
+.tb-row{display:grid;grid-template-columns:170px 1fr;border-bottom:1px solid var(--ink)}
+.tb-row:last-child{border-bottom:none}
+.tb-row .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--graphite);padding:8px 12px;border-right:1px solid var(--ink);background:var(--panel);display:flex;align-items:center}
+.tb-row .v2{font-family:var(--display);font-weight:500;padding:8px 12px}
+.tb-row .v2.mono{font-family:var(--mono);font-size:12px;font-weight:400}
+.tb-row .v2.seal{color:var(--seal);font-weight:700}
+.tb-row .v2{min-width:0;overflow-wrap:anywhere}
+@media(max-width:560px){.tb-row{grid-template-columns:118px 1fr}}
+footer{padding:44px 0 64px}
+
+.bcard{border:var(--rule);border-radius:var(--r);background:#fff;margin-bottom:20px;overflow:hidden}
+.bcard .head{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:14px 20px;background:var(--panel);border-bottom:var(--rule);flex-wrap:wrap}
+.bcard .head h3{font-size:18px;font-weight:800;margin:0}
+.bcard .head .cls{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--graphite)}
+.bcard .body{padding:18px 20px}
+.brow{display:grid;grid-template-columns:150px 1fr;gap:14px;padding:10px 0;border-bottom:var(--rule)}
+.brow:last-child{border-bottom:none}
+.brow .k{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--graphite);padding-top:3px}
+.brow .v{font-family:var(--display);font-size:15px;line-height:1.55}
+.brow.line .v{font-family:var(--body);font-size:16px;border-left:3px solid var(--accent);padding-left:14px;font-style:italic}
+@media(max-width:560px){.brow{grid-template-columns:1fr}}
+
+@media(max-width:560px){table.tls{display:block;overflow-x:auto}table.tls th{width:auto!important}}
+</style>
+</head><body><div class="wrap"><header>
+<div class="mark"><div class="tile">TL</div><div class="word">TRENCH LOGIC STUDIO<span>VIP v3.17 · 15</span></div></div>
+<span class="eyebrow">15 · Security and production boundaries</span>
+<h1>What is built, and what is deliberately yours</h1>
+<p class="lede">An evaluation artifact that pretends to be production software wastes a reviewer&#39;s afternoon and
+loses their trust in the parts that are real. This page draws the line explicitly.</p>
+
+<div class="asis"><p><b>The rule that governs this page.</b> Everything under IMPLEMENTED is behaviour you can
+run and verify today, and the test suite asserts it. Everything under YOURS is absent ON PURPOSE — not missing,
+not planned, not a roadmap item. A policy layer licensed as-is cannot carry your identity provider, your network
+boundary or your operational runbook, and a package that claimed to would be making a promise nobody is left to
+keep.</p></div>
+</header>
+
+<div class="dim"></div>
+
+<section>
+<span class="eyebrow">Implemented and verified</span>
+<h2>What the engine actually does</h2>
+<table class="tls">
+ <tr><th style="width:230px">Area</th><th>What holds, and how you can check it</th></tr>
+ <tr><td style="font-family:var(--display);font-weight:700">Settlement integrity</td>
+ <td>A budget is taken to the nearest cent on arrival and consumption is read in whole cents from its exact total;
+ money is divided in integer cents by largest-remainder allocation, a tie going to the earlier position, and
+ every configured fraction is read as an integer number of millionths. Two invariants hold for every amount:
+ the three venue credits sum exactly to the redirect leg, and redirect plus rollover plus residual sums exactly
+ to the preserved budget. The suite asserts this EXHAUSTIVELY across every amount from €0.01 to €2,000.00, and
+ again with the reward cap engaged, rather than on a sample — and it recomputes the rule itself on every one of
+ those amounts, because a split can close and still put a cent into the wrong venue.</td></tr>
+ <tr><td style="font-family:var(--display);font-weight:700">Published limits</td>
+ <td>The stop line the pre-commit call publishes is the first whole cent at or above the threshold share of the
+ budget, and the engine fires on exactly that cent — not a cent later. The nudge and escalation lines are the same
+ computation. The suite checks every line on every budget from €0.01 to €2,000.00.</td></tr>
+ <tr><td style="font-family:var(--display);font-weight:700">Input validation</td>
+ <td>Every threshold, split, port and lifetime is validated at process start and a value out of range STOPS the
+ process rather than degrading it, with one sentence naming the value; every value the validation accepts starts,
+ seeds and serves. A budget runs from €0.01 to €10,000,000, and a consumption delta must be finite, non-negative
+ and at most €10,000,000. Determination timestamps must parse. Unknown eligibility values, suppression reasons
+ and modes are refused with named identifiers, and so is malformed input: a body that is not a JSON object, a
+ request target that cannot be read, or an identifier of the wrong type is answered with its identifier, never
+ with a server error.</td></tr>
+ <tr><td style="font-family:var(--display);font-weight:700">Tamper evidence</td>
+ <td>Every decision is a hash-chained, append-only event. A settlement that will not issue — at the stop, when a
+ suppression lands on it before it was issued, or at the issue call when the determination lapsed in between — is
+ written as its own link, once, and so is a removal from the programme;
+ a lapse and a deliberate suppression are recorded as different facts. A verification route recomputes the
+ chain.</td></tr>
+ <tr><td style="font-family:var(--display);font-weight:700">Ordering safety</td>
+ <td>The guards hold in orders nobody designed for, and the suite proves it: suppression after a stop, issue
+ before a stop, a replayed issue, suppression before enrolment, and a cap combined with an expired determination.
+ A negative delta cannot walk a session back below a stop it has already reached, and once a guest is
+ suppressed nothing issued earlier can be collected: a credit is not redeemed and a rollover is not applied.</td></tr>
+ <tr><td style="font-family:var(--display);font-weight:700">Schema upgrade</td>
+ <td>The migration runs at server start, so a database written by an earlier build gains the columns this one
+ reads. Asserted against a deliberately older schema.</td></tr>
+ <tr><td style="font-family:var(--display);font-weight:700">Data minimisation</td>
+ <td>One column in the whole system holds a name: the display name. Everything else stored about a guest —
+ tier, budgets and consumption, the eligibility determination your platform supplies, and a suppression with its
+ reason — is keyed to the opaque identifier your platform assigns, and the chain carries that identifier, never
+ the name. Erasure removes the name from the database file and its write-ahead log, not only from the API, and
+ the suite reads both files as bytes after an erasure to prove it. Whether the rows keyed to the identifier must
+ go as well is a legal question for your jurisdiction.</td></tr>
+ <tr><td style="font-family:var(--display);font-weight:700">Console output</td>
+ <td>Every string the evaluation console prints passes through one escape function, and its buttons carry their
+ values in data attributes rather than in inline script, so an identifier armed as markup is shown as text and
+ never runs in the host's browser.</td></tr>
+</table>
+</section>
+
+<div class="dim"></div>
+
+<section>
+<span class="eyebrow">Deliberately absent</span>
+<h2>What is yours, and what breaks if it is skipped</h2>
+<table class="tls">
+ <tr><th style="width:230px">Boundary</th><th>Why it is not here</th><th>What happens if nobody does it</th></tr>
+ <tr><td style="font-family:var(--display);font-weight:700">Authentication</td>
+ <td>The evaluation instance ships a single static admin token so a reviewer can open the console in one step. It
+ is auth for an evaluation, not for a property.</td>
+ <td>Anyone who can reach the port can read the host and admin views.</td></tr>
+ <tr><td style="font-family:var(--display);font-weight:700">Authorisation</td>
+ <td>The engine has no concept of a staff role. Who may open a session, who may suppress a guest and who may see a
+ settlement are your policy decisions, and they differ per property.</td>
+ <td>Every caller can perform every operation, including removing a guest from the programme.</td></tr>
+ <tr><td style="font-family:var(--display);font-weight:700">A gaming-day lock</td>
+ <td>The engine locks the session it stops: every further tick is refused and nothing lifts the stop. The budget
+ is the day's by agreement, but the engine keeps no calendar, so a new pre-commit for the same guest opens a new
+ session. Whether a stopped guest may commit again the same day is your rule, and it belongs where you take the
+ pre-commit.</td>
+ <td>A guest stopped tonight can be armed again tonight with a fresh budget.</td></tr>
+ <tr><td style="font-family:var(--display);font-weight:700">Transport and network boundary</td>
+ <td>The service speaks plain HTTP on a local port. TLS termination, network placement and rate limiting belong to
+ your infrastructure.</td>
+ <td>Traffic is readable in transit and the service is reachable by anything that can route to it.</td></tr>
+ <tr><td style="font-family:var(--display);font-weight:700">Idempotency of inbound events</td>
+ <td>THIS IS THE ONE A REVIEWER WILL RAISE FIRST, so it is stated plainly rather than buried. The engine has no
+ event identifier and no replay protection. A gaming event delivered twice by your bus is processed twice.
+ Deduplication is stateful infrastructure with a retention policy and a rule for what a repeated identifier
+ carrying a DIFFERENT body means — decisions that belong to the integrator, not to a policy layer licensed as-is.</td>
+ <td>Double-counted consumption, and a stop that fires earlier than the guest&#39;s real spend justifies. Make the
+ boundary idempotent before the engine sees the event.</td></tr>
+ <tr><td style="font-family:var(--display);font-weight:700">Persistence and durability</td>
+ <td>A single local database file, suitable for one evaluation instance. No replication, no backup, no retention
+ schedule.</td>
+ <td>The audit chain is exactly as durable as one file on one disk.</td></tr>
+ <tr><td style="font-family:var(--display);font-weight:700">Scale and concurrency</td>
+ <td>Written to be read and verified, not to be load-bearing. Single process, no horizontal story.</td>
+ <td>It will not carry a floor. This is a reference implementation of a mechanism, and the canon says so.</td></tr>
+ <tr><td style="font-family:var(--display);font-weight:700">The risk assessment itself</td>
+ <td>This layer holds no harm model and forms no view of any guest. It consumes your determination and records
+ that it honoured it.</td>
+ <td>A gate is only as good as the judgement it is given.</td></tr>
+ <tr><td style="font-family:var(--display);font-weight:700">Certification and change control</td>
+ <td>Where a regime requires independent laboratory certification of systems touching player limits, a deployment
+ enters that perimeter.</td>
+ <td>A go-live that has not been through it.</td></tr>
+</table>
+</section>
+
+<footer class="wrap"><div class="dim"></div><div class="titleblock">
+<div class="tb-row"><div class="k">Studio</div><div class="v2">Trench Logic Studio — Miloš Petrović · milos@trench-logic.com · trenchlogicstudio.com</div></div>
+<div class="tb-row"><div class="k">Project</div><div class="v2">VIP SmartContract · Compliance-as-Revenue Layer</div></div>
+<div class="tb-row"><div class="k">Document</div><div class="v2 mono">15_Security_and_Boundaries.html</div></div>
+<div class="tb-row"><div class="k">Revision</div><div class="v2 mono">v3.17 · 2026</div></div>
+<div class="tb-row"><div class="k">Proof chain</div><div class="v2 mono">GPG 9078 8B14 00C2 C2EC … EE0B B22B → SHA-256 → OpenTimestamps → Bitcoin</div></div>
+<div class="tb-row"><div class="k">Status</div><div class="v2 seal">AS-IS · STRICTLY CONFIDENTIAL · DISTRIBUTION UNDER NDA ONLY</div></div>
+</div></footer>
+
+</div></body></html>

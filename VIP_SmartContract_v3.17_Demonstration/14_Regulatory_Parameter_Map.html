@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIP v3.17 · 14 · Regulatory Parameter Map</title><style>
+:root{--paper:#F3F5F4;--panel:#E9EEEC;--ink:#122B33;--accent:#1E5A78;--accent-deep:#143E54;--accent-light:#7FB0C4;--seal:#973A3A;--graphite:#54646A;--line:#C7D2D1;--wash:#D8E2E4;--lavender:#D6D3E6;--rose:#DFB3BE;--display:"Schibsted Grotesk",Arial,sans-serif;--body:"Source Serif 4",Georgia,serif;--mono:"Fragment Mono","Courier New",monospace;--r:3px;--rule:1px solid var(--line)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+h1,h2,h3,h4{font-family:var(--display);line-height:1.12;letter-spacing:-.015em}
+h1{font-size:clamp(30px,4.6vw,46px);font-weight:800}
+h2{font-size:25px;font-weight:700;margin-bottom:14px}
+h3{font-size:17px;font-weight:700;margin:20px 0 8px}
+p{max-width:70ch;margin-bottom:13px}
+.lede{font-size:18.5px;color:var(--graphite);max-width:64ch}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:12px}
+.dim{position:relative;border-top:var(--rule);margin:44px 0 38px}
+.dim::before,.dim::after{content:"";position:absolute;top:-5px;width:1px;height:11px;background:var(--line)}
+.dim::before{left:0}.dim::after{right:0}
+header{padding:54px 0 0}
+.mark{display:inline-flex;align-items:center;gap:13px;margin-bottom:26px}
+.mark .tile{width:42px;height:42px;background:var(--ink);color:var(--paper);font-family:var(--display);font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;border-radius:var(--r)}
+.mark .word{font-family:var(--display);font-weight:700;font-size:15.5px}
+.mark .word span{display:block;font-family:var(--mono);font-weight:400;font-size:11px;color:var(--graphite);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
+.asis{border:1.5px solid var(--seal);border-radius:var(--r);background:#fff;padding:13px 16px 13px 48px;position:relative;max-width:880px;margin-top:6px}
+.asis::before{content:"§";position:absolute;left:15px;top:10px;font-family:var(--display);font-weight:800;font-size:21px;color:var(--seal)}
+.asis p{font-size:13.5px;margin:0;font-family:var(--display)}
+.asis b{color:var(--seal)}
+.card{border:var(--rule);border-radius:var(--r);background:#fff;padding:18px 20px;margin-bottom:16px}
+.card h3{margin-top:0}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+table.tls{width:100%;border-collapse:collapse;background:#fff;border:var(--rule);font-size:14.5px}
+table.tls th{font-family:var(--display);font-weight:700;font-size:13px;text-align:left;background:var(--panel);padding:10px 13px;border-bottom:var(--rule)}
+table.tls td{padding:10px 13px;border-bottom:var(--rule);vertical-align:top;font-family:var(--display);font-size:14px}
+table.tls tr:last-child td{border-bottom:none}
+table.tls td.num,table.tls td.mono{font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+.metric{border:var(--rule);border-left:3px solid var(--accent);border-radius:var(--r);background:#fff;padding:16px 18px}
+.metric .v{font-family:var(--display);font-weight:800;font-size:30px;letter-spacing:-.02em}
+.metric .l{font-family:var(--display);font-size:12.5px;color:var(--graphite);margin-top:4px}
+.metric .src{font-family:var(--mono);font-size:10.5px;color:var(--graphite);margin-top:9px;display:block}
+.ann{border:var(--rule);border-left:3px solid var(--accent);border-radius:var(--r);background:#fff;padding:15px 18px;margin-bottom:12px}
+.ann h3{font-size:15.5px;margin:0 0 5px}
+.ann p{font-family:var(--display);font-size:13.9px;color:var(--graphite);margin:0;max-width:none}
+.ann.l2{border-left-color:var(--lavender)}.ann.l3{border-left-color:var(--rose)}.ann.lw{border-left-color:var(--wash)}.ann.lg{border-left-color:var(--graphite)}.ann.ls{border-left-color:var(--seal)}
+.chartwrap{border:var(--rule);border-radius:var(--r);background:#fff;padding:20px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;font-family:var(--display);font-size:12.5px;color:var(--graphite)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.dark{background:var(--ink);color:var(--paper);border-radius:var(--r);padding:22px 24px}
+.dark .eyebrow{color:var(--accent-light)}
+.note{font-family:var(--mono);font-size:11.5px;color:var(--graphite);line-height:1.7;margin-top:12px;max-width:900px}
+.tl{border-left:2px solid var(--line);margin:14px 0 6px 8px;padding-left:22px}
+.tl .ev{position:relative;padding-bottom:16px}
+.tl .ev::before{content:"";position:absolute;left:-27px;top:6px;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.tl .ev.seal::before{background:var(--seal)}
+.tl .ev .when{font-family:var(--mono);font-size:11px;color:var(--graphite);letter-spacing:.08em;text-transform:uppercase}
+.tl .ev .what{font-family:var(--display);font-size:14.5px}
+.quote{border:var(--rule);border-left:3px solid var(--accent);border-radius:var(--r);background:#fff;padding:20px 24px;font-size:19px;font-style:italic;max-width:760px}
+.quote .who{display:block;font-family:var(--mono);font-size:11px;font-style:normal;color:var(--graphite);margin-top:10px;letter-spacing:.08em;text-transform:uppercase}
+.titleblock{border:1.5px solid var(--ink);border-radius:var(--r);background:#fff;overflow:hidden;font-size:13px;max-width:760px}
+.tb-row{display:grid;grid-template-columns:170px 1fr;border-bottom:1px solid var(--ink)}
+.tb-row:last-child{border-bottom:none}
+.tb-row .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--graphite);padding:8px 12px;border-right:1px solid var(--ink);background:var(--panel);display:flex;align-items:center}
+.tb-row .v2{font-family:var(--display);font-weight:500;padding:8px 12px}
+.tb-row .v2.mono{font-family:var(--mono);font-size:12px;font-weight:400}
+.tb-row .v2.seal{color:var(--seal);font-weight:700}
+.tb-row .v2{min-width:0;overflow-wrap:anywhere}
+@media(max-width:560px){.tb-row{grid-template-columns:118px 1fr}}
+footer{padding:44px 0 64px}
+
+.bcard{border:var(--rule);border-radius:var(--r);background:#fff;margin-bottom:20px;overflow:hidden}
+.bcard .head{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:14px 20px;background:var(--panel);border-bottom:var(--rule);flex-wrap:wrap}
+.bcard .head h3{font-size:18px;font-weight:800;margin:0}
+.bcard .head .cls{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--graphite)}
+.bcard .body{padding:18px 20px}
+.brow{display:grid;grid-template-columns:150px 1fr;gap:14px;padding:10px 0;border-bottom:var(--rule)}
+.brow:last-child{border-bottom:none}
+.brow .k{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--graphite);padding-top:3px}
+.brow .v{font-family:var(--display);font-size:15px;line-height:1.55}
+.brow.line .v{font-family:var(--body);font-size:16px;border-left:3px solid var(--accent);padding-left:14px;font-style:italic}
+@media(max-width:560px){.brow{grid-template-columns:1fr}}
+
+@media(max-width:560px){table.tls{display:block;overflow-x:auto}table.tls th{width:auto!important}}
+</style>
+</head><body><div class="wrap"><header>
+<div class="mark"><div class="tile">TL</div><div class="word">TRENCH LOGIC STUDIO<span>VIP v3.17 · 14</span></div></div>
+<span class="eyebrow">14 · Regulatory parameter map</span>
+<h1>Which lever answers which question</h1>
+<p class="lede">Every restriction this architecture has to survive is a setting, not a rewrite. This page names the
+restriction, the parameter that answers it, and what changes when you move it.</p>
+
+<div class="asis"><p><b>This is not legal advice.</b> Trench Logic Studio is not a law firm and gives none. This map
+is written for your compliance function to take to your counsel and your regulator — it tells them where the levers
+are, not whether your configuration is lawful in your jurisdiction. That determination is yours.</p></div>
+</header>
+
+<div class="dim"></div>
+
+<section>
+<span class="eyebrow">The objection to answer first</span>
+<h2>The incentive is earned by stopping, not by playing</h2>
+<p>The sharpest question this design will be asked is that the incentive arrives at the moment the budget is
+exhausted — which is the moment a regulator watches most closely. It deserves a direct answer rather than a
+disclaimer.</p>
+<p>The answer is structural. An incentive that is released only when play <b>ends</b> cannot reward chasing losses,
+cannot reward extended play, and cannot reward accelerating frequency, because every one of those behaviours moves
+the guest away from it rather than toward it. A scheme whose status is earned by spending more is the thing the
+guidance in several jurisdictions is written against. This is its inverse.</p>
+<p>One residual exposure is real and the package names it rather than hiding it: if the reward scales without limit
+with the pre-committed budget, then a larger declared budget earns a larger reward, and that is an incentive to
+declare a larger budget. <span class="mono">VIP_REWARD_CAP_EUR</span> exists for exactly that objection.</p>
+</section>
+
+<div class="dim"></div>
+
+<section>
+<span class="eyebrow">The map</span>
+<h2>Parameter by parameter</h2>
+<table class="tls">
+ <tr><th style="width:210px">Parameter</th><th style="width:280px">Regulatory concern</th><th>What it does</th></tr>
+  <tr><td style="font-family:var(--display);font-weight:700">VIP_THRESHOLD · VIP_NUDGE · VIP_ESCALATE<div class="mono" style="font-weight:400;font-size:12px;color:var(--graphite);margin-top:4px">0.05 – 0.95 · 0.05 – 0.95 · 0.05 – 0.99 · reference 0.50 · 0.40 · 0.85</div></td><td>Jurisdictions that mandate where a limit must bite, or that require a warning before it does.</td><td>Where the policy fires, and where the advisory nudge and the host escalation sit, each as a fraction of the pre-committed budget. Every figure in the canon was computed at the reference values. A value that is not a finite number in range stops the process rather than softening the gate.</td></tr><tr><td style="font-family:var(--display);font-weight:700">VIP_ELIGIBILITY_DEFAULT<div class="mono" style="font-weight:400;font-size:12px;color:var(--graphite);margin-top:4px">permitted | suppressed</div></td><td>Jurisdictions that restrict or prohibit incentives and rewards to high-value or at-risk customers.</td><td>Set to <b>suppressed</b> and the incentive layer is off for the whole deployment. The stop still fires, the budget is still preserved, and the entire preserved amount returns to the guest. This is the setting for a market where any reward of financial value would be a prohibited bonus.</td></tr>
+  <tr><td style="font-family:var(--display);font-weight:700">eligibility (per session)<div class="mono" style="font-weight:400;font-size:12px;color:var(--graphite);margin-top:4px">permitted | suppressed</div></td><td>The operator's own responsible-gaming determination for this guest, at the moment the session opens.</td><td>Supplied on <span class="mono">POST /v3/precommit</span>. The engine performs no risk assessment of its own and holds no harm model: the determination is an input and the engine's only job is to honour it and record that it did. The stricter of this and the process default always wins.</td></tr>
+  <tr><td style="font-family:var(--display);font-weight:700">POST /v3/programme/suppress<br>reason: exclusion<div class="mono" style="font-weight:400;font-size:12px;color:var(--graphite);margin-top:4px">immediate, not reversible</div></td><td>Exclusion and self-exclusion registers, where an excluded patron must not receive credit, comps, points or other redeemable value.</td><td>Accepts a vip_id the engine has never seen, so a register feed can pre-empt enrolment rather than race it. A live session stops on the spot under the suppressed settlement, and nothing issued before it can be collected afterwards: the evaluation build refuses to redeem a credit or apply a rollover for a suppressed guest, whatever the reason.</td></tr>
+  <tr><td style="font-family:var(--display);font-weight:700">POST /v3/programme/suppress<br>reason: player_request<div class="mono" style="font-weight:400;font-size:12px;color:var(--graphite);margin-top:4px">immediate, not reversible</div></td><td>The expectation that a licensee stops personalised incentives promptly when the customer asks to leave the scheme.</td><td>One call, effective immediately, written to the audit chain with the reason recorded.</td></tr>
+  <tr><td style="font-family:var(--display);font-weight:700">POST /v3/programme/suppress<br>reason: rg_determination<div class="mono" style="font-weight:400;font-size:12px;color:var(--graphite);margin-top:4px">immediate, not reversible</div></td><td>Withdrawal of eligibility on the operator's own assessment, including a periodic review of whether a customer remains suitable for the scheme.</td><td>Same route, different reason, so the audit trail distinguishes an operator decision from a register hit and from a customer request.</td></tr>
+  <tr><td style="font-family:var(--display);font-weight:700">VIP_ELIGIBILITY_TTL_DAYS<div class="mono" style="font-weight:400;font-size:12px;color:var(--graphite);margin-top:4px">unset (no expiry) | any positive number of days</div></td><td>Supervisory expectations for periodic review of a customer&#39;s account, and the general weakness of a control that is set once and never revisited.</td><td>How long the operator&#39;s determination stays good for. When it elapses the gate FAILS CLOSED: the incentive is withheld until a fresh determination arrives, while the stop and the preserved budget are unaffected. An absent determination date counts as expired, because an unknown age is not a young age, and a date that does not parse is refused. A lapse writes its own <span class="mono">eligibility.expired</span> row, distinct from a deliberate suppression.</td></tr>
+  <tr><td style="font-family:var(--display);font-weight:700">VIP_REWARD_CAP_EUR<div class="mono" style="font-weight:400;font-size:12px;color:var(--graphite);margin-top:4px">unset (uncapped) | any positive euro amount</div></td><td>The objection that a larger declared budget buys a larger reward, which would be an incentive to declare a larger budget.</td><td>An absolute ceiling on redirect + rollover. When it binds, the excess is <b>not</b> retained by the operator: it returns to the guest as residual. A capped settlement therefore gives the guest more of their own money back, never less.</td></tr>
+  <tr><td style="font-family:var(--display);font-weight:700">VIP_SPLIT_SPA · VIP_SPLIT_FNB · VIP_SPLIT_RETAIL<div class="mono" style="font-weight:400;font-size:12px;color:var(--graphite);margin-top:4px">0 – 1 each</div></td><td>Jurisdictions that restrict a particular category of non-gaming benefit.</td><td>Each share is independent. Set a share to 0 and that category is removed without touching the engine; the remainder of the preserved budget goes to the guest, not to the other categories.</td></tr>
+  <tr><td style="font-family:var(--display);font-weight:700">VIP_ROLLOVER<div class="mono" style="font-weight:400;font-size:12px;color:var(--graphite);margin-top:4px">0 – 1</div></td><td>Jurisdictions that treat credit toward future play differently from non-gaming value, because rollover is the one leg of the settlement that returns to the gaming floor.</td><td>Set to <b>0</b> and the settlement becomes non-gaming value plus residual only. The engine refuses to start if rollover plus the redirect split would exceed the preserved budget.</td></tr>
+  <tr><td style="font-family:var(--display);font-weight:700">VIP_MODE<div class="mono" style="font-weight:400;font-size:12px;color:var(--graphite);margin-top:4px">hard_stop | advisory</div></td><td>Jurisdictions where a binding stop imposed by the operator raises questions the operator would rather answer with an escalation to a host.</td><td>Both modes run the same engine and the same thresholds; only the action at the threshold differs. Incentive mechanics are identical on a voluntary stop.</td></tr>
+  <tr><td style="font-family:var(--display);font-weight:700">hash-anchored audit chain<div class="mono" style="font-weight:400;font-size:12px;color:var(--graphite);margin-top:4px">always on</div></td><td>Record-keeping and audit-trail expectations, including evidence of decisions rather than assertions about them.</td><td>Every decision is a link. A refusal to issue writes its own <span class="mono">incentive.suppressed</span> row, because a regulator asking this system to prove itself needs the occasions it did <b>not</b> reward, and an absent row proves nothing.</td></tr>
+</table>
+</section>
+
+<div class="dim"></div>
+
+<section>
+<span class="eyebrow">What configuration does not fix</span>
+<h2>Four things the buyer owns</h2>
+<div class="grid g2">
+ <div class="card"><h3>Certification and change control</h3>
+ <p>In jurisdictions that require independent laboratory certification of gaming systems, a deployment that touches
+ player limits falls inside that perimeter. Expect a certification or change-management review before go-live, and
+ budget time for it per jurisdiction rather than once.</p></div>
+
+ <div class="card"><h3>The risk assessment itself</h3>
+ <p>This engine holds no harm model and forms no view of any guest. It consumes your determination and records that
+ it honoured it. Whatever produces that determination — your own analytics, a detection vendor, a host's judgement,
+ a register feed — remains yours, and detection systems are a complement to this layer rather than a competitor to
+ it.</p></div>
+
+ <div class="card"><h3>Where the reference configuration sits</h3>
+ <p>Every figure in the canon was computed with the gate open and the cap unset. A stricter configuration lowers
+ realised retention and realised redirect in that deployment. It does not make any published figure wrong: the
+ figures state what the mechanism produces at a stated configuration, and the configuration is printed beside
+ them.</p></div>
+
+ <div class="card"><h3>The determination cannot be undone here</h3>
+ <p>Suppression is not reversible by this engine, by design. Restoring a guest to a programme after an exclusion or
+ a withdrawal is a decision with its own governance and its own sign-off, and a policy layer is the wrong place to
+ make it silently.</p></div>
+</div>
+</section>
+
+
+<div class="dim"></div>
+
+<section>
+<span class="eyebrow">Stated rather than left to be found</span>
+<h2>Known limits of this release</h2>
+<p>A package that names its own limits reads as prepared. One that leaves them for the buyer&#39;s reviewer to
+find reads as unexamined. These are properties, not warnings about any particular market.</p>
+<div class="grid g2">
+ <div class="card"><h3>Advisory mode notifies; it does not enforce</h3>
+ <p>At the thresholds, advisory mode raises a nudge and an escalation and leaves the decision with the guest and
+ the host. That is what the mode is for. But a notification without enforcement has been held insufficient by at
+ least one supervisory authority, and a licensee choosing advisory mode should satisfy itself that notification
+ meets its own obligations. Hard-stop mode enforces. Both run the same engine and the same thresholds.</p></div>
+
+ <div class="card"><h3>The engine forms no view of risk</h3>
+ <p>This layer performs no risk assessment and holds no harm model. It consumes your determination and records
+ that it honoured it. Whatever produces that determination remains yours — and so does its quality. A gate is
+ only as good as the judgement it is given.</p></div>
+
+ <div class="card"><h3>Automated decisions are being governed more tightly</h3>
+ <p>Expectations for automated decision-making are tightening across regulated industries: decision provenance,
+ a named human owner, constrained behaviour, retained logs. This engine is deterministic, fixed by its canon, and
+ writes an append-only chain that includes its refusals — which is the shape those expectations describe. Nothing
+ is claimed here about whether any specific regime classifies this system, and no such claim should be made on
+ this package&#39;s behalf.</p></div>
+
+ <div class="card"><h3>A determination has an age</h3>
+ <p>Until v3.8 the operator&#39;s eligibility determination was honoured indefinitely. It now carries the
+ timestamp of when it was made, and a configurable lifetime after which the gate closes until a fresh one
+ arrives. Shipped unset, so nothing changes unless you set it.</p></div>
+</div>
+</section>
+
+<footer class="wrap"><div class="dim"></div><div class="titleblock">
+<div class="tb-row"><div class="k">Studio</div><div class="v2">Trench Logic Studio — Miloš Petrović · milos@trench-logic.com · trenchlogicstudio.com</div></div>
+<div class="tb-row"><div class="k">Project</div><div class="v2">VIP SmartContract · Compliance-as-Revenue Layer</div></div>
+<div class="tb-row"><div class="k">Document</div><div class="v2 mono">14_Regulatory_Parameter_Map.html</div></div>
+<div class="tb-row"><div class="k">Revision</div><div class="v2 mono">v3.17 · 2026</div></div>
+<div class="tb-row"><div class="k">Proof chain</div><div class="v2 mono">GPG 9078 8B14 00C2 C2EC … EE0B B22B → SHA-256 → OpenTimestamps → Bitcoin</div></div>
+<div class="tb-row"><div class="k">Status</div><div class="v2 seal">AS-IS · STRICTLY CONFIDENTIAL · DISTRIBUTION UNDER NDA ONLY</div></div>
+</div></footer>
+
+</div></body></html>
