@@ -1,5 +1,7 @@
 # VIP SmartContract — Compliance-as-Revenue Layer
 
+> **Try it in your browser, nothing to install:** [Demo B, the policy engine](https://trenchlogicstudio-web.github.io/VIP-SmartContract-Demonstration/VIP_SmartContract_v3.17_Demonstration/05b_Demo_B_Policy_Engine.html) · [All four demos](https://trenchlogicstudio-web.github.io/VIP-SmartContract-Demonstration/VIP_SmartContract_v3.17_Demonstration/05_Demo_Guide.html)
+
 **A policy engine that turns a responsible-gambling limit into a revenue event.**
 The guest pre-commits a budget. The engine watches the session. At the threshold it
 stops gaming and converts the preserved budget into non-gaming spend, rollover
