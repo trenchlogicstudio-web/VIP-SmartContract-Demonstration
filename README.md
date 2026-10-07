@@ -147,7 +147,7 @@ the package is empirical, and the canon says which.
 ## AS-IS
 
 Published strictly as-is: no warranties, no implementation services, no support, no
-ongoing involvement. All performance figures are synthetic model outputs, declared
+ongoing involvement.\* All performance figures are synthetic model outputs, declared
 as such at the point of use — **no live deployment has occurred** and no pilot data
 exists. `15_Security_and_Boundaries.html` states what is deliberately absent:
 authentication, authorisation, transport security, event idempotency, durability
@@ -158,6 +158,8 @@ Whether any configuration is lawful in any jurisdiction, and whether a deploymen
 requires certification or regulatory approval, is the reader's determination to
 make with their own counsel and regulator. Trench Logic Studio gives no legal
 advice.
+
+\* The acquisition is complete on payment; nothing in this package continues after it. Separately, and only if the buyer wants it, Trench Logic Studio offers an independent monthly consulting agreement: a distinct contract that starts after the acquisition and that either party may end at any time without stating a reason.
 
 ## The one exception
 
