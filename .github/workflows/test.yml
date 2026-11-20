@@ -1,0 +1,37 @@
+# VIP SmartContract v3.21 · Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
+#
+# On every push and pull request: the MVP's whole suite inside the package, so
+# the parity checks against slot 04b and the offline demos run and none is
+# skipped, on the MVP's runtime floor and on the current Node.js release lines.
+# Nothing is installed and nothing is cached: there are no dependencies.
+name: Test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['22.13.0', '22.x', '24.x', '26.x']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+          package-manager-cache: false
+      - run: node --version
+      - run: npm test

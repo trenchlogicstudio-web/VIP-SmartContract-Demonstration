@@ -1,0 +1,47 @@
+# VIP SmartContract v3.21 · Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
+# From the repository root: docker compose -f 04c_docker-compose.yml up
+# Both ports are published on the Docker host's loopback interface.
+x-policy: &policy
+  VIP_BIND_HOST: "0.0.0.0"
+  VIP_MODE: ${VIP_MODE:-hard_stop}
+  VIP_THRESHOLD: ${VIP_THRESHOLD:-0.50}
+  VIP_NUDGE: ${VIP_NUDGE:-0.40}
+  VIP_ESCALATE: ${VIP_ESCALATE:-0.85}
+  VIP_ROLLOVER: ${VIP_ROLLOVER:-0.20}
+  VIP_SPLIT_SPA: ${VIP_SPLIT_SPA:-0.30}
+  VIP_SPLIT_FNB: ${VIP_SPLIT_FNB:-0.25}
+  VIP_SPLIT_RETAIL: ${VIP_SPLIT_RETAIL:-0.15}
+  VIP_ELIGIBILITY_DEFAULT: ${VIP_ELIGIBILITY_DEFAULT:-permitted}
+  VIP_ELIGIBILITY_TTL_DAYS: ${VIP_ELIGIBILITY_TTL_DAYS:-}
+  VIP_REWARD_CAP_EUR: ${VIP_REWARD_CAP_EUR:-}
+  VIP_COMMITMENT_HOURS: ${VIP_COMMITMENT_HOURS:-24}
+services:
+  vip-reference:
+    image: node:24-alpine
+    working_dir: /srv
+    volumes:
+      - ./04b_Integration_Reference.js:/srv/reference.js:ro
+    command: ["node", "reference.js"]
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      <<: *policy
+      PORT: "8080"
+  vip-mvp:
+    image: node:24-alpine
+    working_dir: /srv
+    volumes:
+      - ./13_VIP_MVP:/srv:ro
+      - vip-data:/data
+    command: ["node", "server.js"]
+    ports:
+      - "127.0.0.1:3400:3400"
+    environment:
+      <<: *policy
+      PORT: "3400"
+      VIP_DB: "/data/vip-mvp.db"
+      VIP_ADMIN_TOKEN: ${VIP_ADMIN_TOKEN:-evaluation-only}
+      VIP_DOWNSTREAM_URL: ${VIP_DOWNSTREAM_URL:-}
+      VIP_DOWNSTREAM_KEY: ${VIP_DOWNSTREAM_KEY:-}
+volumes:
+  vip-data:

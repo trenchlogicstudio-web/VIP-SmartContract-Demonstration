@@ -1,0 +1,928 @@
+# VIP SmartContract · v3.21 · Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
+openapi: 3.0.3
+info:
+  title: VIP SmartContract — Compliance-as-Revenue API
+  version: "3.21"
+  license:
+    name: MIT
+    url: https://opensource.org/license/mit
+  description: Local, synthetic policy evaluation. A tick reports consumption already incurred, so the engine holds the stop
+    line only where it sees the stake first. Ask POST /v3/session/authorize before each stake is accepted and report it with
+    the authorization_id it returned. HTTP 423 carries a successful stop decision and says how far past the line consumption
+    went (overshoot_eur, 0 when every stake was checked). A pre-commitment binds for the commitment period. Use a separate
+    issuance call to create credit instruments.
+paths:
+  /v3/precommit:
+    post:
+      summary: Register a pre-committed daily budget for a VIP (agreed with host)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - vip_id
+              - budget_eur
+              properties:
+                vip_id:
+                  type: string
+                  minLength: 1
+                  description: Opaque guest identifier. Must contain a non-whitespace character and valid Unicode, without
+                    control characters.
+                budget_eur:
+                  type: number
+                  minimum: 0.01
+                  maximum: 10000000
+                  description: 'The daily budget agreed with the host, in euro. At least one cent and at most 10,000,000:
+                    every amount is decided in integer cents, and the bound keeps each product an exact integer. INVALID_BUDGET
+                    otherwise. A fraction of a cent is counted to the nearest cent on arrival.
+
+                    '
+                mode:
+                  type: string
+                  enum:
+                  - hard_stop
+                  - advisory
+                  description: 'Optional. Absent means the deployment''s configured mode (VIP_MODE), which the response
+                    echoes. INVALID_MODE if it is neither value.
+
+                    '
+                eligibility:
+                  type: string
+                  enum:
+                  - permitted
+                  - suppressed
+                  description: 'The operator''s responsible-gaming determination for this guest at the moment the session
+                    opens. Optional; the process default applies when it is absent, and the stricter of the two always
+                    wins. INVALID_ELIGIBILITY if it is neither value.
+
+                    '
+                eligibility_at:
+                  type: string
+                  format: date-time
+                  description: When the operator made the determination. Use a real calendar date, a time and an explicit
+                    UTC offset or Z. A future timestamp or an invalid date returns INVALID_ELIGIBILITY_AT. When omitted,
+                    the response echoes null. A configured TTL treats an absent determination as expired.
+      responses:
+        '201':
+          description: Policy armed; thresholds per jurisdiction config. armed_at_eur is the first cent at or above the
+            threshold share of the budget — the amount at which the policy fires.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Armed'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: SESSION_LIVE. The guest has a live session younger than the commitment period (VIP_COMMITMENT_HOURS,
+            24 by default, 0 to 168; 0 switches the lock off). The session, its budget and its line are untouched. A larger
+            budget, the same budget and a smaller one are refused alike. After the period a pre-commit supersedes the live
+            session, which is closed and kept. A stopped session does not hold the guest.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionLive'
+        '403':
+          $ref: '#/components/responses/ForbiddenOrigin'
+        '413':
+          $ref: '#/components/responses/TooLarge'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      operationId: precommit
+  /v3/session/tick:
+    post:
+      summary: Report a session delta into the transaction path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - vip_id
+              - delta_eur
+              properties:
+                vip_id:
+                  type: string
+                  minLength: 1
+                  description: Opaque guest identifier. Must contain a non-whitespace character and valid Unicode, without
+                    control characters.
+                delta_eur:
+                  type: number
+                  minimum: 0
+                  maximum: 10000000
+                  description: 'Consumption since the last tick. A tick REPORTS consumption and consumption only goes
+                    up, so a negative or non-finite delta is refused with INVALID_DELTA rather than walking a session
+                    back from its stop, as is a delta above 10,000,000. Consumption is kept as the exact total of the
+                    deltas reported and read in whole cents, so deltas below a cent still add up.
+
+                    '
+                session_id:
+                  type: string
+                  format: uuid
+                  description: Optional session returned by precommit. A tick can only mutate the current live session.
+                    Issue can address an older stopped session owned by the same VIP.
+                event_id:
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+                  description: Optional stable delivery identifier. Requires session_id. Repeating the same delta for
+                    that session returns the original response. Reusing the identifier with a different delta returns
+                    EVENT_CONFLICT.
+                authorization_id:
+                  type: string
+                  description: Optional. The check this tick reports, as returned by POST /v3/session/authorize. The
+                    check closes with the tick and its reservation leaves the headroom. AUTHORIZATION_UNKNOWN when the
+                    current session never granted it, AUTHORIZATION_CLOSED when it was already reported, released or
+                    closed by the stop; in both cases nothing is consumed. A tick that reports more than the stake it
+                    was checked for is counted in full and recorded as stake.exceeded.
+      responses:
+        '200':
+          description: Policy state after tick
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tick'
+        '423':
+          description: Policy locked. The body is the successful settlement, including the original response on an identified
+            replay.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Locked'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '403':
+          $ref: '#/components/responses/ForbiddenOrigin'
+        '413':
+          $ref: '#/components/responses/TooLarge'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      operationId: tick
+  /v3/session/authorize:
+    post:
+      summary: Check a stake before it is placed (the pre-stake check)
+      description: Reserves the stake against what is left to the published stop line, as if it were already lost. In
+        Hard-Stop a stake larger than that is refused before it is placed and the refusal is written to the audit chain
+        as stake.refused. Two stakes asked for at once cannot both take the last euros. In Advisory mode nothing is
+        refused and the answer says enforced false. The line holds exactly only while the platform asks before every stake
+        and no wager consumes more than the stake it was checked for.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - vip_id
+              - stake_eur
+              properties:
+                vip_id:
+                  type: string
+                  minLength: 1
+                stake_eur:
+                  type: number
+                  minimum: 0.01
+                  maximum: 10000000
+                  description: The stake about to be placed, taken to the nearest cent. INVALID_STAKE when absent, not
+                    a finite number, below one cent or above 10,000,000.
+                session_id:
+                  type: string
+                  format: uuid
+                  description: Optional. When given it must be the current live session.
+      responses:
+        '200':
+          description: Authorized and reserved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Authorized'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: STAKE_EXCEEDS_HEADROOM with headroom_eur, the largest stake the check would allow now. Also NO_LIVE_SESSION
+            and ALREADY_STOPPED.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StakeRefused'
+        '403':
+          $ref: '#/components/responses/ForbiddenOrigin'
+        '413':
+          $ref: '#/components/responses/TooLarge'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      operationId: authorize
+  /v3/session/release:
+    post:
+      summary: Return a checked stake that was never played
+      description: The wager was cancelled or voided. Its reservation returns to the headroom and nothing is consumed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - vip_id
+              - authorization_id
+              properties:
+                vip_id:
+                  type: string
+                  minLength: 1
+                authorization_id:
+                  type: string
+                session_id:
+                  type: string
+                  format: uuid
+                  description: Optional. When given it must be the current live session.
+      responses:
+        '200':
+          description: Released.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Released'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '403':
+          $ref: '#/components/responses/ForbiddenOrigin'
+        '413':
+          $ref: '#/components/responses/TooLarge'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      operationId: release
+  /v3/policy/state:
+    get:
+      summary: Live policy state — consumed share of budget, distance to threshold, incentive preview
+      parameters:
+      - name: vip_id
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: State payload incl. live rollover preview
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/State'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '403':
+          $ref: '#/components/responses/ForbiddenOrigin'
+        '413':
+          $ref: '#/components/responses/TooLarge'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      operationId: getPolicyState
+  /v3/redirect/issue:
+    post:
+      summary: Issue resort credits from preserved budget (spa/F&B/retail split per config)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - vip_id
+              properties:
+                vip_id:
+                  type: string
+                  minLength: 1
+                  description: Opaque guest identifier. Must contain a non-whitespace character and valid Unicode, without
+                    control characters.
+                session_id:
+                  type: string
+                  format: uuid
+                  description: Optional session returned by precommit. A tick can only mutate the current live session.
+                    Issue can address an older stopped session owned by the same VIP.
+      responses:
+        '200':
+          description: Credits issued; the issuance is written to the chain as redirect.issue
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issued'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '403':
+          $ref: '#/components/responses/ForbiddenOrigin'
+        '413':
+          $ref: '#/components/responses/TooLarge'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      operationId: issueCredits
+  /v3/audit/{session_id}:
+    get:
+      summary: Hash-anchored audit trail for a session — every decision, in order
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Event chain with fingerprints
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Audit'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          $ref: '#/components/responses/ForbiddenOrigin'
+        '413':
+          $ref: '#/components/responses/TooLarge'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      operationId: getSessionAudit
+  /v3/programme/suppress:
+    post:
+      summary: Remove a guest from the incentive programme
+      description: 'Stops issuing to this guest, now and from now on, and stops any live session immediately under the
+        suppressed settlement. The stop is not cancelled and the budget is not forfeited: the whole preserved amount
+        returns to the guest as residual. Suppression removes the incentive, never the protection. A vip_id the engine
+        has never seen is accepted, so an exclusion register can pre-empt enrolment rather than race it. Not reversible
+        by this engine.
+
+        '
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - vip_id
+              - reason
+              properties:
+                vip_id:
+                  type: string
+                  minLength: 1
+                  description: Opaque guest identifier. Must contain a non-whitespace character and valid Unicode, without
+                    control characters.
+                reason:
+                  type: string
+                  enum:
+                  - exclusion
+                  - player_request
+                  - rg_determination
+      responses:
+        '200':
+          description: Suppressed. session_stopped reports whether a live session was ended.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Suppression'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '403':
+          $ref: '#/components/responses/ForbiddenOrigin'
+        '413':
+          $ref: '#/components/responses/TooLarge'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      operationId: suppressProgramme
+components:
+  schemas:
+    Error:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          type: string
+          enum:
+          - NO_LIVE_SESSION
+          - INVALID_VIP
+          - INVALID_BUDGET
+          - INVALID_MODE
+          - INVALID_DELTA
+          - ALREADY_STOPPED
+          - NOT_STOPPED
+          - ALREADY_ISSUED
+          - SESSION_UNKNOWN
+          - NO_ROUTE
+          - BAD_JSON
+          - BAD_REQUEST
+          - INVALID_STAKE
+          - STAKE_EXCEEDS_HEADROOM
+          - AUTHORIZATION_UNKNOWN
+          - AUTHORIZATION_CLOSED
+          - SESSION_LIVE
+          - INVALID_ELIGIBILITY
+          - INVALID_ELIGIBILITY_AT
+          - INVALID_REASON
+          - INCENTIVE_SUPPRESSED
+          - ALREADY_SUPPRESSED
+          - PAYLOAD_TOO_LARGE
+          - FORBIDDEN_ORIGIN
+          - INVALID_EVENT_ID
+          - EVENT_CONFLICT
+          - INTERNAL_ERROR
+          - LEDGER_CONFLICT
+    Credits:
+      type: object
+      required:
+      - spa
+      - fnb
+      - retail
+      properties:
+        spa:
+          type: number
+          minimum: 0
+        fnb:
+          type: number
+          minimum: 0
+        retail:
+          type: number
+          minimum: 0
+    Preview:
+      type: object
+      required:
+      - redirect_eur
+      - rollover_eur
+      - residual_to_guest_eur
+      - capped
+      properties:
+        redirect_eur:
+          type: number
+          minimum: 0
+        rollover_eur:
+          type: number
+          minimum: 0
+        residual_to_guest_eur:
+          type: number
+          minimum: 0
+        capped:
+          type: boolean
+    Armed:
+      type: object
+      required:
+      - session_id
+      - armed_at_eur
+      - mode
+      - eligibility
+      - eligibility_at
+      - fingerprint
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        armed_at_eur:
+          type: number
+          minimum: 0
+        mode:
+          type: string
+          enum:
+          - hard_stop
+          - advisory
+        eligibility:
+          type: string
+          enum:
+          - permitted
+          - suppressed
+        eligibility_at:
+          type: string
+          format: date-time
+          nullable: true
+        fingerprint:
+          type: string
+          pattern: ^[0-9a-f]{16}$
+    State:
+      type: object
+      required:
+      - vip_id
+      - session_id
+      - mode
+      - stopped
+      - budget_eur
+      - consumed_eur
+      - consumed_fraction
+      - distance_to_threshold_eur
+      - reserved_eur
+      - headroom_eur
+      - nudge_active
+      - escalate_active
+      - eligibility
+      - eligibility_expired
+      - redirect_issued
+      - incentive_preview
+      properties:
+        vip_id:
+          type: string
+        session_id:
+          type: string
+          format: uuid
+        mode:
+          type: string
+          enum:
+          - hard_stop
+          - advisory
+        stopped:
+          type: boolean
+        budget_eur:
+          type: number
+          minimum: 0
+        consumed_eur:
+          type: number
+          minimum: 0
+        consumed_fraction:
+          type: number
+          minimum: 0
+        distance_to_threshold_eur:
+          type: number
+          minimum: 0
+        reserved_eur:
+          type: number
+          minimum: 0
+          description: Stakes checked and not yet reported, counted against the line as if lost.
+        headroom_eur:
+          type: number
+          minimum: 0
+          description: The largest stake the check would allow now. 0 on a stopped session.
+        nudge_active:
+          type: boolean
+        escalate_active:
+          type: boolean
+        eligibility:
+          type: string
+          enum:
+          - permitted
+          - suppressed
+        eligibility_expired:
+          type: boolean
+        redirect_issued:
+          type: boolean
+        incentive_preview:
+          $ref: '#/components/schemas/Preview'
+    Stop:
+      type: object
+      required:
+      - preserved
+      - rollover
+      - residual_to_guest_eur
+      - credits
+      - eligibility
+      - capped
+      - eligibility_expired
+      - overshoot_eur
+      - fingerprint
+      properties:
+        preserved:
+          type: number
+          minimum: 0
+        overshoot_eur:
+          type: number
+          minimum: 0
+          description: How far consumption went past the stop line. 0 while every stake was checked first and no wager
+            consumed more than its check. Above 0 when the crossing amount reached the engine only as a report. Always 0
+            in Advisory mode, which enforces no line.
+        rollover:
+          type: number
+          minimum: 0
+        residual_to_guest_eur:
+          type: number
+          minimum: 0
+        credits:
+          $ref: '#/components/schemas/Credits'
+        eligibility:
+          type: string
+          enum:
+          - permitted
+          - suppressed
+        capped:
+          type: boolean
+        eligibility_expired:
+          type: boolean
+        fingerprint:
+          type: string
+          pattern: ^[0-9a-f]{16}$
+    Locked:
+      allOf:
+      - $ref: '#/components/schemas/Stop'
+      - type: object
+        required:
+        - locked
+        properties:
+          locked:
+            type: boolean
+            enum:
+            - true
+    Tick:
+      type: object
+      required:
+      - state
+      properties:
+        state:
+          $ref: '#/components/schemas/State'
+        advisory:
+          type: string
+    Issued:
+      type: object
+      required:
+      - issued
+      - preserved
+      - credits
+      - rollover
+      - residual
+      - fingerprint
+      properties:
+        issued:
+          type: boolean
+          enum:
+          - true
+        preserved:
+          type: number
+          minimum: 0
+        credits:
+          $ref: '#/components/schemas/Credits'
+        rollover:
+          type: number
+          minimum: 0
+        residual:
+          type: number
+          minimum: 0
+        fingerprint:
+          type: string
+          pattern: ^[0-9a-f]{16}$
+    AuditEvent:
+      type: object
+      required:
+      - seq
+      - type
+      - at
+      - session_id
+      - fingerprint
+      properties:
+        seq:
+          type: integer
+          minimum: 1
+        type:
+          type: string
+        at:
+          type: string
+          format: date-time
+        session_id:
+          type: string
+          format: uuid
+        fingerprint:
+          type: string
+          pattern: ^[0-9a-f]{16}$
+    Audit:
+      type: object
+      required:
+      - session_id
+      - events
+      - chain
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEvent'
+        chain:
+          type: string
+          pattern: ^[0-9a-f]{16}$
+    Suppression:
+      type: object
+      required:
+      - vip_id
+      - suppressed
+      - reason
+      - session_stopped
+      - stopped
+      - fingerprint
+      properties:
+        vip_id:
+          type: string
+        suppressed:
+          type: boolean
+          enum:
+          - true
+        reason:
+          type: string
+          enum:
+          - exclusion
+          - player_request
+          - rg_determination
+        session_stopped:
+          type: boolean
+        stopped:
+          oneOf:
+          - $ref: '#/components/schemas/Stop'
+          - type: object
+            nullable: true
+            enum:
+            - null
+        fingerprint:
+          type: string
+          pattern: ^[0-9a-f]{16}$
+    Authorized:
+      type: object
+      required:
+      - authorized
+      - authorization_id
+      - session_id
+      - stake_eur
+      - enforced
+      - reserved_eur
+      - headroom_eur
+      properties:
+        authorized:
+          type: boolean
+          enum:
+          - true
+        authorization_id:
+          type: string
+          format: uuid
+        session_id:
+          type: string
+          format: uuid
+        stake_eur:
+          type: number
+          minimum: 0.01
+        enforced:
+          type: boolean
+          description: true in Hard-Stop, false in Advisory.
+        reserved_eur:
+          type: number
+          minimum: 0
+        headroom_eur:
+          type: number
+          minimum: 0
+    Released:
+      type: object
+      required:
+      - released
+      - authorization_id
+      - reserved_eur
+      - headroom_eur
+      properties:
+        released:
+          type: boolean
+          enum:
+          - true
+        authorization_id:
+          type: string
+          format: uuid
+        reserved_eur:
+          type: number
+          minimum: 0
+        headroom_eur:
+          type: number
+          minimum: 0
+    StakeRefused:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          type: string
+          enum:
+          - STAKE_EXCEEDS_HEADROOM
+          - NO_LIVE_SESSION
+          - ALREADY_STOPPED
+        headroom_eur:
+          type: number
+          minimum: 0
+          description: Present with STAKE_EXCEEDS_HEADROOM.
+    SessionLive:
+      type: object
+      required:
+      - error
+      - session_id
+      - supersede_after
+      properties:
+        error:
+          type: string
+          enum:
+          - SESSION_LIVE
+        session_id:
+          type: string
+          format: uuid
+          description: The live session that holds the guest.
+        supersede_after:
+          type: string
+          format: date-time
+          description: From this time a pre-commit for the guest is accepted.
+  responses:
+    BadRequest:
+      description: 400 — INVALID_VIP · INVALID_BUDGET · INVALID_MODE · INVALID_DELTA · INVALID_STAKE · BAD_JSON · BAD_REQUEST
+        · INVALID_ELIGIBILITY · INVALID_ELIGIBILITY_AT · INVALID_REASON · INVALID_EVENT_ID
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: 409 — NO_LIVE_SESSION · ALREADY_STOPPED · NOT_STOPPED · ALREADY_ISSUED · INCENTIVE_SUPPRESSED · ALREADY_SUPPRESSED
+        · EVENT_CONFLICT · AUTHORIZATION_CLOSED · STAKE_EXCEEDS_HEADROOM · SESSION_LIVE · LEDGER_CONFLICT on an inconsistent
+        historical SQLite issuance
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: 404 — SESSION_UNKNOWN · AUTHORIZATION_UNKNOWN · NO_ROUTE
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ForbiddenOrigin:
+      description: FORBIDDEN_ORIGIN. Local host or browser origin check failed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    TooLarge:
+      description: PAYLOAD_TOO_LARGE. Maximum request body is 1,000,000 bytes.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: INTERNAL_ERROR. A local operation failed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+x-error-identifiers:
+  POST /v3/precommit:
+  - INVALID_VIP
+  - INVALID_BUDGET
+  - INVALID_MODE
+  - INVALID_ELIGIBILITY
+  - INVALID_ELIGIBILITY_AT
+  - SESSION_LIVE
+  - BAD_JSON
+  POST /v3/session/tick:
+  - NO_LIVE_SESSION
+  - ALREADY_STOPPED
+  - INVALID_DELTA
+  - BAD_JSON
+  - INVALID_EVENT_ID
+  - EVENT_CONFLICT
+  - AUTHORIZATION_UNKNOWN
+  - AUTHORIZATION_CLOSED
+  POST /v3/session/authorize:
+  - NO_LIVE_SESSION
+  - ALREADY_STOPPED
+  - INVALID_STAKE
+  - STAKE_EXCEEDS_HEADROOM
+  - BAD_JSON
+  POST /v3/session/release:
+  - NO_LIVE_SESSION
+  - ALREADY_STOPPED
+  - AUTHORIZATION_UNKNOWN
+  - AUTHORIZATION_CLOSED
+  - BAD_JSON
+  GET /v3/policy/state:
+  - NO_LIVE_SESSION
+  POST /v3/redirect/issue:
+  - NO_LIVE_SESSION
+  - NOT_STOPPED
+  - ALREADY_ISSUED
+  - INCENTIVE_SUPPRESSED
+  - BAD_JSON
+  - LEDGER_CONFLICT
+  GET /v3/audit/{session_id}:
+  - SESSION_UNKNOWN
+  - BAD_REQUEST
+  POST /v3/programme/suppress:
+  - INVALID_VIP
+  - INVALID_REASON
+  - ALREADY_SUPPRESSED
+  - BAD_JSON
+  any unmatched request:
+  - NO_ROUTE
+  - BAD_REQUEST
+  transport / all routes:
+  - PAYLOAD_TOO_LARGE
+  - FORBIDDEN_ORIGIN
+  - BAD_JSON
+  - BAD_REQUEST
+  - INTERNAL_ERROR
+servers:
+- url: http://127.0.0.1:3400
+  description: SQLite MVP
+- url: http://127.0.0.1:8080
+  description: In-memory reference

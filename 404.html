@@ -1,0 +1,20 @@
+<!doctype html>
+<!-- Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT -->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VIP SmartContract · page not found</title>
+<script>
+// Until v3.20 the repository kept the package and the MVP in versioned folders. From v3.21 the package is the
+// repository root and the MVP is 13_VIP_MVP, so a link to an earlier folder goes to the same page here.
+(function () {
+  var p = location.pathname;
+  var n = p.replace(/VIP_SmartContract_v3\.\d+(?:_Demonstration)?\//, '').replace(/VIP_MVP_v0\.2\.\d+\//, '13_VIP_MVP/');
+  if (n !== p) location.replace(n + location.search + location.hash);
+})();
+</script>
+<style>body{font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif;max-width:640px;margin:48px auto;padding:0 16px;color:#122B33;background:#F4F6F5;line-height:1.5}a{color:#1E5A78}</style>
+</head><body><h1>Page not found</h1>
+<p>VIP SmartContract is at
+<a href="https://github.com/trenchlogicstudio-web/VIP-SmartContract-Demonstration">github.com/trenchlogicstudio-web/VIP-SmartContract-Demonstration</a>,
+open source under the MIT License. The browser demos start at <code>05_Demo_Guide.html</code> in the repository root.</p>
+<p>© 2026 Miloš Petrović · Trench Logic Studio</p>
+</body></html>
