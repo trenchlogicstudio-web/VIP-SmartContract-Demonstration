@@ -1,8 +1,8 @@
 {
   "name": "vip-smartcontract",
-  "version": "3.21.0",
+  "version": "3.22.0",
   "private": true,
-  "description": "VIP SmartContract v3.21 with the SQLite MVP v0.2.15 and the in-memory reference service.",
+  "description": "VIP SmartContract v3.22 with the SQLite MVP v0.2.16 and the in-memory reference service.",
   "license": "MIT",
   "author": "Miloš Petrović (Trench Logic Studio)",
   "main": "13_VIP_MVP/server.js",

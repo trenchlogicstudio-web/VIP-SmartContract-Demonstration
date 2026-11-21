@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * VIP SmartContract — Integration Reference · v3.21 · registry slot 04b
+ * VIP SmartContract — Integration Reference · v3.22 · registry slot 04b
  * Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
  * A runnable reference for feasibility evaluation, not a deployable production system.
  *
- * Serves all eight routes declared in 04_API_Spec.yaml, with zero dependencies
+ * Serves all nine routes declared in 04_API_Spec.yaml, with zero dependencies
  * on Node >= 18. State is in memory by design — this is a reference, so 04c
  * declares no database and none is needed.
  *
@@ -184,20 +184,24 @@ function effectiveEligibility(requested, determined_at, now) {
 
 // ── reward cap ────────────────────────────────────────────────────────────
 // An absolute euro ceiling on the operator-funded part of a settlement —
-// redirect plus rollover. Unset means uncapped, which is the reference
-// configuration every canon figure was computed under.
+// redirect plus rollover. From v3.22 it is on by default at €5,000 per stop;
+// `off` removes it, which is the configuration the canon calls uncapped.
 //
 // Without a ceiling the incentive grows with the pre-committed budget, so a
 // larger declared budget earns a larger reward — an incentive to declare a
 // larger budget, and the one attack on this design the mechanism does not
 // answer by itself. When the cap binds the excess is not retained by the
-// operator: it returns to the guest as residual.
-function capEur(key) {
+// operator: it returns to the guest as residual. The canon's reference stop
+// earns €4,590, under the default, so every canon figure holds under it.
+const REWARD_CAP_DEFAULT_EUR = 5000;
+const OFF = raw => raw.trim().toLowerCase() === 'off';
+function capEur(key, fallback = REWARD_CAP_DEFAULT_EUR) {
   const raw = process.env[key];
-  if (raw === undefined || raw === '') return null;
+  if (raw === undefined || raw.trim() === '') return fallback;
+  if (OFF(raw)) return null;
   const v = Number(raw);
   if (!Number.isFinite(v) || v <= 0) {
-    refuse(`${key} must be a finite number greater than 0 when set, got "${raw}". Refusing to start.`);
+    refuse(`${key} must be a finite number greater than 0, or off, got "${raw}". Refusing to start.`);
   }
   return v;
 }
@@ -205,8 +209,8 @@ const REWARD_CAP_EUR = capEur('VIP_REWARD_CAP_EUR');
 
 // ── eligibility lifetime ──────────────────────────────────────────────────
 // How long the operator's responsible-gaming determination stays good for.
-// Unset means it never expires, which is the reference configuration every
-// figure in the canon was computed under.
+// From v3.22 it is on by default at 90 days; `off` makes a determination good
+// forever, which is the configuration the canon calls never-expiring.
 //
 // Why it exists: a determination taken once and never revisited is the weakest
 // form of a control. Supervisory expectations in several regimes include
@@ -216,25 +220,29 @@ const REWARD_CAP_EUR = capEur('VIP_REWARD_CAP_EUR');
 // gate falls CLOSED rather than open: the incentive is withheld until the
 // operator supplies a fresh determination. Failing safe is the only defensible
 // direction here, because the alternative is issuing value on stale grounds.
-function ttlDays(key) {
+const ELIGIBILITY_TTL_DEFAULT_DAYS = 90;
+function ttlDays(key, fallback = ELIGIBILITY_TTL_DEFAULT_DAYS) {
   const raw = process.env[key];
-  if (raw === undefined || raw === '') return null;
+  if (raw === undefined || raw.trim() === '') return fallback;
+  if (OFF(raw)) return null;
   const v = Number(raw);
   if (!Number.isFinite(v) || v <= 0) {
-    refuse(`${key} must be a finite number of days greater than 0 when set, got "${raw}". Refusing to start.`);
+    refuse(`${key} must be a finite number of days greater than 0, or off, got "${raw}". Refusing to start.`);
   }
   return v;
 }
 const ELIGIBILITY_TTL_DAYS = ttlDays('VIP_ELIGIBILITY_TTL_DAYS');
 
 // ── the commitment period ────────────────────────────────────────────────
-// A pre-commitment binds for at least this many hours. While a session is live
-// and younger than this, a new pre-commit for the same guest is refused. Until
-// v3.19 any pre-commit replaced a live session at once, so one call with a
-// larger budget moved the line in the middle of play: the negotiation the
-// Hard-Stop exists to rule out, available on the engine's own route. After the
-// period a live session may be superseded as before, which is how the next
-// day's budget is armed for a guest who never reached the previous line.
+// A pre-commitment binds for at least this many hours from the moment it was
+// armed. While a session is live and younger than this, a new pre-commit for
+// the same guest is refused. Until v3.19 any pre-commit replaced a live session
+// at once, so one call with a larger budget moved the line in the middle of
+// play: the negotiation the Hard-Stop exists to rule out, available on the
+// engine's own route. From v3.22 a STOPPED session holds the guest for the same
+// period: a second budget the same day would be a new limit on top of the
+// first. After the period a live session may be superseded and a stopped guest
+// may commit again, which is how the next day's budget is armed.
 // 0 switches the lock off. That is an operator's setting, and it is stated as one.
 function commitmentHours(key) {
   const raw = process.env[key];
@@ -246,6 +254,32 @@ function commitmentHours(key) {
   return v;
 }
 const COMMITMENT_HOURS = commitmentHours('VIP_COMMITMENT_HOURS');
+
+// ── the terms a guest agrees to ───────────────────────────────────────────
+// Everything that decides what a pre-commitment does with the guest's money,
+// published by GET /v3/terms with a version that is a fingerprint of exactly
+// these values. Every pre-commit records the version it was armed under, beside
+// the amount; a pre-commit that names another version arms nothing. The MVP at
+// slot 13 computes the version the same way, so the same terms carry the same
+// version in both services.
+function canonicalTerms(o) {
+  if (o === null || typeof o !== 'object') return JSON.stringify(o);
+  return '{' + Object.keys(o).sort().map(k => JSON.stringify(k) + ':' + canonicalTerms(o[k])).join(',') + '}';
+}
+const TERMS = Object.freeze({
+  default_mode: CFG.mode,
+  stop_fraction: fraction(W.threshold),
+  advisory_nudge_fraction: fraction(W.nudge),
+  advisory_escalate_fraction: fraction(W.escalate),
+  redirect_split: Object.freeze({ spa: fraction(W.spa), fnb: fraction(W.fnb), retail: fraction(W.retail) }),
+  rollover_fraction: fraction(W.rollover),
+  residual_to_guest_fraction: fraction(W.residual),
+  reward_cap_eur: REWARD_CAP_EUR,
+  eligibility_default: ELIGIBILITY_DEFAULT,
+  eligibility_ttl_days: ELIGIBILITY_TTL_DAYS,
+  commitment_hours: COMMITMENT_HOURS
+});
+const TERMS_VERSION = 'terms-' + crypto.createHash('sha256').update(canonicalTerms(TERMS)).digest('hex').slice(0, 12);
 
 // Returns true when a determination taken at determined_at is too old to rely
 // on. An absent timestamp is treated as expired when a lifetime is configured:
@@ -347,7 +381,11 @@ function evt(type, payload) {
 }
 
 // ── policy ────────────────────────────────────────────────────────────────
-function precommit({ vip_id, budget_eur, mode, eligibility, eligibility_at }) {
+function terms() {
+  return { terms_version: TERMS_VERSION, terms: TERMS };
+}
+
+function precommit({ vip_id, budget_eur, mode, eligibility, eligibility_at, terms_version }) {
   if (!validVip(vip_id)) fail('INVALID_VIP', 400);
   // At least one cent and at most MAX_EUR: below a cent there is no line to
   // arm, and above the bound the cent arithmetic stops being exact.
@@ -366,19 +404,31 @@ function precommit({ vip_id, budget_eur, mode, eligibility, eligibility_at }) {
   // An absent determination date is recorded as absent, never filled in with the
   // current time: with a lifetime configured an unknown age counts as expired.
   const elig_at = eligibility_at === undefined ? null : eligibility_at;
+  // A version the client sends is the version it showed the guest. If it is not
+  // the version in force, the guest agreed to other terms and nothing is armed.
+  if (terms_version !== undefined && terms_version !== TERMS_VERSION) {
+    fail('TERMS_CHANGED', 409, { terms_version: TERMS_VERSION });
+  }
   // A guest withdrawn from the programme cannot be re-enrolled by opening a
   // session; suppression outlives the session that carried it.
   const elig = state.suppressed.has(vip_id) ? 'suppressed' : effectiveEligibility(requested, elig_at);
   const s = {
     vip_id, budget: budget_eur, mode: m, consumed: 0, consumed_exact: '0', eligibility: elig, eligibility_at: elig_at,
     session_id: crypto.randomUUID(), stopped: false, redirect_issued: false, receipts: new Map(),
-    opened_at: Date.now(), reserved_c: 0, authorizations: new Map()
+    opened_at: Date.now(), reserved_c: 0, authorizations: new Map(), terms_version: TERMS_VERSION
   };
   const previous = state.sessions.get(vip_id);
+  if (previous && previous.stopped && !previous.closed) {
+    // From v3.22 a stopped session holds the guest for the rest of the
+    // commitment period, counted from the moment it was armed.
+    const after = previous.opened_at + COMMITMENT_HOURS * 3600000;
+    if (!(Date.now() >= after)) {
+      fail('COMMITMENT_ACTIVE', 409, { session_id: previous.session_id, precommit_after: new Date(after).toISOString() });
+    }
+  }
   if (previous && !previous.stopped && !previous.closed) {
     // A pre-commitment binds for the commitment period: a live session younger
-    // than that is not superseded, and the answer says when one may be. A
-    // stopped session does not hold the guest; that is the property's own rule.
+    // than that is not superseded, and the answer says when one may be.
     const free_at = previous.opened_at + COMMITMENT_HOURS * 3600000;
     if (Date.now() < free_at) {
       fail('SESSION_LIVE', 409, { session_id: previous.session_id, supersede_after: new Date(free_at).toISOString() });
@@ -391,9 +441,9 @@ function precommit({ vip_id, budget_eur, mode, eligibility, eligibility_at }) {
   }
   state.sessions.set(vip_id, s);
   state.byId.set(s.session_id, s);
-  const e = evt('precommit', { vip_id, budget_eur, mode: m, session_id: s.session_id, eligibility: elig, eligibility_at: elig_at });
+  const e = evt('precommit', { vip_id, budget_eur, mode: m, session_id: s.session_id, eligibility: elig, eligibility_at: elig_at, terms_version: TERMS_VERSION });
   const armed = eur(lineCents(cents(budget_eur), W.threshold));
-  return { session_id: s.session_id, armed_at_eur: armed, mode: m, eligibility: elig, eligibility_at: elig_at, fingerprint: e.fingerprint };
+  return { session_id: s.session_id, armed_at_eur: armed, mode: m, eligibility: elig, eligibility_at: elig_at, terms_version: TERMS_VERSION, fingerprint: e.fingerprint };
 }
 
 function tick(payload) {
@@ -596,7 +646,7 @@ function view(s) {
   }
   return {
     vip_id: s.vip_id, session_id: s.session_id, mode: s.mode, stopped: s.stopped,
-    budget_eur: s.budget, consumed_eur: eur(c),
+    budget_eur: s.budget, terms_version: s.terms_version ?? null, consumed_eur: eur(c),
     consumed_fraction: Math.round(frac * 1000) / 1000,
     distance_to_threshold_eur: eur(Math.max(0, lineCents(b, W.threshold) - c)),
     reserved_eur: eur(s.reserved_c || 0),
@@ -650,7 +700,7 @@ function fail(code, status, extra) { const e = new Error(code); e.status = statu
 const ROUTES = ['POST /v3/precommit', 'POST /v3/session/tick', 'GET /v3/policy/state',
                 'POST /v3/redirect/issue', 'GET /v3/audit/{session_id}',
                 'POST /v3/programme/suppress', 'POST /v3/session/authorize',
-                'POST /v3/session/release'];
+                'POST /v3/session/release', 'GET /v3/terms'];
 
 
 const MAX_BODY_BYTES = 1_000_000;
@@ -710,6 +760,7 @@ const server = http.createServer((req, res) => {
       return send(400, { error: 'BAD_JSON' });
     }
     try {
+      if (req.method === 'GET' && path === '/v3/terms') return send(200, terms());
       if (req.method === 'POST' && path === '/v3/precommit') return send(201, precommit(payload));
       if (req.method === 'POST' && path === '/v3/session/tick') {
         const r = tick(payload);
@@ -740,14 +791,15 @@ const server = http.createServer((req, res) => {
 if (require.main === module) {
   server.listen(CFG.port, process.env.VIP_BIND_HOST || '127.0.0.1', () => {
     const pct = m => `${m / 10000}%`;
-    console.log(`VIP SmartContract reference v3.21 · mode=${CFG.mode} · threshold=${pct(W.threshold)} · ` +
+    console.log(`VIP SmartContract reference v3.22 · mode=${CFG.mode} · threshold=${pct(W.threshold)} · ` +
                 `rollover=${pct(W.rollover)} · redirect=${pct(W.redirect)} · residual=${pct(W.residual)} · ` +
-                `eligibility=${ELIGIBILITY_DEFAULT} · cap=${REWARD_CAP_EUR === null ? 'none' : REWARD_CAP_EUR} · ` +
-                `commitment=${COMMITMENT_HOURS}h · :${CFG.port} · ${ROUTES.length}/8 spec routes live`);
+                `eligibility=${ELIGIBILITY_DEFAULT} · cap=${REWARD_CAP_EUR === null ? 'off' : REWARD_CAP_EUR} · ` +
+                `determination=${ELIGIBILITY_TTL_DAYS === null ? 'never expires' : ELIGIBILITY_TTL_DAYS + 'd'} · ` +
+                `commitment=${COMMITMENT_HOURS}h · ${TERMS_VERSION} · :${CFG.port} · ${ROUTES.length}/9 spec routes live`);
   });
 }
 
-module.exports = { server, precommit, tick, authorize, release, COMMITMENT_HOURS, stop, view, redirectIssue, audit, settle, MAX_EUR, W, lineCents, cents,
+module.exports = { server, terms, TERMS, TERMS_VERSION, precommit, tick, authorize, release, COMMITMENT_HOURS, stop, view, redirectIssue, audit, settle, MAX_EUR, W, lineCents, cents,
                    ELIGIBILITY_TTL_DAYS, eligibilityExpired, allocate,
                    programmeSuppress, SUPPRESS_REASONS, ELIGIBILITY, effectiveEligibility,
                    REWARD_CAP_EUR, CFG, _state: state };

@@ -1,4 +1,4 @@
-// VIP SmartContract · MVP v0.2.15 · test suite
+// VIP SmartContract · MVP v0.2.16 · test suite
 // Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
 //
 // Run:  node test.js
@@ -26,9 +26,15 @@ const fs = require('fs');
 const net = require('net');
 const { spawnSync, spawn } = require('child_process');
 
-// The baseline is the reference preset, regardless of the evaluator's shell.
+// The baseline is the reference preset, regardless of the evaluator's shell:
+// every VIP_ variable cleared, then the two that 0.2.16 switched on by default
+// switched off, because every canon figure is stated for an uncapped incentive
+// and a determination that does not expire. The DEFAULTS block below starts
+// this build with nothing set and checks what an unconfigured install does.
 for (const key of Object.keys(process.env)) if (key.startsWith('VIP_')) delete process.env[key];
 delete process.env.PORT;
+process.env.VIP_REWARD_CAP_EUR = 'off';
+process.env.VIP_ELIGIBILITY_TTL_DAYS = 'off';
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'vip-mvp-test-'));
 process.env.VIP_DB = path.join(TMP, 'suite.db');
 delete process.env.VIP_DOWNSTREAM_URL;
@@ -122,10 +128,15 @@ async function startServer(env) {
   ok('STORE · the database file is the one VIP_DB names', DB_PATH === process.env.VIP_DB, DB_PATH);
 
   // ── 1 · the specification surface ───────────────────────────────────────
-  head('CONTRACT · the eight routes of 04_API_Spec.yaml');
+  head('CONTRACT · the nine routes of 04_API_Spec.yaml');
 
-  let r = await call('POST', '/v3/precommit', { vip_id: 'T-HARD', budget_eur: 3000, mode: 'hard_stop' });
+  let r = await call('GET', '/v3/terms');
+  ok('terms returns 200 with the version and every term', r.status === 200 && /^terms-[0-9a-f]{12}$/.test(r.body.terms_version) &&
+     Object.keys(r.body.terms).length === 11 && r.body.terms.stop_fraction === 0.5, r.body);
+  const termsVersion = r.body.terms_version;
+  r = await call('POST', '/v3/precommit', { vip_id: 'T-HARD', budget_eur: 3000, mode: 'hard_stop', terms_version: termsVersion });
   ok('precommit returns 201', r.status === 201, r);
+  ok('precommit records the terms version the guest was shown', r.body.terms_version === termsVersion, r.body);
   ok('armed_at_eur is budget x the canon threshold', near(r.body.armed_at_eur, 1500), r.body);
   const hardSession = r.body.session_id;
 
@@ -172,6 +183,17 @@ async function startServer(env) {
 
   // ── 2 · every control has a negative case ───────────────────────────────
   head('NEGATIVE · each canon error identifier, provoked on purpose');
+
+  r = await call('POST', '/v3/precommit', { vip_id: 'T-TERMS', budget_eur: 100, terms_version: 'terms-000000000000' });
+  ok('TERMS_CHANGED on a terms version that is not in force, with the version that is',
+     r.status === 409 && r.body.error === 'TERMS_CHANGED' && r.body.terms_version === termsVersion, r);
+  r = await call('GET', '/v3/policy/state?vip_id=T-TERMS');
+  ok('TERMS_CHANGED arms nothing', r.status === 409 && r.body.error === 'NO_LIVE_SESSION', r);
+  // T-HARD stopped in the contract block above, inside its commitment period.
+  r = await call('POST', '/v3/precommit', { vip_id: 'T-HARD', budget_eur: 100 });
+  ok('COMMITMENT_ACTIVE on a second budget for a guest stopped inside the period, with the session and the time',
+     r.status === 409 && r.body.error === 'COMMITMENT_ACTIVE' && r.body.session_id === hardSession &&
+     Number.isFinite(Date.parse(r.body.precommit_after)), r);
 
   r = await call('POST', '/v3/precommit', { budget_eur: 100, mode: 'hard_stop' });
   ok('INVALID_VIP on a missing vip_id', r.status === 400 && r.body.error === 'INVALID_VIP', r);
@@ -251,7 +273,7 @@ async function startServer(env) {
   ok('BAD_REQUEST on an audit path that is not valid percent-encoding', r.status === 400 && r.body.error === 'BAD_REQUEST', r);
 
   r = await call('GET', '/v3/nothing/here');
-  ok('NO_ROUTE names the eight specification routes', r.status === 404 && r.body.error === 'NO_ROUTE' && r.body.routes.length === 8, r);
+  ok('NO_ROUTE names the nine specification routes', r.status === 404 && r.body.error === 'NO_ROUTE' && r.body.routes.length === 9, r);
 
   r = await call('POST', '/v3/precommit', '{not json');
   ok('BAD_JSON on an unparseable body', r.status === 400 && r.body.error === 'BAD_JSON', r);
@@ -661,10 +683,16 @@ async function startServer(env) {
   r = await call('POST', '/v3/programme/suppress', { vip_id: 'T-G2', reason: 'exclusion' });
   ok('PROGRAMME · a second suppression is refused', r.status === 409 && r.body.error === 'ALREADY_SUPPRESSED', r);
 
-  // Suppression outlives the session that carried it.
+  // Suppression outlives the session that carried it. Inside the commitment
+  // period the stopped session still holds the guest; after it, a new
+  // pre-commit arms the protection and issues nothing.
+  r = await call('POST', '/v3/precommit', { vip_id: 'T-G2', budget_eur: 2000, mode: 'hard_stop' });
+  ok('PROGRAMME · inside the commitment period the stopped session holds the suppressed guest too',
+     r.status === 409 && r.body.error === 'COMMITMENT_ACTIVE', r);
+  db.prepare("UPDATE sessions SET opened_at = ? WHERE guest_id = 'T-G2'").run(new Date(Date.now() - 25 * 3600000).toISOString());
   r = await call('POST', '/v3/precommit', { vip_id: 'T-G2', budget_eur: 2000, mode: 'hard_stop' });
   ok('PROGRAMME · a suppressed guest cannot be re-enrolled by a new pre-commit',
-     r.body.eligibility === 'suppressed', r.body);
+     r.status === 201 && r.body.eligibility === 'suppressed', r.body);
 
   // An exclusion feed can name a guest before the guest has ever played.
   r = await call('POST', '/v3/programme/suppress', { vip_id: 'T-NOSESSION', reason: 'player_request' });

@@ -1,4 +1,4 @@
-// VIP SmartContract · MVP v0.2.15 · engine (persistent session operations)
+// VIP SmartContract · MVP v0.2.16 · engine (persistent session operations)
 // Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
 //
 // This layer binds the pure policy core (policy.js) to storage and to the
@@ -47,8 +47,16 @@ function ensureGuest(db, vip_id) {
     .run(vip_id, 'unclassified', new Date().toISOString());
 }
 
+// ── /v3 · GET /v3/terms ───────────────────────────────────────────────────
+// The terms a guest is shown before agreeing, and their version. A client that
+// sends the version back with the pre-commit has it checked: if the terms
+// changed between the screen and the call, nothing is armed.
+function terms() {
+  return { terms_version: P.TERMS_VERSION, terms: P.TERMS };
+}
+
 // ── /v3 · POST /v3/precommit ──────────────────────────────────────────────
-function precommit(db, { vip_id, budget_eur, mode, eligibility, eligibility_at }) {
+function precommit(db, { vip_id, budget_eur, mode, eligibility, eligibility_at, terms_version }) {
   if (!validVip(vip_id)) fail('INVALID_VIP', 400);
   // A budget is at least one cent and at most P.MAX_EUR: below a cent there is
   // no line to arm, and above the bound the cent arithmetic stops being exact.
@@ -75,6 +83,13 @@ function precommit(db, { vip_id, budget_eur, mode, eligibility, eligibility_at }
     }
   }
   const elig_at = eligibility_at === undefined ? null : eligibility_at;
+  // The terms the guest agreed to. A version the client sends is the version
+  // it showed the guest; if it is not the version in force, the guest agreed to
+  // something else and nothing is armed. Without one, the session records the
+  // version in force, which is the version the guest was armed under.
+  if (terms_version !== undefined && terms_version !== P.TERMS_VERSION) {
+    fail('TERMS_CHANGED', 409, { terms_version: P.TERMS_VERSION });
+  }
 
   ensureGuest(db, vip_id);
   // A guest withdrawn from the programme, excluded, or removed by the
@@ -86,8 +101,18 @@ function precommit(db, { vip_id, budget_eur, mode, eligibility, eligibility_at }
   // one will be accepted: before 0.2.14 it superseded the session at once, so a
   // larger budget sent in the middle of play moved the line. After the period a
   // live session is superseded as before; it is closed and stays in the record,
-  // so the audit trail keeps both. A stopped session does not hold the guest:
-  // whether a stopped guest may pre-commit again is the property's own rule.
+  // so the audit trail keeps both.
+  // From 0.2.16 a stopped session holds the guest for the same period, counted
+  // from the same moment: the session was armed, reached its line or was
+  // settled, and a second budget inside the period would be a second limit on
+  // top of the first. Until 0.2.15 that was left to the property's own rule.
+  const last = latest(db, vip_id);
+  if (last && last.state === 'stopped') {
+    const after = new Date(last.opened_at).getTime() + P.COMMITMENT_HOURS * 3600000;
+    if (!(Date.now() >= after)) {
+      fail('COMMITMENT_ACTIVE', 409, { session_id: last.id, precommit_after: new Date(after).toISOString() });
+    }
+  }
   const live = db.prepare("SELECT id, opened_at FROM sessions WHERE guest_id = ? AND state = 'live'").get(vip_id);
   if (live) {
     const free_at = new Date(live.opened_at).getTime() + P.COMMITMENT_HOURS * 3600000;
@@ -103,12 +128,13 @@ function precommit(db, { vip_id, budget_eur, mode, eligibility, eligibility_at }
 
   const session_id = crypto.randomUUID();
   const armed = P.armedAt(budget_eur);
-  db.prepare(`INSERT INTO sessions(id, guest_id, mode, eligibility, eligibility_at, state, budget_eur, armed_at_eur, consumed_eur, opened_at)
-              VALUES(?,?,?,?,?,'live',?,?,0,?)`)
-    .run(session_id, vip_id, m, elig, elig_at, budget_eur, armed, new Date().toISOString());
+  db.prepare(`INSERT INTO sessions(id, guest_id, mode, eligibility, eligibility_at, terms_version, state, budget_eur, armed_at_eur, consumed_eur, opened_at)
+              VALUES(?,?,?,?,?,?,'live',?,?,0,?)`)
+    .run(session_id, vip_id, m, elig, elig_at, P.TERMS_VERSION, budget_eur, armed, new Date().toISOString());
 
-  const e = B.append(db, 'precommit', { vip_id, session_id, budget_eur, mode: m, armed_at_eur: armed, eligibility: elig, eligibility_at: elig_at });
-  return { session_id, armed_at_eur: armed, mode: m, eligibility: elig, eligibility_at: elig_at, fingerprint: e.fingerprint };
+  // The amount and the terms the guest agreed to are one link in the chain.
+  const e = B.append(db, 'precommit', { vip_id, session_id, budget_eur, mode: m, armed_at_eur: armed, eligibility: elig, eligibility_at: elig_at, terms_version: P.TERMS_VERSION });
+  return { session_id, armed_at_eur: armed, mode: m, eligibility: elig, eligibility_at: elig_at, terms_version: P.TERMS_VERSION, fingerprint: e.fingerprint };
 }
 
 // ── /v3 · GET /v3/policy/state ────────────────────────────────────────────
@@ -126,6 +152,8 @@ function view(s, db) {
     mode: s.mode,
     stopped: s.state === 'stopped',
     budget_eur: s.budget_eur,
+    // The terms this session was armed under; null for a session armed before 0.2.16.
+    terms_version: s.terms_version ?? null,
     consumed_eur: P.money(consumed),
     consumed_fraction: Math.round(a.fraction * 1000) / 1000,
     distance_to_threshold_eur: P.distanceToThreshold(consumed, s.budget_eur, s.armed_at_eur),
@@ -654,7 +682,7 @@ function guests(db) {
 }
 
 module.exports = {
-  precommit: atomic(precommit), tick: atomic(tick), authorize: atomic(authorize), release: atomic(release), stateOf, redirectIssue, audit, view, latest,
+  terms, precommit: atomic(precommit), tick: atomic(tick), authorize: atomic(authorize), release: atomic(release), stateOf, redirectIssue, audit, view, latest,
   programmeSuppress: atomic(programmeSuppress), SUPPRESS_REASONS,
   voluntaryStop: atomic(voluntaryStop), redeem: atomic(redeem), applyRollover: atomic(applyRollover), quarter, guests, fail
 };

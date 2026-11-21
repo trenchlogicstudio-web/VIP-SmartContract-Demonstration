@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT -->
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>VIP v3.21 · Demo C · Synthetic Case Model</title><style>
+<title>VIP v3.22 · Demo C · Synthetic Case Model</title><style>
 :root{--paper:#F3F5F4;--panel:#E9EEEC;--ink:#122B33;--accent:#1E5A78;--accent-deep:#143E54;--accent-light:#7FB0C4;--seal:#973A3A;--graphite:#54646A;--line:#C7D2D1;--wash:#D8E2E4;--lavender:#D6D3E6;--rose:#DFB3BE;--display:"Schibsted Grotesk",Arial,sans-serif;--body:"Source Serif 4",Georgia,serif;--mono:"Fragment Mono","Courier New",monospace;--r:3px;--rule:1px solid var(--line)}
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
@@ -20,11 +20,11 @@ header{padding:54px 0 0}
 .asis::before{content:"§";position:absolute;left:15px;top:10px;font-family:var(--display);font-weight:800;font-size:21px;color:var(--seal)}
 .asis p{font-size:13.5px;margin:0;font-family:var(--display)}.asis b{color:var(--seal)}
 .card{border:var(--rule);border-radius:var(--r);background:#fff;padding:18px 20px;margin-bottom:16px}.card h3{margin-top:0}
-.grid{display:grid;gap:16px}.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}.g3{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}.g4{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.grid{display:grid;gap:16px}.g2{grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr))}.g3{grid-template-columns:repeat(auto-fit,minmax(min(210px,100%),1fr))}.g4{grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr))}
 table.tls{width:100%;border-collapse:collapse;background:#fff;border:var(--rule);font-size:14.5px}
 table.tls th{font-family:var(--display);font-weight:700;font-size:13px;text-align:left;background:var(--panel);padding:10px 13px;border-bottom:var(--rule)}
 table.tls td{padding:10px 13px;border-bottom:var(--rule);vertical-align:top;font-family:var(--display);font-size:14px}
-table.tls tr:last-child td{border-bottom:none}table.tls td.num,table.tls td.mono{font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+table.tls tr:last-child td{border-bottom:none}table.tls td.num,table.tls td.mono{font-family:var(--mono);font-size:12.5px;white-space:nowrap}table.tls td.wrap{white-space:normal}
 .metric{border:var(--rule);border-left:3px solid var(--accent);border-radius:var(--r);background:#fff;padding:16px 18px}
 .metric .v{font-family:var(--display);font-weight:800;font-size:30px;letter-spacing:-.02em}
 .metric .l{font-family:var(--display);font-size:12.5px;color:var(--graphite);margin-top:4px}
@@ -45,9 +45,9 @@ table.tls tr:last-child td{border-bottom:none}table.tls td.num,table.tls td.mono
 .tb-row .v2{min-width:0;overflow-wrap:anywhere}
 @media(max-width:560px){.tb-row{grid-template-columns:118px 1fr}}
 footer{padding:44px 0 64px}
-/* v3.21 interactive layer */
-.calcgrid{display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start}@media(max-width:860px){.calcgrid{grid-template-columns:1fr}}
-.ctrlcard{border:var(--rule);border-radius:var(--r);background:#fff;padding:20px;position:sticky;top:16px}
+/* v3.22 interactive layer */
+.calcgrid{display:grid;grid-template-columns:300px minmax(0,1fr);gap:24px;align-items:start}@media(max-width:860px){.calcgrid{grid-template-columns:minmax(0,1fr)}}
+.ctrlcard{border:var(--rule);border-radius:var(--r);background:#fff;padding:20px;position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto}@media(max-width:860px){.ctrlcard{position:static;max-height:none;overflow:visible}}
 label{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--graphite);display:block;margin:14px 0 5px}label:first-of-type{margin-top:0}label b{color:var(--accent-deep);font-size:13px}
 input[type=range]{width:100%;accent-color:var(--accent)}
 .seg{display:flex;gap:6px;margin-top:4px}.seg button{flex:1;font-family:var(--display);font-weight:700;font-size:12.5px;padding:9px 4px;border:var(--rule);border-radius:var(--r);background:#fff;cursor:pointer;color:var(--ink)}
@@ -102,8 +102,16 @@ details.assume .in li{margin-bottom:6px;margin-left:16px}
 .feed .fi .t{font-family:var(--mono);font-size:10px;color:var(--graphite);letter-spacing:.06em;text-transform:uppercase;display:block;margin-bottom:2px}
 .verdictbox{border:var(--rule);border-left:3px solid var(--accent);border-radius:var(--r);background:#fff;padding:18px 20px;max-width:880px}
 
-@media(max-width:560px){table.tls{display:block;overflow-x:auto}table.tls th{width:auto!important}}
-</style></head><body><div class="wrap"><header><div class="mark"><div class="tile">TL</div><div class="word">TRENCH LOGIC STUDIO<span>VIP v3.21 · Demo C</span></div></div>
+@media(max-width:560px){table.tls{display:block;overflow-x:auto}table.tls th{width:auto!important}table.tls.settle,table.settle tbody{display:block;overflow:visible}table.settle tr:first-child{display:none}table.settle tr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-bottom:var(--rule)}table.settle tr:last-child{border-bottom:none}table.settle td{display:block;border-bottom:none;padding:5px 8px 9px}table.settle td:first-child{grid-column:1/-1;padding:10px 8px 2px}table.settle td.num{font-size:11.5px}table.settle td[data-h]::before{content:attr(data-h);display:block;font-family:var(--display);font-size:11px;color:var(--graphite);white-space:normal;margin-bottom:2px}}
+/* v3.22 */
+a{color:var(--accent-deep);text-underline-offset:2px}a:hover{color:var(--accent)}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ctrlcard .hint{margin:4px 0 0;max-width:none;line-height:1.5}
+.seg.four button{font-size:11.5px;padding:9px 2px}
+td.owed{font-weight:700}
+.backnav{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 14px}
+</style></head><body><div class="wrap"><header><div class="mark"><div class="tile">TL</div><div class="word">TRENCH LOGIC STUDIO<span>VIP v3.22 · Demo C</span></div></div>
+<p class="backnav"><a href="00_INDEX.html">Index</a> · <a href="05_Demo_Guide.html">Demo guide</a> · <a href="05b_Demo_B_Policy_Engine.html">Demo B</a> · <a href="05d_Demo_D_Narrative_Proof.html">Demo D</a></p>
 <span class="eyebrow">Demo C · registry slot 05c · recomputable ledger model</span>
 <h1>Quarter economics, on sliders</h1>
 <p class="lede">The reference preset reproduces the canon's quarter figures it shows exactly — and every modeled figure wears its label, because in this category the difference between modeled and observed is a licence condition.</p>
@@ -111,44 +119,65 @@ details.assume .in li{margin-bottom:6px;margin-left:16px}
 <div class="wrap"><div class="dim"></div></div>
 <section class="wrap"><div class="calcgrid">
 <div class="ctrlcard">
-<label>preset</label><div class="seg"><button id="p0">Floor</button><button class="on" id="p1">Reference</button><button id="p2">Ceiling</button></div>
-<label>limited VIPs / quarter · <b id="vN">60</b></label><input type="range" id="n" min="20" max="150" value="60" step="1">
-<label>preserved per VIP / quarter · <b id="vP">€5,100</b></label><input type="range" id="p" min="2000" max="12000" value="5100" step="100">
-<label>non-gaming capture, of preserved budget · <b id="vG">70%</b></label><input type="range" id="g" min="40" max="80" value="70" step="1">
-<label>quarter retention of limited VIPs, incentive mode · <b id="vR">84%</b></label><input type="range" id="r" min="61" max="92" value="84" step="1">
+<label id="lPre">preset</label><div class="seg four" role="group" aria-labelledby="lPre"><button id="p0">Floor</button><button class="on" id="p1">Reference</button><button id="p2">Ceiling</button><button id="p3">Downside</button></div>
+<label for="n">limited VIPs / quarter · <b id="vN">60</b></label><input type="range" id="n" min="20" max="150" value="60" step="1" aria-describedby="hN">
+<p class="hint" id="hN">Guests who set a limit and reached it in the quarter.</p>
+<label for="p">preserved per VIP / quarter · <b id="vP">€5,100</b></label><input type="range" id="p" min="2000" max="12000" value="5100" step="100" aria-describedby="hP">
+<p class="hint" id="hP">The budget still unspent when the policy fires, never the guest's whole theoretical.</p>
+<label for="g">resort credit issued, of preserved budget · <b id="vG">70%</b></label><input type="range" id="g" min="40" max="80" value="70" step="1" aria-describedby="hG">
+<p class="hint" id="hG">40% for a gaming-only property. 80% is the most the engine accepts while the rollover keeps its 20%.</p>
+<label for="q">resort credit redeemed in the quarter · <b id="vQ">50%</b></label><input type="range" id="q" min="0" max="100" value="50" step="5" aria-describedby="hQ">
+<p class="hint" id="hQ">ASSUMPTION. No redemption has been measured: the MVP's seeded quarter has redeemed none of its 180 credits.</p>
+<label for="r">quarter retention of limited VIPs, incentive mode · <b id="vR">84%</b></label><input type="range" id="r" min="40" max="92" value="84" step="1" aria-describedby="hR">
+<p class="hint" id="hR">The hard-stop-only baseline is 61%. Below it the incentive layer keeps fewer guests than the stop alone.</p>
 <button class="resetb" id="rst">reset to reference</button>
 </div>
 <div>
 <div class="grid g4" style="margin-bottom:16px">
 <div class="metric"><div class="v" id="mPre">€306K</div><div class="l">preserved budget, quarter <span class="pill mod">MODELED</span></div></div>
-<div class="metric roz"><div class="v" id="mRed">€214K</div><div class="l">redirected to spa · F&amp;B · retail <span class="pill mod">MODELED</span></div></div>
+<div class="metric roz"><div class="v" id="mRed">€214K</div><div class="l">resort credit issued · spa · F&amp;B · retail <span class="pill mod">MODELED</span></div></div>
 <div class="metric lav"><div class="v" id="mRet">84% v 61%</div><div class="l">retention of limited VIPs vs hard-stop-only <span class="pill mod">MODELED</span></div></div>
-<div class="metric"><div class="v">2.92×</div><div class="l">odds limit-setters remain active at 1yr <span class="pill">EMPIRICAL</span></div></div>
+<div class="metric"><div class="v">2.92×</div><div class="l">odds that limit-setters remain active at 1yr, against players who set none <span class="pill">EMPIRICAL</span></div></div>
 </div>
+<h3 style="margin-top:0">Issued, redeemed, still owed</h3>
+<table class="tls settle" style="margin-bottom:16px">
+<tr><th>Leg of the settlement</th><th>Issued</th><th>Redeemed or used</th><th>Still owed at quarter end</th></tr>
+<tr><td>Resort credit · spa, F&amp;B, retail</td><td class="num" data-h="Issued" id="tIss">€214,200</td><td class="num" data-h="Redeemed or used" id="tRed">€107,100</td><td class="num" data-h="Still owed" id="tOpen">€107,100</td></tr>
+<tr><td>Future-play credit (rollover) · <span id="tRollPct">20%</span> of preserved</td><td class="num" data-h="Issued" id="tRoll">€61,200</td><td class="num wrap" data-h="Redeemed or used">on a later visit</td><td class="num" data-h="Still owed" id="tRollOpen">€61,200</td></tr>
+<tr><td>Returned to the guests · residual</td><td class="num" data-h="Issued" id="tRes">€30,600</td><td class="num wrap" data-h="Redeemed or used">paid back</td><td class="num" data-h="Still owed">—</td></tr>
+<tr><td><b>Open obligation</b></td><td class="num"></td><td class="num"></td><td class="num owed" data-h="Still owed" id="tOwed">€168,300</td></tr>
+</table>
 <div class="chartwrap"><svg id="ch" viewBox="0 0 640 220" width="100%" height="220"></svg>
 <div class="legend"><span><i style="background:var(--accent)"></i>incentive mode · VIPs retained</span><span><i style="background:var(--rose)"></i>hard-stop-only baseline</span></div></div>
 <div class="verdictbox" style="margin-top:16px"><h3 style="margin-top:0">Model verdict</h3><p id="verd" style="font-family:var(--display);font-size:14px;margin:0"></p></div>
 <details class="assume"><summary>Assumptions · sources · where this can break</summary><div class="in"><ul>
 <li>Concentration context: industry analyst estimates put roughly 30% of GGR with the top 1% of players — why one protected whale is a P&amp;L line, not a CSR line.</li>
-<li>Empirical anchor: peer-reviewed responsible-gambling research finds voluntary limit-setters at 2.92× the odds of remaining active a year later. That is what makes the modeled quarter believable.</li>
-<li>The 84% vs 61% quarter retention pair is MODELED: it compares the incentive layer against a hard-stop-only baseline that loses 39% of stopped players in-quarter. It is a design comparison, not a field result, and every frame says so.</li>
+<li>The cited study: voluntary limit-setters had 2.92× the odds of remaining active a year later than players who set no limit. Both variants on this page already have a limit, so the study does not measure what the incentive adds.</li>
+<li>The 84% vs 61% quarter retention pair is MODELED: it compares the incentive layer against a hard-stop-only baseline that loses 39% of stopped players in-quarter. It is a design comparison, not a field result, and stays an assumption until a pilot measures it. The slider runs from 40% so the model can show the incentive layer doing worse than the stop alone.</li>
 <li>€5,100 preserved per limited VIP per quarter is the slice of the pre-committed budget still unspent when the policy fires — never the guest’s whole theoretical. The slider runs €2,000–€12,000 so an operator can set it to their own VIP tier.</li>
-<li>70% non-gaming capture assumes integrated resort amenities; drag it to 40% of the preserved budget for a gaming-only property and watch the redirect shrink honestly.</li>
+<li>70% of the preserved budget issued as resort credit assumes integrated resort amenities; drag it to 40% for a gaming-only property and watch the credit shrink honestly. 80% is the ceiling: with the rollover at 20% of the preserved budget the engine accepts no more, and the remainder returns to the guest.</li>
+<li>Issued is not redeemed. Resort credit becomes spend only when a guest uses it, and the rollover is credit toward future play, owed until the guest comes back. Until then both are an obligation of the resort. The redeemed share is an assumption: no redemption has been measured.</li>
 <li>Regulatory direction of travel — UK high-value customer rules, US affordability proposals — is context for why this ships now; it is not a model input. Above 90% of the limited-VIP cohort retained, the model prints its own warning beside the verdict, and the slider stops at 92%.</li>
 </ul></div></details>
 </div></div><p class="note">Auer, Hopfgartner and Griffiths report the 2.92 odds ratio for voluntary limit-setting in Table 5. The quarter assumptions on this page are illustrative. <a href="https://doi.org/10.1007/s11469-019-00084-3">Read the study</a>.</p>
 </section>
 <script>
 function el(i){return document.getElementById(i)}
-var DEF={n:60,p:5100,g:70,r:84};
+var DEF={n:60,p:5100,g:70,q:50,r:84},ROLL=20,BASE=61;
 function fm(x){return Math.round(x).toLocaleString("en-US")}
 function K(x){return x>=1e6?"€"+(x/1e6).toFixed(2)+"M":"€"+Math.round(x/1000)+"K"}
-function calc(){var n=+el("n").value,p=+el("p").value,g=+el("g").value,r=+el("r").value;
-el("vN").textContent=n;el("vP").textContent="€"+fm(p);el("vG").textContent=g+"%";el("vR").textContent=r+"%";
-var pre=n*p, red=pre*g/100;
+function vt(i,t){var x=el(i);if(x.setAttribute)x.setAttribute("aria-valuetext",t)}
+function calc(){var n=+el("n").value,p=+el("p").value,g=+el("g").value,q=+el("q").value,r=+el("r").value;
+el("vN").textContent=n;el("vP").textContent="€"+fm(p);el("vG").textContent=g+"%";el("vQ").textContent=q+"%";el("vR").textContent=r+"%";
+vt("n",n+" limited VIPs");vt("p","€"+fm(p)+" per VIP");vt("g",g+"% of preserved budget");vt("q",q+"% of the credit issued");vt("r",r+"% retained");
+/* the canon settlement: credit g%, rollover 20%, the remainder back to the guest */
+var pre=n*p, red=pre*g/100, roll=pre*ROLL/100, res=pre-red-roll, used=red*q/100, open=red-used, owed=open+roll;
 el("mPre").textContent=K(pre);el("mRed").textContent=K(red);
-el("mRet").textContent=r+"% v 61%";
-var kept=Math.round(n*r/100), base=Math.round(n*0.61);
+el("mRet").textContent=r+"% v "+BASE+"%";
+el("tIss").textContent="€"+fm(red);el("tRed").textContent="€"+fm(used);el("tOpen").textContent="€"+fm(open);
+el("tRollPct").textContent=ROLL+"%";el("tRoll").textContent="€"+fm(roll);el("tRollOpen").textContent="€"+fm(roll);
+el("tRes").textContent="€"+fm(res);el("tOwed").textContent="€"+fm(owed);
+var kept=Math.round(n*r/100), base=Math.round(n*BASE/100);
 var W=640,H=220,P=34,bw=120;
 var s="";
 function bar(x,v,col,lab){var h=(v/n)*(H-2*P);s+='<rect x="'+x+'" y="'+(H-P-h)+'" width="'+bw+'" height="'+h+'" fill="'+col+'" rx="3"/>';
@@ -156,19 +185,20 @@ s+='<text x="'+(x+bw/2)+'" y="'+(H-P-h-8)+'" text-anchor="middle" font-family="S
 s+='<text x="'+(x+bw/2)+'" y="'+(H-12)+'" text-anchor="middle" font-family="Fragment Mono" font-size="10" fill="#54646A">'+lab+'</text>';}
 bar(150,kept,"#1E5A78","INCENTIVE · RETAINED");bar(370,base,"#DFB3BE","HARD-STOP ONLY · RETAINED");
 el("ch").innerHTML=s;
-el("verd").innerHTML="At these assumptions the quarter preserves <b>"+K(pre)+"</b> of at-risk budget across <b>"+n+"</b> limited VIPs, redirects <b>"+K(red)+"</b> into the building at "+g+"% capture of the preserved budget, and retains <b>"+kept+"</b> of them ("+r+"%) against <b>"+base+"</b> (61%) under hard-stop-only — all MODELED, with the 2.92× empirical anchor carrying the plausibility."+(r>90?" <span style=color:var(--seal)>Above 90% strains even the incentive story — treat as fantasy until piloted.</span>":"");}
-["n","p","g","r"].forEach(function(i){el(i).oninput=function(){seg(-1);calc()}});
-function set(o){el("n").value=o.n;el("p").value=o.p;el("g").value=o.g;el("r").value=o.r;calc();}
-function seg(x){["p0","p1","p2"].forEach(function(y,i){el(y).classList.toggle("on",i==x)})}
+el("verd").innerHTML="At these assumptions the quarter preserves <b>"+K(pre)+"</b> of the budgets <b>"+n+"</b> limited VIPs committed and issues <b>"+K(red)+"</b> of it as resort credit at "+g+"%. At the assumed "+q+"% redemption, <b>"+K(used)+"</b> becomes spend in the building and the quarter ends owing <b>"+K(owed)+"</b>: unredeemed credit plus <b>"+K(roll)+"</b> of future-play credit. It retains <b>"+kept+"</b> of the limited VIPs ("+r+"%) against <b>"+base+"</b> ("+BASE+"%) under hard-stop-only. All MODELED: no pilot has measured the retention difference or the redemption."+(r<BASE?" <span style=color:var(--seal)>Below "+BASE+"% the incentive layer keeps fewer guests than the stop alone: at these assumptions it costs retention instead of buying it.</span>":"")+(r>90?" <span style=color:var(--seal)>Above 90% strains even the incentive story — treat as fantasy until piloted.</span>":"");}
+["n","p","g","q","r"].forEach(function(i){el(i).oninput=function(){seg(-1);calc()}});
+function set(o){el("n").value=o.n;el("p").value=o.p;el("g").value=o.g;if(o.q!==undefined)el("q").value=o.q;el("r").value=o.r;calc();}
+function seg(x){["p0","p1","p2","p3"].forEach(function(y,i){el(y).classList.toggle("on",i==x)})}
 el("p0").onclick=function(){seg(0);set({n:30,p:3200,g:45,r:72})};
 el("p1").onclick=function(){seg(1);set(DEF)};
 el("p2").onclick=function(){seg(2);set({n:110,p:8000,g:80,r:90})};
+el("p3").onclick=function(){seg(3);set({n:30,p:3200,g:40,r:52})};
 el("rst").onclick=function(){seg(1);set(DEF)};
 calc();
 </script><footer class="wrap"><div class="titleblock">
 <div class="tb-row"><div class="k">Studio</div><div class="v2">© 2026 Miloš Petrović · Trench Logic Studio · milos@trench-logic.com · trenchlogicstudio.com</div></div>
 <div class="tb-row"><div class="k">Project</div><div class="v2">VIP SmartContract — Compliance-as-Revenue Layer</div></div>
 <div class="tb-row"><div class="k">Document</div><div class="v2 mono">05c_Demo_C_Synthetic_Case_Study.html</div></div>
-<div class="tb-row"><div class="k">Revision</div><div class="v2 mono">v3.21 · 2026</div></div>
+<div class="tb-row"><div class="k">Revision</div><div class="v2 mono">v3.22 · 2026</div></div>
 <div class="tb-row"><div class="k">Licence</div><div class="v2 seal">MIT LICENSE · OPEN SOURCE · PROVIDED AS IS, WITHOUT WARRANTY</div></div>
 </div></footer></body></html>

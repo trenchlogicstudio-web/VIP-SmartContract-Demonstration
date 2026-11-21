@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT -->
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>VIP v3.21 · Demo D · Narrative Proof</title><style>
+<title>VIP v3.22 · Demo D · Narrative Proof</title><style>
 :root{--paper:#F3F5F4;--panel:#E9EEEC;--ink:#122B33;--accent:#1E5A78;--accent-deep:#143E54;--accent-light:#7FB0C4;--seal:#973A3A;--graphite:#54646A;--line:#C7D2D1;--wash:#D8E2E4;--lavender:#D6D3E6;--rose:#DFB3BE;--display:"Schibsted Grotesk",Arial,sans-serif;--body:"Source Serif 4",Georgia,serif;--mono:"Fragment Mono","Courier New",monospace;--r:3px;--rule:1px solid var(--line)}
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
@@ -20,7 +20,7 @@ header{padding:54px 0 0}
 .asis::before{content:"§";position:absolute;left:15px;top:10px;font-family:var(--display);font-weight:800;font-size:21px;color:var(--seal)}
 .asis p{font-size:13.5px;margin:0;font-family:var(--display)}.asis b{color:var(--seal)}
 .card{border:var(--rule);border-radius:var(--r);background:#fff;padding:18px 20px;margin-bottom:16px}.card h3{margin-top:0}
-.grid{display:grid;gap:16px}.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}.g3{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}.g4{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.grid{display:grid;gap:16px}.g2{grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr))}.g3{grid-template-columns:repeat(auto-fit,minmax(min(210px,100%),1fr))}.g4{grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr))}
 table.tls{width:100%;border-collapse:collapse;background:#fff;border:var(--rule);font-size:14.5px}
 table.tls th{font-family:var(--display);font-weight:700;font-size:13px;text-align:left;background:var(--panel);padding:10px 13px;border-bottom:var(--rule)}
 table.tls td{padding:10px 13px;border-bottom:var(--rule);vertical-align:top;font-family:var(--display);font-size:14px}
@@ -45,9 +45,9 @@ table.tls tr:last-child td{border-bottom:none}table.tls td.num,table.tls td.mono
 .tb-row .v2{min-width:0;overflow-wrap:anywhere}
 @media(max-width:560px){.tb-row{grid-template-columns:118px 1fr}}
 footer{padding:44px 0 64px}
-/* v3.21 interactive layer */
+/* v3.22 interactive layer */
 .calcgrid{display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start}@media(max-width:860px){.calcgrid{grid-template-columns:1fr}}
-.ctrlcard{border:var(--rule);border-radius:var(--r);background:#fff;padding:20px;position:sticky;top:16px}
+.ctrlcard{border:var(--rule);border-radius:var(--r);background:#fff;padding:20px;position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto}@media(max-width:860px){.ctrlcard{position:static;max-height:none;overflow:visible}}
 label{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--graphite);display:block;margin:14px 0 5px}label:first-of-type{margin-top:0}label b{color:var(--accent-deep);font-size:13px}
 input[type=range]{width:100%;accent-color:var(--accent)}
 .seg{display:flex;gap:6px;margin-top:4px}.seg button{flex:1;font-family:var(--display);font-weight:700;font-size:12.5px;padding:9px 4px;border:var(--rule);border-radius:var(--r);background:#fff;cursor:pointer;color:var(--ink)}
@@ -105,24 +105,30 @@ details.assume .in li{margin-bottom:6px;margin-left:16px}
 @media(max-width:560px){table.tls{display:block;overflow-x:auto}table.tls th{width:auto!important}}
 .calcgrid.wide{grid-template-columns:340px 1fr}
 @media(max-width:860px){.calcgrid.wide{grid-template-columns:1fr}}
-</style></head><body><div class="wrap"><header><div class="mark"><div class="tile">TL</div><div class="word">TRENCH LOGIC STUDIO<span>VIP v3.21 · Demo D</span></div></div>
+/* v3.22 */
+a{color:var(--accent-deep);text-underline-offset:2px}a:hover{color:var(--accent)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tl2 .ev:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+.backnav{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 14px}
+</style></head><body><div class="wrap"><header><div class="mark"><div class="tile">TL</div><div class="word">TRENCH LOGIC STUDIO<span>VIP v3.22 · Demo D</span></div></div>
+<p class="backnav"><a href="00_INDEX.html">Index</a> · <a href="05_Demo_Guide.html">Demo guide</a> · <a href="05c_Demo_C_Synthetic_Case_Study.html">Demo C</a></p>
 <span class="eyebrow">Demo D · registry slot 05d · clickable narrative</span>
 <h1>One quarter, preserved</h1>
-<p class="lede">A synthetic resort quarter, event by event. Click any point — or press play — and the KPI board morphs to that week’s state. The final frame is the canon.</p>
+<p class="lede">A synthetic resort quarter, event by event. Click any point, or move to it with Tab and press Enter, or press play — and the KPI board morphs to that week’s state. The final frame is the canon.</p>
 <div class="asis"><p><b>MIT LICENSE · SYNTHETIC BY DECLARATION.</b> This page runs a synthetic scenario in the browser. The external limit-setting study is cited below. No live resort data exists. Assumptions are printed beside each model; whoever integrates it validates independently.</p></div></header>
 <div class="wrap"><div class="dim"></div></div>
 <section class="wrap"><div class="calcgrid wide">
 <div><button class="btn pri" id="play" style="width:100%;margin-bottom:10px">▶ Play the quarter</button>
-<div class="tl2" id="tl"></div></div>
+<div class="tl2" id="tl" role="list" aria-label="Weeks of the quarter"></div></div>
 <div>
 <div class="grid g4" style="margin-bottom:16px">
 <div class="metric"><div class="v" id="kV">—</div><div class="l">VIPs under contract</div></div>
 <div class="metric lav"><div class="v" id="kP">—</div><div class="l">preserved budget (cum.)</div></div>
-<div class="metric roz"><div class="v" id="kR">—</div><div class="l">redirected in-building</div></div>
+<div class="metric roz"><div class="v" id="kR">—</div><div class="l">resort credit issued in-building</div></div>
 <div class="metric"><div class="v" id="kQ">—</div><div class="l">quarter retention of limited VIPs vs hard-stop baseline</div></div>
 </div>
-<div class="card"><h3 id="nt" style="margin-top:0">—</h3><p id="nb" style="font-family:var(--display);font-size:14.5px;margin:0"></p></div>
-<p class="note">The closing frame is the 05c model at its reference preset — recompute it there; the weeks before it are narrative waypoints on the way to it, not separate model outputs. Modeled figures are labeled; the empirical anchor is cited in 05c.</p>
+<div class="card" aria-live="polite"><h3 id="nt" style="margin-top:0">—</h3><p id="nb" style="font-family:var(--display);font-size:14.5px;margin:0"></p></div>
+<p class="note">The closing frame is the 05c model at its reference preset — recompute it there; the weeks before it are narrative waypoints on the way to it, not separate model outputs. Modeled figures are labeled; the limit-setting study is cited in 05c, with what it does and does not measure.</p>
 </div></div><p class="note">Auer, Hopfgartner and Griffiths report the 2.92 odds ratio for voluntary limit-setting in Table 5. The quarter assumptions on this page are illustrative. <a href="https://doi.org/10.1007/s11469-019-00084-3">Read the study</a>.</p>
 </section>
 <script>
@@ -131,14 +137,21 @@ var EV=[
 {w:"W1",t:"Velocity flags · 60 VIPs",v:"0",p:"€0",r:"€0",q:"—",b:"The quarter opens with 60 flags from the property's own detection — not problem players, valuable ones on a bad slope. Concentration means each is a P&amp;L line."},
 {w:"W2",t:"Consent wave · private-banking framing",v:"41",p:"€0",r:"€0",q:"—",b:"Offered as an instrument, not an intervention: 41 sign in week one of the push. Nothing arms without consent — the precommit is written only after a yes."},
 {w:"W4",t:"First contracts fire",v:"53",p:"€58K",r:"€41K",q:"—",b:"Thresholds hit and policy.stop is written without a human in the loop; hosts arrive as concierge. First preserved budget routes to the resort.",seal:1},
-{w:"W6",t:"The 2am test",v:"57",p:"€131K",r:"€92K",q:"—",b:"A whale asks the shift manager to ‘just lift it for tonight.’ There is no lever on a stopped session, and the property's own rule refuses a second budget the same night — the rail holds, the relationship survives the morning.",seal:1},
-{w:"W8",t:"Redirect economy visible",v:"60",p:"€204K",r:"€143K",q:"—",b:"Spa, F&amp;B, retail: redirect.issue puts preserved budget on a non-gaming line the CFO can point at, not a compliance cost."},
-{w:"W12",t:"Quarter close · the canon frame",v:"60",p:"€306K",r:"€214K",q:"84% v 61%",b:"€306K preserved, €214K captured in-building at 70% of the preserved budget, and 84% of limited VIPs still on property vs 61% under hard-stop-only — MODELED, anchored by the 2.92× empirical line. This exact frame is the package canon — recompute it in 05c."}];
+{w:"W6",t:"The 2am test",v:"57",p:"€131K",r:"€92K",q:"—",b:"A whale asks the shift manager to ‘just lift it for tonight.’ There is no lever on a stopped session, and the engine refuses a second budget until the 24-hour commitment ends — the rail holds, the relationship survives the morning.",seal:1},
+{w:"W8",t:"Redirect economy visible",v:"60",p:"€204K",r:"€143K",q:"—",b:"Spa, F&amp;B, retail: redirect.issue puts preserved budget on a non-gaming line the CFO can point at, not a compliance cost. It is credit until a guest redeems it."},
+{w:"W12",t:"Quarter close · the canon frame",v:"60",p:"€306K",r:"€214K",q:"84% v 61%",b:"€306K preserved, €214K issued as resort credit at 70% of the preserved budget, and 84% of limited VIPs still on property vs 61% under hard-stop-only — MODELED; no pilot has measured the retention difference. This exact frame is the package canon — recompute it in 05c, where what is redeemed and what is still owed sit beside it."}];
 var cur=0,timer=null;
-function draw(){el("tl").innerHTML=EV.map(function(e,i){return "<div class=\"ev "+(i==cur?"on":"")+(e.seal?" seal":"")+"\" data-i="+i+"><span class=when>"+e.w+"</span><div class=what>"+e.t+"</div></div>"}).join("");
-el("tl").querySelectorAll(".ev").forEach(function(v){v.onclick=function(){cur=+v.dataset.i;pause(cur===EV.length-1?"▶ Replay":"▶ Play");draw();};});
+function draw(){el("tl").innerHTML=EV.map(function(e,i){return "<div class=\"ev "+(i==cur?"on":"")+(e.seal?" seal":"")+"\" data-i="+i+" role=listitem tabindex=0"+(i==cur?" aria-current=step":"")+"><span class=when>"+e.w+"</span><div class=what>"+e.t+"</div></div>"}).join("");
+el("tl").querySelectorAll(".ev").forEach(function(v){v.onclick=function(){go(+v.dataset.i,false);};
+v.onkeydown=function(k){var i=+v.dataset.i;
+if(k.key==="Enter"||k.key===" "){k.preventDefault();go(i,true);}
+else if(k.key==="ArrowDown"||k.key==="ArrowRight"){k.preventDefault();go(Math.min(EV.length-1,i+1),true);}
+else if(k.key==="ArrowUp"||k.key==="ArrowLeft"){k.preventDefault();go(Math.max(0,i-1),true);}};});
 var e=EV[cur];el("kV").textContent=e.v;el("kP").textContent=e.p;el("kR").textContent=e.r;el("kQ").textContent=e.q;el("nt").textContent=e.w+" · "+e.t;el("nb").innerHTML=e.b;}
 function pause(label){if(timer!==null)clearInterval(timer);timer=null;el("play").textContent=label;}
+/* select a week by click or keyboard; from the keyboard the focus stays on the selected week */
+function go(i,focus){cur=i;pause(cur===EV.length-1?"▶ Replay":"▶ Play");draw();
+if(focus){var n=el("tl").querySelector("[data-i=\""+cur+"\"]");if(n)n.focus();}}
 el("play").onclick=function(){
   if(timer!==null){pause("▶ Resume");return}
   if(cur===EV.length-1)cur=0;
@@ -153,6 +166,6 @@ draw();
 <div class="tb-row"><div class="k">Studio</div><div class="v2">© 2026 Miloš Petrović · Trench Logic Studio · milos@trench-logic.com · trenchlogicstudio.com</div></div>
 <div class="tb-row"><div class="k">Project</div><div class="v2">VIP SmartContract — Compliance-as-Revenue Layer</div></div>
 <div class="tb-row"><div class="k">Document</div><div class="v2 mono">05d_Demo_D_Narrative_Proof.html</div></div>
-<div class="tb-row"><div class="k">Revision</div><div class="v2 mono">v3.21 · 2026</div></div>
+<div class="tb-row"><div class="k">Revision</div><div class="v2 mono">v3.22 · 2026</div></div>
 <div class="tb-row"><div class="k">Licence</div><div class="v2 seal">MIT LICENSE · OPEN SOURCE · PROVIDED AS IS, WITHOUT WARRANTY</div></div>
 </div></footer></body></html>

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT -->
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VIP v3.21 · 00 · Index</title><style>
+<title>VIP v3.22 · 00 · Index</title><style>
 :root{--paper:#F3F5F4;--panel:#E9EEEC;--ink:#122B33;--accent:#1E5A78;--accent-deep:#143E54;--accent-light:#7FB0C4;--seal:#973A3A;--graphite:#54646A;--line:#C7D2D1;--wash:#D8E2E4;--lavender:#D6D3E6;--rose:#DFB3BE;--display:"Schibsted Grotesk",Arial,sans-serif;--body:"Source Serif 4",Georgia,serif;--mono:"Fragment Mono","Courier New",monospace;--r:3px;--rule:1px solid var(--line)}
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
@@ -28,8 +28,8 @@ header{padding:54px 0 0}
 .card{border:var(--rule);border-radius:var(--r);background:#fff;padding:18px 20px;margin-bottom:16px}
 .card h3{margin-top:0}
 .grid{display:grid;gap:16px}
-.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
-.g3{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(min(210px,100%),1fr))}
 table.tls{width:100%;border-collapse:collapse;background:#fff;border:var(--rule);font-size:14.5px}
 table.tls th{font-family:var(--display);font-weight:700;font-size:13px;text-align:left;background:var(--panel);padding:10px 13px;border-bottom:var(--rule)}
 table.tls td{padding:10px 13px;border-bottom:var(--rule);vertical-align:top;font-family:var(--display);font-size:14px}
@@ -69,10 +69,20 @@ table.tls td.num,table.tls td.mono{font-family:var(--mono);font-size:12.5px;whit
 footer{padding:44px 0 64px}
 
 @media(max-width:560px){table.tls{display:block;overflow-x:auto}table.tls th{width:auto!important}}
+/* v3.22 · links and the four ways in */
+a{color:var(--accent-deep);text-underline-offset:2px}a:hover{color:var(--accent)}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cta{display:inline-block;font-family:var(--display);font-weight:700;font-size:15px;padding:12px 20px;border-radius:var(--r);background:var(--accent);color:#fff;text-decoration:none;border:1px solid var(--accent-deep);margin:4px 0 18px}
+.cta:hover{background:var(--accent-deep);color:#fff}
+.entry{display:block;border:var(--rule);border-left:3px solid var(--accent);border-radius:var(--r);background:#fff;padding:15px 18px;text-decoration:none;color:var(--ink)}
+.entry:hover{border-color:var(--accent);background:#fafcfc;color:var(--ink)}
+.entry b{display:block;font-family:var(--display);font-size:15.5px;margin-bottom:4px;color:var(--accent-deep)}
+.entry span{display:block;font-family:var(--display);font-size:13.5px;color:var(--graphite)}
+.entry.l2{border-left-color:var(--lavender)}.entry.l3{border-left-color:var(--rose)}.entry.lg{border-left-color:var(--graphite)}
 </style></head>
 <body>
 <header class="wrap">
-  <div class="mark"><div class="tile">TL</div><div class="word">TRENCH LOGIC STUDIO<span>VIP SmartContract · v3.21</span></div></div>
+  <div class="mark"><div class="tile">TL</div><div class="word">TRENCH LOGIC STUDIO<span>VIP SmartContract · v3.22</span></div></div>
   <span class="eyebrow">00 · Index & Reading Paths</span>
   <h1>VIP SmartContract — Compliance-as-Revenue Layer</h1>
   <p class="lede">A middleware policy engine that turns the stop-loss into a hospitality event: pre-committed budgets, a stop that pays the player, preserved spend redirected to the resort, every decision hash-anchored — funds never on chain. Open source under the MIT License, and operated entirely by whoever deploys it, after their own freedom-to-operate review.</p>
@@ -80,38 +90,51 @@ footer{padding:44px 0 64px}
 </header>
 <div class="wrap"><div class="dim"></div></div>
 
-<section class="wrap"><span class="eyebrow">Reading paths · start where your role starts</span>
- <h2>Five readers, five routes</h2>
- <div class="ann"><h3>Decision-maker</h3><p>01 Executive Brief → 05d Demo D → 10 Design Rationale.</p></div>
- <div class="ann l2"><h3>Compliance & legal</h3><p>01 scope note → 03a/03b thresholds & controls → 14 regulatory map → 15 boundaries. The FTO recommendation is stated in writing in 01.</p></div>
- <div class="ann l2"><h3>Technical</h3><p>05b policy engine → 04 API Spec → 04b Integration Reference → 04c compose → 13 MVP.</p></div>
- <div class="ann l3"><h3>Hosts & operations</h3><p>05a screens → 05d → 03b Advisory script.</p></div>
- <div class="ann lg"><h3>Finance</h3><p>05c for the quarter model, the rollover liability printed in it → 12 canon, every figure with its label and formula.</p></div>
+<section class="wrap"><span class="eyebrow">Start here · four demos, in the browser, nothing to install</span>
+ <h2>Try it first</h2>
+ <a class="cta" href="05b_Demo_B_Policy_Engine.html">Run the policy engine — Demo B →</a>
+ <div class="grid g2">
+  <a class="entry" href="05a_Demo_A_Screens.html"><b>05a · Host console</b><span>One VIP in six steps: flag, consent, the terms, arming, the stop and the credit.</span></a>
+  <a class="entry l2" href="05b_Demo_B_Policy_Engine.html"><b>05b · Policy engine</b><span>Set the stop-loss and deal the shoe: every stake is checked before the hand is dealt.</span></a>
+  <a class="entry l3" href="05c_Demo_C_Synthetic_Case_Study.html"><b>05c · Quarter model</b><span>Preserved budget, credit issued and redeemed, what is still owed, and retention — on sliders.</span></a>
+  <a class="entry lg" href="05d_Demo_D_Narrative_Proof.html"><b>05d · One quarter, event by event</b><span>Play the quarter week by week; the last frame is the canon.</span></a>
+ </div>
+ <p style="font-family:var(--display);font-size:14px;color:var(--graphite);margin-top:14px">The <a href="05_Demo_Guide.html">Demo Guide</a> routes each reader to the demo they will trust first. The runnable engine is <a href="13_VIP_MVP/">13 VIP MVP</a>: Node.js and <span style="font-family:var(--mono);font-size:13px">npm start</span>, no dependencies. Source: <a href="https://github.com/trenchlogicstudio-web/VIP-SmartContract-Demonstration">github.com/trenchlogicstudio-web/VIP-SmartContract-Demonstration</a>.</p>
 </section>
 <div class="wrap"><div class="dim"></div></div>
-<section class="wrap"><span class="eyebrow">File registry · canon v3.21</span>
+
+<section class="wrap"><span class="eyebrow">Reading paths · start where your role starts</span>
+ <h2>Five readers, five routes</h2>
+ <div class="ann"><h3>Decision-maker</h3><p><a href="01_Executive_Brief.docx">01 Executive Brief</a> → <a href="05d_Demo_D_Narrative_Proof.html">05d Demo D</a> → <a href="10_Design_Rationale.docx">10 Design Rationale</a>.</p></div>
+ <div class="ann l2"><h3>Compliance & legal</h3><p><a href="01_Executive_Brief.docx">01 scope note</a> → <a href="03a_Mode_Hard_Stop.docx">03a</a>/<a href="03b_Mode_Advisory.docx">03b</a> thresholds & controls → <a href="14_Regulatory_Parameter_Map.html">14 regulatory map</a> → <a href="15_Security_and_Boundaries.html">15 boundaries</a>. The FTO recommendation is stated in writing in 01.</p></div>
+ <div class="ann l2"><h3>Technical</h3><p><a href="05b_Demo_B_Policy_Engine.html">05b policy engine</a> → <a href="04_API_Spec.yaml">04 API Spec</a> → <a href="04b_Integration_Reference.js">04b Integration Reference</a> → <a href="04c_docker-compose.yml">04c compose</a> → <a href="13_VIP_MVP/">13 MVP</a>.</p></div>
+ <div class="ann l3"><h3>Hosts & operations</h3><p><a href="05a_Demo_A_Screens.html">05a screens</a> → <a href="05d_Demo_D_Narrative_Proof.html">05d</a> → <a href="03b_Mode_Advisory.docx">03b Advisory script</a>.</p></div>
+ <div class="ann lg"><h3>Finance</h3><p><a href="05c_Demo_C_Synthetic_Case_Study.html">05c</a> for the quarter model, with credit issued, redeemed and still owed, and the rollover liability → <a href="12_Canon.json">12 canon</a>, every figure with its label and formula.</p></div>
+</section>
+<div class="wrap"><div class="dim"></div></div>
+<section class="wrap"><span class="eyebrow">File registry · canon v3.22</span>
  <h2>What the package contains</h2>
  <table class="tls">
   <tr><th style="width:110px">Slot</th><th>Artifact</th></tr>
-  <tr><td class="num">00 · 01</td><td>Index · Executive Brief (with scope &amp; FTO note)</td></tr>
-  <tr><td class="num">03a · 03b</td><td>Modes — Hard-Stop · Advisory</td></tr>
-  <tr><td class="num">04 · 04b · 04c</td><td>API Spec · Integration Reference · docker-compose</td></tr>
-  <tr><td class="num">05</td><td>Demo Guide — the connecting thread through A · B · C · D (start here)</td></tr>
-    <tr><td class="num">05a–d</td><td>Demos: screens · policy engine · synthetic quarter · narrative proof</td></tr>
-  <tr><td class="num">10</td><td>Design Rationale (incl. on-chain rejection)</td></tr>
-    <tr><td class="num">12</td><td>Canon — the authoritative source for every fixed value, definition and term in this package</td></tr>
-      <tr><td class="num">13</td><td>VIP MVP — the runnable evaluation build: eight contract routes, the pre-stake check among them, guest and host console, hash-anchored audit, dormant downstream</td></tr>
-  <tr><td class="num">14</td><td>Regulatory Parameter Map — which restriction each parameter answers, and what the reference configuration is</td></tr>
-  <tr><td class="num">15</td><td>Security and Production Boundaries — what is implemented and verified, and what is deliberately the integrator's</td></tr>
+  <tr><td class="num">00 · 01</td><td>Index · <a href="01_Executive_Brief.docx">Executive Brief</a> (with scope &amp; FTO note)</td></tr>
+  <tr><td class="num">03a · 03b</td><td>Modes — <a href="03a_Mode_Hard_Stop.docx">Hard-Stop</a> · <a href="03b_Mode_Advisory.docx">Advisory</a></td></tr>
+  <tr><td class="num">04 · 04b · 04c</td><td><a href="04_API_Spec.yaml">API Spec</a> · <a href="04b_Integration_Reference.js">Integration Reference</a> · <a href="04c_docker-compose.yml">docker-compose</a></td></tr>
+  <tr><td class="num">05</td><td><a href="05_Demo_Guide.html">Demo Guide</a> — the connecting thread through A · B · C · D (start here)</td></tr>
+    <tr><td class="num">05a–d</td><td>Demos: <a href="05a_Demo_A_Screens.html">screens</a> · <a href="05b_Demo_B_Policy_Engine.html">policy engine</a> · <a href="05c_Demo_C_Synthetic_Case_Study.html">synthetic quarter</a> · <a href="05d_Demo_D_Narrative_Proof.html">narrative proof</a></td></tr>
+  <tr><td class="num">10</td><td><a href="10_Design_Rationale.docx">Design Rationale</a> (incl. on-chain rejection)</td></tr>
+    <tr><td class="num">12</td><td><a href="12_Canon.json">Canon</a> — the authoritative source for every fixed value, definition and term in this package</td></tr>
+      <tr><td class="num">13</td><td><a href="13_VIP_MVP/">VIP MVP</a> — the runnable evaluation build: nine contract routes, the pre-stake check and the published terms among them, guest and host console, hash-anchored audit, dormant downstream</td></tr>
+  <tr><td class="num">14</td><td><a href="14_Regulatory_Parameter_Map.html">Regulatory Parameter Map</a> — which restriction each parameter answers, and what the reference configuration is</td></tr>
+  <tr><td class="num">15</td><td><a href="15_Security_and_Boundaries.html">Security and Production Boundaries</a> — what is implemented and verified, and what is deliberately the integrator's</td></tr>
  </table>
- <p style="font-family:var(--display);font-size:13.5px;color:var(--graphite);margin-top:10px">Slots 02, 06–09 and 11 held the commercial and legal set and are not part of the open-source release. All metrics synthetic; LICENSE (MIT) covers every file. The responsible-gaming eligibility gate and the reward cap ship at their reference settings — 14 maps every lever to the restriction it answers.</p>
+ <p style="font-family:var(--display);font-size:13.5px;color:var(--graphite);margin-top:10px">Slots 02, 06–09 and 11 held the commercial and legal set and are not part of the open-source release. All metrics synthetic; <a href="LICENSE">LICENSE</a> (MIT) covers every file. From v3.22 the reward cap (€5,000 per stop) and the lifetime of the operator's eligibility determination (90 days) are on by default, and a stopped guest cannot commit a second budget for 24 hours — 14 maps every lever to the restriction it answers.</p>
 </section>
 
 <footer class="wrap"><div class="dim"></div><div class="titleblock">
 <div class="tb-row"><div class="k">Studio</div><div class="v2">© 2026 Miloš Petrović · Trench Logic Studio · milos@trench-logic.com · trenchlogicstudio.com</div></div>
 <div class="tb-row"><div class="k">Project</div><div class="v2">VIP SmartContract · Compliance-as-Revenue Layer</div></div>
 <div class="tb-row"><div class="k">Document</div><div class="v2 mono">00_INDEX.html</div></div>
-<div class="tb-row"><div class="k">Revision</div><div class="v2 mono">v3.21 · 2026</div></div>
+<div class="tb-row"><div class="k">Revision</div><div class="v2 mono">v3.22 · 2026</div></div>
 <div class="tb-row"><div class="k">Licence</div><div class="v2 seal">MIT LICENSE · OPEN SOURCE · PROVIDED AS IS, WITHOUT WARRANTY</div></div>
 </div></footer>
 

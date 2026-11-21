@@ -1,8 +1,16 @@
 # VIP SmartContract MVP
 
-This local Node.js application persists demo sessions and issued credits in SQLite. The guest screen, host console and admin page call the same engine as the HTTP API. Version **0.2.15** ships inside VIP SmartContract **v3.21**, and this folder also runs on its own.
+This local Node.js application persists demo sessions and issued credits in SQLite. The guest screen, host console and admin page call the same engine as the HTTP API. Version **0.2.16** ships inside VIP SmartContract **v3.22**, and this folder also runs on its own.
 
 Use Node 22.13+ on the 22 line or Node 24+ with built-in SQLite. Run `npm test` in this directory, then `npm start`. Open [the guest screen](http://127.0.0.1:3400/). For a worked example, set a budget of €1,000 in hard-stop mode and stake €500 with **Check, then report**. The stake fits exactly, the service returns 423 and preserves €500. Choose **Issue settled credits**. Under the default policy the guest receives €150 in spa credit, €125 in dining credit, €75 in retail credit, €100 in rollover and €50 in residual funds. See [configuration](.env.example), [the API contract](docs/04_API_Spec.yaml) and [the fixes](../docs/FIXES.md).
+
+## What 0.2.16 changes
+
+**The guest agrees to stated terms, and the record says which.** `GET /v3/terms` publishes the terms a pre-commitment is made under — the stop line, the split of the preserved budget, the ceiling on the incentive, the lifetime of the operator's determination and the commitment period — with a version that is a fingerprint of exactly those values. Every pre-commit records the version beside the amount: in the session, in `GET /v3/policy/state` and in the `precommit` event of the chain. A pre-commit that sends a `terms_version` other than the one in force is refused with `409 TERMS_CHANGED`, and nothing is armed. The guest screen shows the terms and sends their version.
+
+**A stop holds the guest for the commitment period.** A stopped session holds the guest until `VIP_COMMITMENT_HOURS` (24 by default) after it was armed: a second budget inside that period is refused with `409 COMMITMENT_ACTIVE`, which names the session and `precommit_after`. Until 0.2.15 a stopped guest could arm a second budget at once. `0` switches both holds off.
+
+**The ceiling and the determination lifetime are on by default.** Without configuration the incentive is capped at €5,000 per stop and the operator's eligibility determination counts for 90 days, so a pre-commit without `eligibility_at` issues nothing. `VIP_REWARD_CAP_EUR=off` and `VIP_ELIGIBILITY_TTL_DAYS=off` restore the uncapped, never-expiring reference configuration. The reference stop earns €4,590 and the seed records a fresh determination, so the seeded quarter is the canon quarter under either configuration. The guest screen sends the operator's determination with the pre-commit when **Eligibility determined by the operator today** is ticked.
 
 ## What 0.2.15 changes
 
@@ -12,7 +20,7 @@ The licence. VIP SmartContract is open source under the MIT License, and this bu
 
 **The stop line is held before the stake, not after it.** A tick reports money already consumed, so a session driven by ticks alone locks on the tick that crosses the line and that tick counts in full: on a line of €1,500 with €1,400 consumed, a reported €1,500 stopped the session at €2,900. `POST /v3/session/authorize` checks each stake before it is placed, reserves it against what is left to the line, and refuses one that does not fit (`409 STAKE_EXCEEDS_HEADROOM` with `headroom_eur`). The tick that reports the stake names its `authorization_id`. `POST /v3/session/release` returns a stake that was never played. Every stop now carries `overshoot_eur`: 0 when each stake was checked first, and the amount past the line when one was only reported.
 
-**A pre-commitment binds.** A second pre-commit used to replace a live session at once, so a larger budget sent in the middle of play moved the line. A live session younger than `VIP_COMMITMENT_HOURS` (24 by default) now refuses it with `409 SESSION_LIVE` and says from when a new one is accepted. After that period a live session is superseded as before. A stopped session does not hold the guest.
+**A pre-commitment binds.** A second pre-commit used to replace a live session at once, so a larger budget sent in the middle of play moved the line. A live session younger than `VIP_COMMITMENT_HOURS` (24 by default) now refuses it with `409 SESSION_LIVE` and says from when a new one is accepted. After that period a live session is superseded as before. A stopped session did not hold the guest until 0.2.16.
 
 The earlier 0.2.13 of this line did not contain the pre-stake check that a 0.2.13 published in October did. This release has both sets of changes.
 
@@ -25,9 +33,9 @@ Copied out of the repository, this folder runs without the in-memory reference s
 | [store.js](src/store.js) | Schema, migrations, write transactions and commit callbacks |
 | [boundary.js](src/boundary.js) | Local hash chain, optional outbound events and display-name erasure |
 | [seed.js](src/seed.js) | Replay synthetic sessions to build the initial ledger |
-| [web.js](src/web.js), [request.js](src/request.js) | Pages, product operations and eight contract routes |
+| [web.js](src/web.js), [request.js](src/request.js) | Pages, product operations and nine contract routes |
 | [test.js](test.js), [regression.test.js](regression.test.js) | Baseline and adversarial regression tests |
 
-The reference service retains state in memory. The MVP retains superseded sessions and instrument lifecycles on disk. Both accept an optional session ID on ticks, checks, releases and issues, an optional event ID on ticks, and both apply the pre-stake check and the commitment period. Audit payload fields and fingerprints are local to each implementation. The MVP also records advisory crossings, redemption, rollover use and erasure. Use tick, state and issuance responses for cross-implementation comparisons.
+The reference service retains state in memory. The MVP retains superseded sessions and instrument lifecycles on disk. Both accept an optional session ID on ticks, checks, releases and issues, an optional event ID on ticks, and both apply the pre-stake check, the commitment period on live and stopped sessions, and the published terms with the same version. Audit payload fields and fingerprints are local to each implementation. The MVP also records advisory crossings, redemption, rollover use and erasure. Use tick, state and issuance responses for cross-implementation comparisons.
 
 Released under the MIT License: see [LICENSE](LICENSE). Copyright (c) 2026 Miloš Petrović (Trench Logic Studio).

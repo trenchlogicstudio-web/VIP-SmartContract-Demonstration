@@ -1,4 +1,4 @@
-// VIP SmartContract · MVP v0.2.15 · entry
+// VIP SmartContract · MVP v0.2.16 · entry
 // Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
 'use strict';
 // A configuration the build refuses is reported as one sentence and exit code
@@ -37,6 +37,9 @@ createServer(db).listen(p, bindHost, () => {
               ` · escalate ${pct(P.W.escalate)}`);
   console.log(` settlement  redirect ${pct(P.W.redirect)} · rollover ${pct(P.W.rollover)}` +
               ` · residual to guest ${pct(P.W.residual)}`);
+  console.log(` guest terms ${P.TERMS_VERSION} · cap ${P.REWARD_CAP_EUR === null ? 'off' : '€' + P.REWARD_CAP_EUR} per stop` +
+              ` · determination ${P.ELIGIBILITY_TTL_DAYS === null ? 'never expires' : P.ELIGIBILITY_TTL_DAYS + ' days'}` +
+              ` · commitment ${P.COMMITMENT_HOURS} h`);
   console.log(` downstream  ${downstream.armed() ? 'ARMED' : 'DORMANT (Path 2 off — set VIP_DOWNSTREAM_URL + VIP_DOWNSTREAM_KEY)'}`);
   console.log(` guest       http://localhost:${p}/`);
   console.log(` host        http://localhost:${p}/host`);

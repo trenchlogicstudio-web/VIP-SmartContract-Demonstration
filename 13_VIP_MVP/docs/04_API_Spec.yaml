@@ -1,17 +1,37 @@
-# VIP SmartContract · v3.21 · Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
+# VIP SmartContract · v3.22 · Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
 openapi: 3.0.3
 info:
   title: VIP SmartContract — Compliance-as-Revenue API
-  version: "3.21"
+  version: "3.22"
   license:
     name: MIT
     url: https://opensource.org/license/mit
   description: Local, synthetic policy evaluation. A tick reports consumption already incurred, so the engine holds the stop
     line only where it sees the stake first. Ask POST /v3/session/authorize before each stake is accepted and report it with
     the authorization_id it returned. HTTP 423 carries a successful stop decision and says how far past the line consumption
-    went (overshoot_eur, 0 when every stake was checked). A pre-commitment binds for the commitment period. Use a separate
-    issuance call to create credit instruments.
+    went (overshoot_eur, 0 when every stake was checked). A pre-commitment binds for the commitment period, and from 3.22 a
+    stopped session holds the guest for the same period. GET /v3/terms publishes the terms a guest agrees to and their version;
+    every pre-commit records that version beside the amount. Use a separate issuance call to create credit instruments.
 paths:
+  /v3/terms:
+    get:
+      summary: The terms a guest agrees to, and their version
+      description: The stop line, the split of the preserved budget, the ceiling on the incentive, the lifetime of the
+        operator's eligibility determination and the commitment period, as configured, with a version that is a fingerprint
+        of exactly these values. Show the guest these terms and send terms_version back with the pre-commit; if the terms
+        changed in between, nothing is armed. Both services compute the same version for the same terms.
+      responses:
+        '200':
+          description: The terms in force.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Terms'
+        '403':
+          $ref: '#/components/responses/ForbiddenOrigin'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      operationId: getTerms
   /v3/precommit:
     post:
       summary: Register a pre-committed daily budget for a VIP (agreed with host)
@@ -63,7 +83,15 @@ paths:
                   format: date-time
                   description: When the operator made the determination. Use a real calendar date, a time and an explicit
                     UTC offset or Z. A future timestamp or an invalid date returns INVALID_ELIGIBILITY_AT. When omitted,
-                    the response echoes null. A configured TTL treats an absent determination as expired.
+                    the response echoes null. With a determination lifetime configured — 90 days by default from 3.22,
+                    VIP_ELIGIBILITY_TTL_DAYS=off to switch it off — an absent determination counts as expired and the
+                    incentive is withheld.
+                terms_version:
+                  type: string
+                  description: Optional. The version of the terms the guest was shown, from GET /v3/terms. If it is not the
+                    version in force, the pre-commit is refused with TERMS_CHANGED and nothing is armed. When omitted, the
+                    session records the version in force. Either way the response, the session state and the precommit
+                    event in the chain carry the version, beside the amount.
       responses:
         '201':
           description: Policy armed; thresholds per jurisdiction config. armed_at_eur is the first cent at or above the
@@ -75,14 +103,19 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
         '409':
-          description: SESSION_LIVE. The guest has a live session younger than the commitment period (VIP_COMMITMENT_HOURS,
-            24 by default, 0 to 168; 0 switches the lock off). The session, its budget and its line are untouched. A larger
+          description: SESSION_LIVE — the guest has a live session younger than the commitment period (VIP_COMMITMENT_HOURS,
+            24 by default, 0 to 168; 0 switches both holds off). The session, its budget and its line are untouched. A larger
             budget, the same budget and a smaller one are refused alike. After the period a pre-commit supersedes the live
-            session, which is closed and kept. A stopped session does not hold the guest.
+            session, which is closed and kept. COMMITMENT_ACTIVE — from 3.22 the guest's latest session has stopped inside
+            the same period, counted from when it was armed; the answer names the session and precommit_after. TERMS_CHANGED
+            — the request named a terms_version that is not the version in force; the answer carries the version in force.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SessionLive'
+                oneOf:
+                - $ref: '#/components/schemas/SessionLive'
+                - $ref: '#/components/schemas/CommitmentActive'
+                - $ref: '#/components/schemas/TermsChanged'
         '403':
           $ref: '#/components/responses/ForbiddenOrigin'
         '413':
@@ -438,6 +471,65 @@ components:
           - EVENT_CONFLICT
           - INTERNAL_ERROR
           - LEDGER_CONFLICT
+          - COMMITMENT_ACTIVE
+          - TERMS_CHANGED
+    Terms:
+      type: object
+      required:
+      - terms_version
+      - terms
+      properties:
+        terms_version:
+          type: string
+          pattern: ^terms-[0-9a-f]{12}$
+          description: The leading 12 hex characters of the SHA-256 of the terms below, serialised with their keys sorted.
+        terms:
+          type: object
+          required:
+          - default_mode
+          - stop_fraction
+          - advisory_nudge_fraction
+          - advisory_escalate_fraction
+          - redirect_split
+          - rollover_fraction
+          - residual_to_guest_fraction
+          - reward_cap_eur
+          - eligibility_default
+          - eligibility_ttl_days
+          - commitment_hours
+          properties:
+            default_mode:
+              type: string
+              enum:
+              - hard_stop
+              - advisory
+            stop_fraction:
+              type: number
+            advisory_nudge_fraction:
+              type: number
+            advisory_escalate_fraction:
+              type: number
+            redirect_split:
+              $ref: '#/components/schemas/Credits'
+            rollover_fraction:
+              type: number
+            residual_to_guest_fraction:
+              type: number
+            reward_cap_eur:
+              type: number
+              nullable: true
+              description: The ceiling on redirect plus rollover per stop. 5000 by default from 3.22; null when switched off.
+            eligibility_default:
+              type: string
+              enum:
+              - permitted
+              - suppressed
+            eligibility_ttl_days:
+              type: number
+              nullable: true
+              description: How long a determination counts. 90 by default from 3.22; null when switched off.
+            commitment_hours:
+              type: number
     Credits:
       type: object
       required:
@@ -481,11 +573,15 @@ components:
       - mode
       - eligibility
       - eligibility_at
+      - terms_version
       - fingerprint
       properties:
         session_id:
           type: string
           format: uuid
+        terms_version:
+          type: string
+          description: The terms the session was armed under, as GET /v3/terms names them.
         armed_at_eur:
           type: number
           minimum: 0
@@ -541,6 +637,10 @@ components:
         budget_eur:
           type: number
           minimum: 0
+        terms_version:
+          type: string
+          nullable: true
+          description: The terms the session was armed under; null for a session armed before 3.22.
         consumed_eur:
           type: number
           minimum: 0
@@ -825,6 +925,38 @@ components:
           type: string
           format: date-time
           description: From this time a pre-commit for the guest is accepted.
+    CommitmentActive:
+      type: object
+      required:
+      - error
+      - session_id
+      - precommit_after
+      properties:
+        error:
+          type: string
+          enum:
+          - COMMITMENT_ACTIVE
+        session_id:
+          type: string
+          format: uuid
+          description: The stopped session that holds the guest.
+        precommit_after:
+          type: string
+          format: date-time
+          description: From this time a pre-commit for the guest is accepted.
+    TermsChanged:
+      type: object
+      required:
+      - error
+      - terms_version
+      properties:
+        error:
+          type: string
+          enum:
+          - TERMS_CHANGED
+        terms_version:
+          type: string
+          description: The version in force. Show the guest the terms GET /v3/terms returns now before asking again.
   responses:
     BadRequest:
       description: 400 — INVALID_VIP · INVALID_BUDGET · INVALID_MODE · INVALID_DELTA · INVALID_STAKE · BAD_JSON · BAD_REQUEST
@@ -835,8 +967,8 @@ components:
             $ref: '#/components/schemas/Error'
     Conflict:
       description: 409 — NO_LIVE_SESSION · ALREADY_STOPPED · NOT_STOPPED · ALREADY_ISSUED · INCENTIVE_SUPPRESSED · ALREADY_SUPPRESSED
-        · EVENT_CONFLICT · AUTHORIZATION_CLOSED · STAKE_EXCEEDS_HEADROOM · SESSION_LIVE · LEDGER_CONFLICT on an inconsistent
-        historical SQLite issuance
+        · EVENT_CONFLICT · AUTHORIZATION_CLOSED · STAKE_EXCEEDS_HEADROOM · SESSION_LIVE · COMMITMENT_ACTIVE · TERMS_CHANGED
+        · LEDGER_CONFLICT on an inconsistent historical SQLite issuance
       content:
         application/json:
           schema:
@@ -873,6 +1005,8 @@ x-error-identifiers:
   - INVALID_ELIGIBILITY
   - INVALID_ELIGIBILITY_AT
   - SESSION_LIVE
+  - COMMITMENT_ACTIVE
+  - TERMS_CHANGED
   - BAD_JSON
   POST /v3/session/tick:
   - NO_LIVE_SESSION

@@ -71,8 +71,8 @@
   "_dual_form_rule": "Every quantity appears twice and never once: the typed value carries the number, a parallel map carries the sentence. Figures resolve in model_figures with their prose in model_figures._figure_kinds; prices carry numeric bounds with a prose field beside them. A label never replaces a value and a value never replaces its explanation — a machine must be able to compute from this file and a person must be able to read it.",
   "project": "VIP SmartContract — Compliance-as-Revenue Layer",
   "package": "VIP SmartContract, single package",
-  "package_version": "v3.21",
-  "canon_version": "1.16",
+  "package_version": "v3.22",
+  "canon_version": "1.17",
   "canon_established": "2026-07-27",
   "canon_change_log": "1.0 — first canon for this package. No value is invented: every figure is lifted from the package's own demo layer (05, 05a, 05b, 05c, 05d), its API specification (04), its reference implementation (04b), its mode documents (03a, 03b) and its pricing model (06b). The document layer and the demo layer already agreed — 84% / 61% / 70% / €306K / €214K / 2.92× carry the same values in 01, 02a, 02b, 06, 07, 08c and 11 as in the demos — so nothing had to be reconciled.",
   "studio": "Trench Logic Studio — Miloš Petrović · milos@trench-logic.com · trenchlogicstudio.com",
@@ -90,7 +90,7 @@
     "03a": {
       "name": "Hard-Stop",
       "trigger": "50% of pre-committed budget consumed",
-      "action": "Gaming locked for the day, engine-enforced, no override. Restated in canon 1.12: the session the policy stopped is locked — every further tick is refused and nothing lifts it. The budget is the day's by agreement, but the engine keeps no calendar: a new pre-commit for the same guest opens a new session, and whether one is allowed the same day is the operator's rule, applied where it takes the pre-commit. Restated in canon 1.15: the lock falls on the line itself where the platform checks each stake with the engine before accepting it (POST /v3/session/authorize); where consumption is only reported after the fact, the session locks on the tick that crosses the line, that tick counts in full, and the stop records how far past the line it went as overshoot_eur. And the engine now keeps one clock: while a session is live and younger than the commitment period, a new pre-commit for the same guest is refused, so a budget cannot be raised in the middle of play.",
+      "action": "Gaming locked for the day, engine-enforced, no override. Restated in canon 1.12: the session the policy stopped is locked — every further tick is refused and nothing lifts it. The budget is the day's by agreement, but the engine keeps no calendar: a new pre-commit for the same guest opens a new session, and whether one is allowed the same day is the operator's rule, applied where it takes the pre-commit. Restated in canon 1.15: the lock falls on the line itself where the platform checks each stake with the engine before accepting it (POST /v3/session/authorize); where consumption is only reported after the fact, the session locks on the tick that crosses the line, that tick counts in full, and the stop records how far past the line it went as overshoot_eur. And the engine now keeps one clock: while a session is live and younger than the commitment period, a new pre-commit for the same guest is refused, so a budget cannot be raised in the middle of play. Restated in canon 1.17: a stopped session now holds the guest for the rest of the commitment period, counted from when it was armed, so a second budget inside it is refused with COMMITMENT_ACTIVE; a gaming day that ends at a fixed hour remains the operator's rule.",
       "status": "canonical, audit-first deployment"
     },
     "03b": {
@@ -138,16 +138,18 @@
       "_what_it_is": "An absolute euro ceiling on the operator-funded part of a settlement — redirect plus rollover.",
       "_why_it_exists": "Without a ceiling the incentive grows with the pre-committed budget, so a larger declared budget earns a larger reward. That is an incentive to declare a larger budget, and it is the one attack on this design the mechanism does not answer by itself.",
       "reference_value": null,
-      "_reference_note": "Unset means uncapped, which is the configuration every figure in this canon was computed under.",
-      "binding_behaviour": "When the cap binds, the excess is not retained by the operator. It goes to the guest as residual, so a capped settlement returns more of the guest's own money, never less, and the model still closes: redirect + rollover + residual = preserved."
+      "_reference_note": "Off means uncapped, which is the configuration every figure in this canon was computed under. From v3.22 the ceiling is on by default at €5,000 per stop; VIP_REWARD_CAP_EUR=off switches it off. The reference stop preserves €5,100 and earns €4,590, under the default, so every figure in this canon holds under the default as well, while a budget declared larger no longer earns more.",
+      "binding_behaviour": "When the cap binds, the excess is not retained by the operator. It goes to the guest as residual, so a capped settlement returns more of the guest's own money, never less, and the model still closes: redirect + rollover + residual = preserved.",
+      "default_value": 5000
     },
     "eligibility_lifetime_days": {
       "_what_it_is": "How long the operator's responsible-gaming determination stays good for, in days.",
       "_why_it_exists": "A determination taken once and never revisited is the weakest form of a control. Supervisory expectations in several regimes include periodic review of a high-value customer's account, and a policy layer that honours a two-year-old assessment as though it were today's is honouring a memory of a control rather than the control.",
       "reference_value": null,
-      "_reference_note": "Unset means the determination never expires, which is the configuration every figure in this canon was computed under.",
+      "_reference_note": "Off means the determination never expires, which is the configuration every figure in this canon was computed under. From v3.22 the lifetime is on by default at 90 days; VIP_ELIGIBILITY_TTL_DAYS=off switches it off. A pre-commit that carries no determination date issues nothing under the default. The MVP seed records a fresh determination on every session, so its quarter is the canon quarter under the default as well.",
       "fail_direction": "CLOSED. When the lifetime elapses the incentive is withheld until the operator supplies a fresh determination; the stop and the preserved budget are unaffected and the whole preserved amount returns to the guest. An ABSENT or unparseable determination date is treated as expired rather than as fresh, because an unknown age is not a young age. Failing open would mean issuing value on stale grounds, which is the thing the lifetime exists to prevent.",
-      "recorded_separately": "An expiry writes eligibility.expired, distinct from incentive.suppressed. A decision to withhold and a failure to refresh are different facts and a reader of the chain must be able to tell them apart."
+      "recorded_separately": "An expiry writes eligibility.expired, distinct from incentive.suppressed. A decision to withhold and a failure to refresh are different facts and a reader of the chain must be able to tell them apart.",
+      "default_value": 90
     },
     "_settlement_closure": "The settlement is allocated in integer CENTS by the largest-remainder method, not by rounding each leg independently. Two invariants hold for every amount, and the suite asserts them exhaustively from €0.01 to €2,000.00 rather than on a sample: spa + fnb + retail === redirect, and redirect + rollover + residual === preserved. No leg is ever negative. Before v3.10 the legs were rounded independently and failed to close on 52,205 of the 200,000 amounts from €0.01 to €2,000.00 — 26.1%, roughly one in four — by one cent in either direction; every figure printed in this canon is unchanged by the correction, because at these figures the shares divide exactly. Closing is necessary and not sufficient: v3.16 closed on every one of those amounts and still put a cent into a different venue than the largest-remainder rule on 6,553 of them, because a floating-point remainder decided ties that position should decide. From v3.17 money is decided on integers (_prose._money_rule), and the suite recomputes the rule itself, independently, on every amount in the same range.",
     "commitment_period_hours": {
@@ -157,11 +159,12 @@
         168
       ],
       "env": "VIP_COMMITMENT_HOURS",
-      "_what_it_is": "How long a pre-commitment binds. While a session is live and younger than this, a new pre-commit for the same guest is refused with SESSION_LIVE, and the answer names the session and the time from which one will be accepted.",
+      "_what_it_is": "How long a pre-commitment binds, counted from the moment it was armed. While a session is live and younger than this, a new pre-commit for the same guest is refused with SESSION_LIVE; from v3.22, while the guest's latest session has stopped inside the same period, it is refused with COMMITMENT_ACTIVE. Both answers name the session and the time from which a new pre-commit will be accepted.",
       "_why_it_exists": "Until v3.19 any pre-commit replaced a live session at once, so one call with a larger budget moved the line in the middle of play. A limit that the next call can raise is not a pre-commitment.",
-      "_after_the_period": "A live session may be superseded as before; it is closed and kept, and its open checks close with it. A stopped session does not hold the guest.",
-      "_zero": "0 switches the lock off and restores immediate supersession. It is an operator-side setting and is stated as one.",
-      "_clock": "The age is read from the wall clock. A session whose opening lies in the future, after a clock set backwards, stays held: the lock fails closed."
+      "_after_the_period": "A live session may be superseded as before; it is closed and kept, and its open checks close with it. A stopped guest may commit again.",
+      "_zero": "0 switches both holds off: a pre-commit supersedes a live session at once, and a stopped guest may commit again at once. It is an operator-side setting and is stated as one.",
+      "_clock": "The age is read from the wall clock. A session whose opening lies in the future, after a clock set backwards, stays held, live or stopped: the lock fails closed.",
+      "_stopped_sessions": "Until v3.21 a stopped session did not hold the guest: a guest stopped by the line could arm a second budget at once, so a second limit on top of the first was one call away, and the package left that to the property's own rule. From v3.22 the stop holds the guest for the rest of the period. The engine keeps no calendar: the period is counted in hours from arming, and a gaming day that ends at a fixed hour remains the property's own rule."
     }
   },
   "api_surface": [
@@ -172,7 +175,8 @@
     "GET /v3/audit/{session_id}",
     "POST /v3/programme/suppress",
     "POST /v3/session/authorize",
-    "POST /v3/session/release"
+    "POST /v3/session/release",
+    "GET /v3/terms"
   ],
   "status_codes": {
     "precommit_armed": 201,
@@ -183,8 +187,10 @@
     "_prose": {
       "hard_stop_fired": "423 Locked is the contract's own signal that the Hard-Stop fired: gaming is locked for the day and rollover plus redirect have been issued. It is a state, not an error — the stop is the product working. Restated in canon 1.12: 423 means the session is locked and its settlement computed; the credits and the rollover are issued by POST /v3/redirect/issue, which can still refuse — INCENTIVE_SUPPRESSED when the incentive is withheld. From canon 1.15 every stop also states overshoot_eur: 0 when every stake was checked first, and the distance past the line when consumption was only reported.",
       "stake_authorized": "200 on POST /v3/session/authorize: the stake fits in what is left to the line and is reserved against it until the tick that reports it, or a release, closes the check. The answer carries authorization_id, session_id, the stake, what is reserved and what is left. In Advisory the check is answered and recorded and never refuses: enforced is false.",
-      "stake_released": "200 on POST /v3/session/release: a checked stake that was never played — a cancelled or voided wager — returns its reservation to the headroom, and nothing is consumed."
-    }
+      "stake_released": "200 on POST /v3/session/release: a checked stake that was never played — a cancelled or voided wager — returns its reservation to the headroom, and nothing is consumed.",
+      "terms_published": "200 on GET /v3/terms: the terms a guest agrees to — the stop line, the advisory lines, the split of the preserved budget, the rollover and the residual, the ceiling on the incentive, the eligibility default, the determination lifetime and the commitment period — with terms_version, 'terms-' and the leading 12 hex characters of the SHA-256 of those values serialised with their keys sorted. Both services compute it the same way, so the same terms carry the same version in both. Every pre-commit records the version beside the amount."
+    },
+    "terms_published": 200
   },
   "error_identifiers": {
     "_rule": "Errors have an error identifier. A 423 locked response is a successful policy stop with a settlement body. See 04_API_Spec.yaml.",
@@ -218,6 +224,8 @@
     "AUTHORIZATION_UNKNOWN": 404,
     "AUTHORIZATION_CLOSED": 409,
     "SESSION_LIVE": 409,
+    "COMMITMENT_ACTIVE": 409,
+    "TERMS_CHANGED": 409,
     "_prose": {
       "NO_LIVE_SESSION": "A tick arrived for a VIP with no armed session, or for a session already stopped. Correction in canon 1.12: a tick for a session the policy has already stopped is answered ALREADY_STOPPED, as both implementations have always done. NO_LIVE_SESSION answers a vip_id with no session on record — including one that is not a string, which names none — on tick, state and redirect/issue.",
       "INVALID_VIP": "Missing or non-string vip_id on the pre-commit call. The suppression call refuses the same way.",
@@ -228,7 +236,7 @@
       "NOT_STOPPED": "Redirect requested before the policy fired. Credits are issued from preserved budget, which only exists after a stop.",
       "ALREADY_ISSUED": "Redirect requested twice for the same session. Credits are issued once.",
       "SESSION_UNKNOWN": "No audit rows exist for that session id.",
-      "NO_ROUTE": "No route matches the request; the response names the eight spec routes.",
+      "NO_ROUTE": "No route matches the request; the response names the nine spec routes.",
       "BAD_REQUEST": "The request line is not a parseable URL. Returned by the transport layer before any route is chosen. From v3.17 the audit route answers it as well, for a session_id that is not valid percent-encoding, which both implementations had answered with a 500.",
       "BAD_JSON": "The request body is not parseable JSON. Returned by the transport layer before any handler runs. From v3.17 it also answers a body that parses to anything but a JSON object — null, an array, a bare string or number — before any route reads it; until then such a body reached the route, where a null was answered with a 500.",
       "INVALID_ELIGIBILITY": "the eligibility value supplied at pre-commit is not one of permitted | suppressed.",
@@ -240,7 +248,9 @@
       "STAKE_EXCEEDS_HEADROOM": "In Hard-Stop, the stake is larger than what is left to the line once every stake checked and not yet reported is counted as lost. It is refused before it is placed, the answer names headroom_eur, and the refusal is written to the chain as stake.refused although the request that caused it fails.",
       "AUTHORIZATION_UNKNOWN": "A tick or a release names a check that this guest's current session never granted: an unknown id, one that is not a string, another guest's, or one granted under a session a later pre-commit replaced. Nothing moves.",
       "AUTHORIZATION_CLOSED": "A tick or a release names a check that is already closed: reported, released, or closed by the stop. Nothing moves. A report that carries an event_id and is delivered twice is answered from its receipt and counts once.",
-      "SESSION_LIVE": "A pre-commit arrived for a guest whose session is live and younger than the commitment period (VIP_COMMITMENT_HOURS, 24 by default). The session, its budget and its line are untouched. The answer names session_id and supersede_after. A larger, an equal and a smaller budget are refused alike."
+      "SESSION_LIVE": "A pre-commit arrived for a guest whose session is live and younger than the commitment period (VIP_COMMITMENT_HOURS, 24 by default). The session, its budget and its line are untouched. The answer names session_id and supersede_after. A larger, an equal and a smaller budget are refused alike.",
+      "COMMITMENT_ACTIVE": "From canon 1.17: a pre-commit arrived for a guest whose latest session stopped inside the commitment period, counted from when it was armed. Nothing is armed. The answer names session_id and precommit_after, the time from which a pre-commit is accepted. A larger, an equal and a smaller budget are refused alike.",
+      "TERMS_CHANGED": "From canon 1.17: the pre-commit named a terms_version that is not the version in force, so the guest was shown other terms than the ones the engine would arm. Nothing is armed. The answer carries the terms_version in force."
     }
   },
   "event_vocabulary": [
@@ -254,7 +264,7 @@
   ],
   "_event_scope": {
     "_rule": "Parity runs in both directions: every event named here is emitted by the reference implementation, and every event the reference emits is named here. The MVP in slot 13 emits these seven with the same meaning plus five of its own, which are enumerated in its own CANON.json and belong to that build alone.",
-    "precommit": "emitted when a budget is armed; carries vip_id, budget and mode",
+    "precommit": "emitted when a budget is armed; carries vip_id, budget and mode, and from canon 1.17 terms_version: the amount and the terms the guest agreed to, in one link of the chain",
     "policy.stop": "emitted when the threshold fires; carries preserved, rollover and the credit split, and returns the chain fingerprint; it is also emitted when a programme suppression stops a live session, with the trigger suppression; from canon 1.15 it also carries overshoot_eur and authorizations_voided",
     "_note": "Seven events from canon 1.15; five until then. The audit chain is a SHA-256 fold of the previous chain value with each new event, so altering any earlier row breaks every fingerprint after it; each event returns the leading 16 hex characters as its fingerprint.",
     "redirect.issue": "emitted when resort credits are issued from preserved budget; carries the split, the rollover and the residual",
@@ -310,7 +320,7 @@
       "_rule": "Labelling kept in a parallel map so every figure above stays the same JSON type it has always been. A label must never be written over a value — that destroys the machine-readability this file exists to provide.",
       "limited_vips_per_quarter": "ANCHORED — modelled count of VIPs who set a limit in the quarter. Demo slider band 20–150.",
       "preserved_per_vip_eur": "ANCHORED — modelled preserved budget per limited VIP per quarter. Demo slider band €2,000–€12,000.",
-      "non_gaming_capture": "ANCHORED — modelled share of preserved budget captured as resort spend. Demo slider band 40–90%. Assumes integrated resort amenities; a gaming-only property sits near the bottom of the band.",
+      "non_gaming_capture": "ANCHORED — modelled share of preserved budget issued as resort credit. Demo slider band 40–80%: 80% is the most the engine accepts while the rollover keeps its 20% of the preserved budget, and canon 1.16 and earlier wrote 40–90% here, a band the reference configuration cannot reach. Assumes integrated resort amenities; a gaming-only property sits near the bottom of the band. Issued is not redeemed: credit becomes spend when a guest uses it, and 05c shows the redeemed share as a separate, labelled assumption.",
       "retention_incentive": "ANCHORED — modelled quarter retention of limited VIPs under incentive mode. Demo slider band 61–92%. Above 90% the model prints its own warning that the figure strains even the incentive story, and the slider stops at the top of the band.",
       "retention_hard_stop_only": "ANCHORED — the fixed baseline the incentive figure is compared against. Not a slider; it is the comparison point and the lower bound of the retention band.",
       "preserved_quarter_eur": "DERIVED — limited_vips_per_quarter × preserved_per_vip_eur (60 × 5,100), reported as €306K",
@@ -322,7 +332,7 @@
       "post_stop_churn_baseline": "ANCHORED — modelled share of stopped players lost within the quarter with no incentive layer",
       "post_stop_churn_incentive": "ANCHORED — the same measure with the incentive layer",
       "host_hours_index": "ANCHORED — modelled host time spent on limit conflicts, indexed against the operator's own baseline of 100",
-      "limit_setter_odds_ratio": "EMPIRICAL — odds of limit-setters remaining active at one year, from peer-reviewed responsible-gambling literature. The ONLY non-synthetic figure in this package: it is what carries the plausibility of everything above, and it must never be presented as this package's own result.",
+      "limit_setter_odds_ratio": "EMPIRICAL — odds of limit-setters remaining active at one year, against players who set no limit, from peer-reviewed responsible-gambling literature. The ONLY non-synthetic figure in this package, and it must never be presented as this package's own result. Restated in canon 1.17: it is cited as context, not as proof of the modelled quarter. Both variants the package compares already have a limit, so the study does not measure what the incentive adds; the retention pair stays an assumption until a pilot measures it.",
       "ggr_share_top_1pct": "ANCHORED — industry concentration estimate, the reason the VIP cohort is worth protecting"
     },
     "boundary": "Preserved budget is not new revenue. These figures price money the guest had already committed and would otherwise have taken out of the building; they are not a claim of incremental spend created.",
@@ -342,13 +352,13 @@
   },
   "mechanism_scope": "The pre-commitment policy architecture; the engine-enforced threshold with its two operating modes; the responsible-gaming eligibility gate that decides whether a settlement may issue, including programme-level suppression and the determination lifetime after which the gate fails closed; the reward cap on the operator-funded part of a settlement; the rollover-and-redirect economics that convert preserved budget into non-gaming revenue; and the hash-anchored audit trail, including its record of the occasions on which nothing was issued.",
   "implementation": {
-    "reference_service": "04b_Integration_Reference.js — registry slot 04b. Eight spec routes, zero dependencies, in memory by design, Node >= 18. The smallest readable statement of the mechanism, and it is still shipped.",
-    "mvp": "Slot 13_VIP_MVP — VIP MVP, the runnable evaluation build. Node >= 22.13 for the built-in node:sqlite, no dependencies, no build step. Adds persistence, the guest and host surfaces, credit and rollover as first-class objects, the audit chain, erasure and a dormant downstream around the same policy. Current build in the slot: VIP MVP v0.2.15, from package v3.21.",
-    "mvp_relationship": "The MVP does not replace the reference and does not reimplement it. Its policy core is the reference arithmetic in pure form, and its eight /v3 routes are byte-compatible with the reference: same paths, same status codes, same error identifiers, same response fields. The MVP test suite asserts that identity by loading slot 04b and comparing both on the same inputs, so the claim is checked rather than believed. Restated in canon 1.12: the paths, status codes, error identifiers and response fields are the same on every route except inside the events the audit route returns, which are each implementation's own record, and a request outside /v3 that matches nothing, which the MVP answers with spec_routes where the reference names the same list routes. The parity block checks the arithmetic both share; the MVP's README lists these differences among its documented divergences.",
+    "reference_service": "04b_Integration_Reference.js — registry slot 04b. Nine spec routes, zero dependencies, in memory by design, Node >= 18. The smallest readable statement of the mechanism, and it is still shipped.",
+    "mvp": "Slot 13_VIP_MVP — VIP MVP, the runnable evaluation build. Node >= 22.13 for the built-in node:sqlite, no dependencies, no build step. Adds persistence, the guest and host surfaces, credit and rollover as first-class objects, the audit chain, erasure and a dormant downstream around the same policy. Current build in the slot: VIP MVP v0.2.16, from package v3.22.",
+    "mvp_relationship": "The MVP does not replace the reference and does not reimplement it. Its policy core is the reference arithmetic in pure form, and its nine /v3 routes are byte-compatible with the reference: same paths, same status codes, same error identifiers, same response fields. The MVP test suite asserts that identity by loading slot 04b and comparing both on the same inputs, so the claim is checked rather than believed. Restated in canon 1.12: the paths, status codes, error identifiers and response fields are the same on every route except inside the events the audit route returns, which are each implementation's own record, and a request outside /v3 that matches nothing, which the MVP answers with spec_routes where the reference names the same list routes. The parity block checks the arithmetic both share; the MVP's README lists these differences among its documented divergences.",
     "stack": "04c_docker-compose.yml runs both as shipped: the reference on port 8080 and the MVP on port 3400.",
     "test_suite": "Run npm test. The full package exercises both services and the offline demos. In the standalone MVP the comparisons that need the separate reference service or package demos are explicitly skipped. See docs/FIXES.md.",
     "standalone_copy": "The 13_VIP_MVP folder also runs on its own: copied out of the repository it is the standalone VIP MVP, and the checks that need slot 04b or the offline demos report explicit skips.",
-    "adoption": "Package v3.16 adopts VIP MVP v0.2.10. Package v3.17 adopts VIP MVP v0.2.11. Package v3.18 adopts VIP MVP v0.2.12. Package v3.19 adopts VIP MVP v0.2.13. Package v3.20 adopts VIP MVP v0.2.14. Package v3.21 adopts VIP MVP v0.2.15.",
+    "adoption": "Package v3.16 adopts VIP MVP v0.2.10. Package v3.17 adopts VIP MVP v0.2.11. Package v3.18 adopts VIP MVP v0.2.12. Package v3.19 adopts VIP MVP v0.2.13. Package v3.20 adopts VIP MVP v0.2.14. Package v3.21 adopts VIP MVP v0.2.15. Package v3.22 adopts VIP MVP v0.2.16.",
     "_status_v3_2": "The v3.2 reference is NOT a service. It is a 30-line module exporting precommit, tick and _state, with a require.main walkthrough; it has no HTTP listener, reads no environment variable, and does not export the stop path even though the stop is the mechanism being sold. Its 04c is a copy of another product's compose file. Both are replaced in the same revision that seals this canon."
   },
   "runtime_floors": {
@@ -447,9 +457,12 @@
     "quarter": "All credit totals use seeded stopped sessions. Rollover allocated at stop and still outstanding are separate balances.",
     "study": "https://doi.org/10.1007/s11469-019-00084-3",
     "pre_stake_check": "POST /v3/session/authorize reserves each stake against what is left to the published line and in Hard-Stop refuses one that does not fit; POST /v3/session/release returns a stake that was never played; a tick may name the check it reports. reserved_eur and headroom_eur are on the state, and every stop states overshoot_eur and authorizations_voided. Enforced on both services.",
-    "commitment_period": "A live session younger than VIP_COMMITMENT_HOURS is not superseded: the pre-commit is refused with SESSION_LIVE. Enforced on both services."
+    "commitment_period": "A live session younger than VIP_COMMITMENT_HOURS is not superseded: the pre-commit is refused with SESSION_LIVE. From v3.22 a session that stopped inside the same period refuses it with COMMITMENT_ACTIVE. Enforced on both services.",
+    "terms": "GET /v3/terms publishes the terms with their version; every pre-commit records the version beside the amount, and one naming another version is refused with TERMS_CHANGED. Enforced on both services, with the same version for the same terms.",
+    "defaults": "From v3.22 VIP_REWARD_CAP_EUR defaults to 5000 and VIP_ELIGIBILITY_TTL_DAYS to 90; off switches either off. Unset or blank means the default on both services."
   },
   "canon_change_log_15": "1.14 — Package v3.19 contains MVP v0.2.13. Both releases include the corrected transaction, settlement, reporting, input-validation and replay behavior documented in release_behaviour. The standalone MVP and slot 13 carry identical files.",
   "canon_change_log_16": "1.15 — Package v3.20 contains MVP v0.2.14. Two changes of behaviour, on both services. First, the pre-stake check: the package dated 10 November 2026 (v3.19 / v0.2.13) was built from v3.18 and did not contain the check that the demonstration release published in October 2026 under the same numbers had introduced. It is here now: two routes (the contract surface is eight /v3 routes), five error identifiers, two events, overshoot_eur and authorizations_voided on every stop, reserved_eur and headroom_eur on the state. Until this edition the stop was applied to consumption after it was reported, so one report could carry a session far past its line: 1,500 reported at 1,400 consumed against a line of 1,500 locked the session at 2,900. Second, the commitment period: a new pre-commit used to replace a live session at once, so a guest at 450 of a 500 line could be given a line of 50,000 by one call. A live session younger than VIP_COMMITMENT_HOURS now refuses it with SESSION_LIVE. What the engine still cannot do is stated where it applies: it holds the line only where the platform asks before it accepts each stake and no wager consumes more than the stake checked for it. No threshold, split, model figure or metric changed value.",
-  "canon_change_log_17": "1.16 — v3.21, the open-source release, with VIP MVP v0.2.15. The package is released under the MIT License, which LICENSE states and terms now names. The commercial and legal set (02a, 02b, 06, 06b, 07, 08, 08b, 08c, 08d), the AS-IS notice (09) and the battlecard (11) are withdrawn from the registry, and with them buyer_segments, pricing, competitor_classes, as_is_scope and _licensed_ip_rule; licensed_ip is kept, word for word, as mechanism_scope. Documents no longer carry a confidentiality status or a proof-chain line, and the wording that addressed a buyer addresses the operator or the integrator. No threshold, split, model figure, metric, route, status code, error identifier or event changed value."
+  "canon_change_log_17": "1.16 — v3.21, the open-source release, with VIP MVP v0.2.15. The package is released under the MIT License, which LICENSE states and terms now names. The commercial and legal set (02a, 02b, 06, 06b, 07, 08, 08b, 08c, 08d), the AS-IS notice (09) and the battlecard (11) are withdrawn from the registry, and with them buyer_segments, pricing, competitor_classes, as_is_scope and _licensed_ip_rule; licensed_ip is kept, word for word, as mechanism_scope. Documents no longer carry a confidentiality status or a proof-chain line, and the wording that addressed a buyer addresses the operator or the integrator. No threshold, split, model figure, metric, route, status code, error identifier or event changed value.",
+  "canon_change_log_18": "1.17 — v3.22, with VIP MVP v0.2.16, after an outside review of v3.21. Four changes of behaviour, on both services. GET /v3/terms publishes the terms a guest agrees to with a version, every pre-commit records the version beside the amount, and one naming another version is refused with TERMS_CHANGED. A stopped session holds the guest for the rest of the commitment period, so a second budget inside it is refused with COMMITMENT_ACTIVE. The reward cap is on by default at €5,000 per stop and the determination lifetime at 90 days; off switches either off. No threshold, split, model figure or metric changed value: the reference stop earns €4,590, under the default ceiling. The contract surface is nine /v3 routes; the error identifiers gain COMMITMENT_ACTIVE and TERMS_CHANGED; precommit carries terms_version. Two statements are corrected: the demo band of non_gaming_capture is 40–80%, the band the engine can reach, and the limit-setting study is restated as context that does not measure the incentive's added effect. The index and the demo guide link to every demo, and 05c shows issued, redeemed and still-owed credit beside each other."
 }

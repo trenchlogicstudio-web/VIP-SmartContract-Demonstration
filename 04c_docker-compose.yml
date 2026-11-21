@@ -1,4 +1,4 @@
-# VIP SmartContract v3.21 · Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
+# VIP SmartContract v3.22 · Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
 # From the repository root: docker compose -f 04c_docker-compose.yml up
 # Both ports are published on the Docker host's loopback interface.
 x-policy: &policy
@@ -12,6 +12,8 @@ x-policy: &policy
   VIP_SPLIT_FNB: ${VIP_SPLIT_FNB:-0.25}
   VIP_SPLIT_RETAIL: ${VIP_SPLIT_RETAIL:-0.15}
   VIP_ELIGIBILITY_DEFAULT: ${VIP_ELIGIBILITY_DEFAULT:-permitted}
+  # Empty means the engine's default from v3.22: a determination counts for 90 days
+  # and the incentive is capped at 5000 euro per stop. Set either to off to switch it off.
   VIP_ELIGIBILITY_TTL_DAYS: ${VIP_ELIGIBILITY_TTL_DAYS:-}
   VIP_REWARD_CAP_EUR: ${VIP_REWARD_CAP_EUR:-}
   VIP_COMMITMENT_HOURS: ${VIP_COMMITMENT_HOURS:-24}

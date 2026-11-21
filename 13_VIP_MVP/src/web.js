@@ -1,8 +1,8 @@
-// VIP SmartContract · MVP v0.2.15 · web layer
+// VIP SmartContract · MVP v0.2.16 · web layer
 // Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
 //
 // Two surfaces, deliberately separated:
-//   /v3/*   the architecture contract from 04_API_Spec.yaml. Eight routes, at
+//   /v3/*   the architecture contract from 04_API_Spec.yaml. Nine routes, at
 //           the paths, status codes and error identifiers of registry slot
 //           04b_Integration_Reference.js. This is what an integrator implements in
 //           their own platform.
@@ -33,7 +33,7 @@ const ESC = String.raw`const esc=v=>String(v).replace(/[&<>"'\\]/g,c=>'&#'+c.cha
 const SPEC_ROUTES = ['POST /v3/precommit', 'POST /v3/session/tick', 'GET /v3/policy/state',
                      'POST /v3/redirect/issue', 'GET /v3/audit/{session_id}',
                      'POST /v3/programme/suppress', 'POST /v3/session/authorize',
-                     'POST /v3/session/release'];
+                     'POST /v3/session/release', 'GET /v3/terms'];
 
 // ── presentation ──────────────────────────────────────────────────────────
 // No external stylesheet, no web font, no network call of any kind: the
@@ -105,8 +105,14 @@ function guestPage() {
   <label>Guest ID <input id="vip" placeholder="vip_id" value="VIP-D02"></label>
   <label>Budget (€) <input id="budget" type="number" min="0.01" max="10000000" step="0.01" value="8000"></label>
   <select id="mode"><option value="hard_stop">hard_stop</option><option value="advisory" selected>advisory</option></select>
+  <label><input id="determined" type="checkbox" checked> Eligibility determined by the operator today</label>
   <button onclick="pre()">Arm policy</button>
   <span class="note">POST /v3/precommit</span>
+  <p class="note" id="terms">Terms: GET /v3/terms</p>
+  <p class="note">The guest agrees to these terms. The pre-commit sends their version back, so the engine
+  arms nothing if the terms changed after they were shown, and the session and the audit chain record the
+  amount and the version agreed to. Without today's determination the incentive is withheld: a
+  determination is good for a limited number of days.</p>
 </div>
 <div class="panel"><h2>Live session</h2>
   <p class="note">A checked stake asks first: the engine refuses a stake larger than what is left to the
@@ -130,8 +136,22 @@ const $=s=>document.querySelector(s);
 const show=o=>{$('#out').textContent=JSON.stringify(o,null,2)};
 async function call(m,u,b){const r=await fetch(u,{method:m,headers:{'content-type':'application/json'},
   body:b?JSON.stringify(b):undefined});const j=await r.json();show({status:r.status,body:j});return j}
-function pre(){return call('POST','/v3/precommit',{vip_id:$('#vip').value,budget_eur:Number($('#budget').value),
-  mode:$('#mode').value}).then(load)}
+let termsVersion=null;
+async function loadTerms(){
+  const r=await fetch('/v3/terms');const j=await r.json();const t=j.terms;termsVersion=j.terms_version;
+  $('#terms').textContent='Terms '+j.terms_version+' · stop at '+Math.round(t.stop_fraction*1000)/10+'% of the budget · '+
+    (t.reward_cap_eur===null?'no ceiling on the incentive':'incentive capped at €'+t.reward_cap_eur.toLocaleString('en-US')+' per stop')+' · '+
+    (t.eligibility_ttl_days===null?'a determination never expires':'a determination counts for '+t.eligibility_ttl_days+' days')+' · '+
+    'no second budget for '+t.commitment_hours+' h after one is armed';
+}
+function pre(){
+  const body={vip_id:$('#vip').value,budget_eur:Number($('#budget').value),mode:$('#mode').value};
+  if(termsVersion)body.terms_version=termsVersion;
+  // The operator's determination, dated a minute back so a client clock a little
+  // ahead of the engine's is not read as a determination from the future.
+  if($('#determined').checked)body.eligibility_at=new Date(Date.now()-60000).toISOString();
+  return call('POST','/v3/precommit',body).then(j=>{if(j&&j.error==='TERMS_CHANGED')loadTerms();return load()})}
+loadTerms().catch(()=>{});
 let currentSession = null, requestNumber = 0;
 function sessionAction(path, extra) {
   if (!currentSession) return;
@@ -337,6 +357,7 @@ function createServer(db) {
         }
 
         // /v3 — the specification surface
+        if (req.method === 'GET' && path === '/v3/terms') return send(200, E.terms());
         if (req.method === 'POST' && path === '/v3/precommit') return send(201, E.precommit(db, payload));
         if (req.method === 'POST' && path === '/v3/session/tick') {
           const r = E.tick(db, payload);
@@ -392,6 +413,7 @@ function createServer(db) {
             eligibility_ttl_days: P.ELIGIBILITY_TTL_DAYS,
             downstream: B.downstream.armed() ? 'ARMED' : 'DORMANT',
             commitment_hours: P.COMMITMENT_HOURS,
+            terms_version: P.TERMS_VERSION,
             spec_routes: SPEC_ROUTES
           });
         }

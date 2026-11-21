@@ -1,6 +1,6 @@
 {
   "name": "vip-mvp",
-  "version": "0.2.15",
+  "version": "0.2.16",
   "private": true,
   "description": "VIP SmartContract local evaluation engine, SQLite ledger and synthetic resort console.",
   "license": "MIT",

@@ -1,5 +1,56 @@
 # Changelog
 
+## v3.22 · MVP v0.2.16 — 21 November 2026
+
+The corrections after an outside review of v3.21. No threshold, split, model figure or
+metric changed value.
+
+- **The terms a guest agrees to, and which ones.** `GET /v3/terms` publishes the stop
+  line, the split of the preserved budget, the ceiling on the incentive, the lifetime of
+  the operator's determination and the commitment period, with a version that is the
+  fingerprint of exactly those values. Every pre-commit records the version beside the
+  amount, in the session, the state and the chain; one that names another version is
+  refused with `409 TERMS_CHANGED` and nothing is armed. Both services compute the same
+  version. The guest screen shows the terms and sends their version; Demo A shows what
+  is recorded at the consent.
+- **A stop holds the guest.** A stopped session holds the guest until the commitment
+  period, counted from when it was armed, ends: a second budget is refused with
+  `409 COMMITMENT_ACTIVE`, `session_id` and `precommit_after`. Until v3.21 a stopped guest
+  could arm a second budget at once. `VIP_COMMITMENT_HOURS=0` switches both holds off.
+- **Stricter defaults.** The reward cap is on by default at €5,000 per stop and the
+  determination lifetime at 90 days, so a pre-commit without a determination date issues
+  nothing; `off` switches either off, and blank means the default. The reference stop
+  earns €4,590 and the seed records a fresh determination, so the canon quarter is the
+  same under the defaults.
+- **Contract.** Nine `/v3` routes. `COMMITMENT_ACTIVE` and `TERMS_CHANGED` join the error
+  identifiers, `terms_version` the pre-commit request and response, the state and the
+  `precommit` event, and the specification validates as OpenAPI 3.0.3. A database written
+  before 0.2.16 gains the `terms_version` column; its sessions keep `null` there.
+- **Pages that lead somewhere.** The index opens with four direct entries and a button to
+  Demo B, and the index and the demo guide link every demo, document and the runnable
+  build; every page links back to the index.
+- **Demo C.** Credit issued, redeemed and still owed sit side by side, with the redeemed
+  share as a labelled assumption; retention can be set below the 61% hard-stop baseline,
+  with a downside preset and a warning; the capture band is 40–80% in the canon as on the
+  slider.
+- **What the study shows.** The limit-setting study is cited as context in every page
+  and in the canon: it compares players who set a limit with players who set none, and
+  does not measure what the incentive adds, so the 84% vs 61% pair is labelled as not
+  yet measured.
+- **Keyboard and screen readers.** Demo D's weeks take focus and answer Enter and the
+  arrow keys; the sliders in Demos A, B and C carry their labels and descriptions.
+- **Phones.** On screens narrower than 860 px the control panel of Demos B and C stayed
+  pinned to the top and covered the results; it now scrolls with the page, and on a
+  desktop it scrolls inside itself when it is taller than the window. Demo C's
+  settlement table becomes labelled rows on a phone, and no page is wider than a
+  320 px screen.
+- **Documents.** README files, the integration guide, the regulatory map (14), the
+  security page (15), 03a, 10, both canons (1.17 and MVP 1.16) and
+  [`docs/FIXES.md`](docs/FIXES.md), which records each change with its code and test.
+- **Verified:** 314 checks and 54 regression scenarios pass, none skipped, on Node.js
+  22.13.0, 22.23.4, 24 and 26; copied out of the repository, `13_VIP_MVP` passes with its
+  stated skips. The four Word documents render on the same number of pages as before.
+
 ## v3.21 · MVP v0.2.15 — 20 November 2026
 
 The open-source release. Nothing in the engine, the routes, the consoles or the

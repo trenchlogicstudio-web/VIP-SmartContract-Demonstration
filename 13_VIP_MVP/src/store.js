@@ -1,4 +1,4 @@
-// VIP SmartContract · MVP v0.2.15 · store (schema + open)
+// VIP SmartContract · MVP v0.2.16 · store (schema + open)
 // Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT · not production infrastructure.
 // Design rule: a person's name lives ONLY in guests.display_name. Sessions, credits,
 // rollover and the event chain carry opaque guest ids, so erasure
@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS sessions(
   guest_id TEXT NOT NULL REFERENCES guests(id),
   eligibility TEXT NOT NULL DEFAULT 'permitted',   -- operator RG determination at pre-commit
   eligibility_at TEXT,                             -- when the operator made that determination
+  terms_version TEXT,                              -- the terms the guest agreed to (GET /v3/terms); NULL before 0.2.16
   mode TEXT NOT NULL CHECK(mode IN ('hard_stop','advisory')),
   state TEXT NOT NULL CHECK(state IN ('live','stopped','closed')),
   budget_eur REAL NOT NULL,
@@ -227,6 +228,10 @@ function migrate(db) {
   // The pre-stake check arrived in 0.2.14: a database written by an earlier build
   // gains the reservation column and the link from a tick to its check.
   if (!sc.includes('reserved_eur')) db.exec('ALTER TABLE sessions ADD COLUMN reserved_eur REAL NOT NULL DEFAULT 0');
+  // The terms version arrived in 0.2.16. A session armed by an earlier build
+  // keeps NULL: which terms it was armed under was not recorded, and the
+  // migration does not guess.
+  if (!sc.includes('terms_version')) db.exec('ALTER TABLE sessions ADD COLUMN terms_version TEXT');
   const tc = db.prepare('PRAGMA table_info(ticks)').all().map(c => c.name);
   if (!tc.includes('authorization_id')) db.exec('ALTER TABLE ticks ADD COLUMN authorization_id TEXT');
 }

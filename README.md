@@ -7,10 +7,12 @@ credit and a residual returned to the guest — every decision hash-chained.
 
 Middleware: funds never go on chain, rules stay off chain, only proofs are anchored.
 
-Open source under the [MIT License](LICENSE). This is package **v3.21**; the runnable
-build is **VIP MVP v0.2.15** in [`13_VIP_MVP`](13_VIP_MVP). Every figure in the
+Open source under the [MIT License](LICENSE). This is package **v3.22**; the runnable
+build is **VIP MVP v0.2.16** in [`13_VIP_MVP`](13_VIP_MVP). Every figure in the
 package is synthetic and labelled as such: no live deployment has occurred and no
 pilot data exists.
+
+**Try it in the browser, nothing to install:** [the index and the four demos](https://trenchlogicstudio-web.github.io/VIP-SmartContract-Demonstration/00_INDEX.html).
 
 ---
 
@@ -29,8 +31,10 @@ in-memory reference service of slot 04b on port 8080.
 
 ### What to do on the screen
 
-1. **Arm a policy.** Pick a guest and commit a budget. The console prints the euro
-   amount at which the policy will fire — before the session, not at the stop.
+1. **Arm a policy.** Pick a guest and commit a budget. The console shows the terms
+   the guest agrees to and their version, and prints the euro amount at which the
+   policy will fire — before the session, not at the stop. The session and the
+   audit chain record the amount and the terms version agreed to.
 2. **Run the session.** Press **Check, then report**: the wager path a platform
    should run. The engine is asked before each stake, reserves it against what is
    left to the line, and the console shows the largest stake allowed now. The
@@ -55,7 +59,11 @@ in-memory reference service of slot 04b on port 8080.
 
 A pre-commitment binds: while a session is live and younger than
 `VIP_COMMITMENT_HOURS` (24 by default), a new pre-commit for the same guest is
-refused with **409 SESSION_LIVE**. Every setting is listed in
+refused with **409 SESSION_LIVE**, and once it has stopped, with
+**409 COMMITMENT_ACTIVE** until the period counted from its arming ends. Without
+configuration the incentive is capped at €5,000 per stop and the operator's
+eligibility determination counts for 90 days, so a pre-commit without one issues
+nothing; `off` switches either off. Every setting is listed in
 [`13_VIP_MVP/.env.example`](13_VIP_MVP/.env.example).
 
 ### Then break it
@@ -64,12 +72,15 @@ refused with **409 SESSION_LIVE**. Every setting is listed in
 npm test
 ```
 
-308 checks and 41 regression scenarios, none skipped. Among them: the settlement
+314 checks and 54 regression scenarios, none skipped. Among them: the settlement
 closes to the cent on every amount from €0.01 to €2,000.00, and the split is
 recomputed independently on every one of them; every stop, nudge and escalation
 line is checked on every budget in the same range; twelve stakes of €300 sent at
 once against a €1,000 line let exactly three through; a seeded run of 2,000
-sessions with every stake checked never once passes the line; the hash chain is
+sessions with every stake checked never once passes the line; a pre-commit naming
+other terms than the ones in force arms nothing, and a stopped guest cannot arm a
+second budget inside the commitment period, in both services; every link in every
+page resolves; the hash chain is
 corrupted on purpose and must break at exactly the altered row; malformed and
 hostile input must be answered with its error identifier, never a server error;
 an erased name must be gone from the database file itself; bad configurations
@@ -135,7 +146,7 @@ their numbers so every reference to them stays valid.
 | [`05_Demo_Guide.html`](05_Demo_Guide.html) → `05a`–`05d` | The demo guide and the four browser demos |
 | [`10_Design_Rationale.docx`](10_Design_Rationale.docx) | The variants considered, and why the shipped shape won |
 | [`12_Canon.json`](12_Canon.json) | Every fixed value, threshold, split and definition, with the formula beside each derived figure |
-| [`13_VIP_MVP/`](13_VIP_MVP) | The runnable build: SQLite ledger, guest, host and admin consoles, eight contract routes |
+| [`13_VIP_MVP/`](13_VIP_MVP) | The runnable build: SQLite ledger, guest, host and admin consoles, nine contract routes |
 | [`14_Regulatory_Parameter_Map.html`](14_Regulatory_Parameter_Map.html) | Which lever answers which regulatory question |
 | [`15_Security_and_Boundaries.html`](15_Security_and_Boundaries.html) | What is implemented and verified, and what is deliberately the integrator's |
 | [`CHANGELOG.md`](CHANGELOG.md) · [`docs/FIXES.md`](docs/FIXES.md) | What changed in each release, and the record of the corrections with their regression tests |

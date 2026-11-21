@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
-// Reproductions for MVP v0.2.14 and SmartContract v3.20, kept in v0.2.15 / v3.21. Run with node --test regression.test.js.
+// Reproductions for MVP v0.2.14 and SmartContract v3.20, kept in v0.2.16 / v3.22, and those of v0.2.16 / v3.22 at the end. Run with node --test regression.test.js.
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -13,6 +13,10 @@ const vm = require('node:vm');
 
 for (const key of Object.keys(process.env)) if (key.startsWith('VIP_')) delete process.env[key];
 delete process.env.PORT;
+// The reference preset: the cap and the determination lifetime that 0.2.16
+// switches on by default are switched off here, as in test.js.
+process.env.VIP_REWARD_CAP_EUR = 'off';
+process.env.VIP_ELIGIBILITY_TTL_DAYS = 'off';
 const S = require('./src/store');
 const E = require('./src/engine');
 const B = require('./src/boundary');
@@ -69,12 +73,14 @@ for (const kind of ['MVP', 'reference']) {
       state: id => E.stateOf(db, id), suppress: x => E.programmeSuppress(db, x), audit: sid => E.audit(db, sid),
       authorize: x => E.authorize(db, x), release: x => E.release(db, x),
       // Move a session's opening back by `ms`, as if that much time had passed.
-      age: (sid, ms) => db.prepare('UPDATE sessions SET opened_at = ? WHERE id = ?').run(new Date(Date.now() - ms).toISOString(), sid)
+      age: (sid, ms) => db.prepare('UPDATE sessions SET opened_at = ? WHERE id = ?').run(new Date(Date.now() - ms).toISOString(), sid),
+      armed: id => Boolean(E.latest(db, id)), terms: () => E.terms()
     } : {
       precommit: ref.precommit, tick: ref.tick, issue: ref.redirectIssue, suppress: ref.programmeSuppress,
       state: id => ref.view(ref._state.sessions.get(id)), audit: ref.audit,
       authorize: ref.authorize, release: ref.release,
-      age: (sid, ms) => { ref._state.byId.get(sid).opened_at = Date.now() - ms; }
+      age: (sid, ms) => { ref._state.byId.get(sid).opened_at = Date.now() - ms; },
+      armed: id => ref._state.sessions.has(id), terms: () => ref.terms()
     };
     return fn(api);
   });
@@ -108,6 +114,10 @@ for (const kind of ['MVP', 'reference']) {
     const crossing = { ...first, event_id: 'sale-2', delta_eur: 30 };
     const stop = a.tick(crossing);
     assert.equal(stop.locked, true);
+    // The stopped session holds the guest for the commitment period; after it,
+    // a new budget is armed and the old delivery still replays its stop.
+    expectCode(() => a.precommit({ vip_id, budget_eur: 200 }), 'COMMITMENT_ACTIVE');
+    a.age(session_id, 24 * 3600000 + 1000);
     a.precommit({ vip_id, budget_eur: 200 });
     assert.deepEqual(a.tick(crossing), stop);
     assert.equal(a.state(vip_id).consumed_eur, 0);
@@ -247,15 +257,52 @@ for (const kind of ['MVP', 'reference']) {
     assert.equal(a.state(vip_id).consumed_eur, 0); assert.equal(a.state(vip_id).reserved_eur, 0);
     // The check granted under the old session died with it.
     expectCode(() => a.tick({ vip_id, delta_eur: 40, authorization_id: open.authorization_id }), 'AUTHORIZATION_UNKNOWN', 404);
-    // A stopped session does not hold the guest: that is the property's own rule.
-    a.precommit({ vip_id: 'done', budget_eur: 100 });
+    // From v3.22 a stopped session holds the guest for the same period, counted
+    // from when it was armed: a larger, an equal and a smaller budget are refused
+    // alike, the answer names the session and the time a new one is accepted, and
+    // a clock set backwards keeps the guest held.
+    const done = a.precommit({ vip_id: 'done', budget_eur: 100 });
     assert.equal(a.tick({ vip_id: 'done', delta_eur: 50 }).locked, true);
+    for (const budget_eur of [100000, 100, 10]) {
+      assert.throws(() => a.precommit({ vip_id: 'done', budget_eur }), e => e.message === 'COMMITMENT_ACTIVE' && e.status === 409 &&
+        e.extra.session_id === done.session_id && Number.isFinite(Date.parse(e.extra.precommit_after)));
+    }
+    assert.equal(a.state('done').session_id, done.session_id); assert.equal(a.state('done').stopped, true);
+    a.age(done.session_id, -6 * HOUR);
+    expectCode(() => a.precommit({ vip_id: 'done', budget_eur: 100 }), 'COMMITMENT_ACTIVE');
+    a.age(done.session_id, 24 * HOUR - 60000);
+    expectCode(() => a.precommit({ vip_id: 'done', budget_eur: 100 }), 'COMMITMENT_ACTIVE');
+    a.age(done.session_id, 24 * HOUR + 1000);
     assert.equal(a.precommit({ vip_id: 'done', budget_eur: 100 }).armed_at_eur, 50);
+    // A stop the guest asked for, a withdrawal from the programme, holds the
+    // guest the same way as the line does.
+    a.precommit({ vip_id: 'chose', budget_eur: 100, mode: 'advisory' });
+    a.suppress({ vip_id: 'chose', reason: 'player_request' });
+    expectCode(() => a.precommit({ vip_id: 'chose', budget_eur: 100 }), 'COMMITMENT_ACTIVE');
+  });
+  suite('the terms a guest agreed to are recorded beside the amount, and other terms arm nothing', a => {
+    const { terms_version } = a.terms();
+    assert.match(terms_version, /^terms-[0-9a-f]{12}$/);
+    for (const other of ['terms-000000000000', 'old', 7, null]) {
+      assert.throws(() => a.precommit({ vip_id: 'agreed', budget_eur: 900, terms_version: other }),
+        e => e.message === 'TERMS_CHANGED' && e.status === 409 && e.extra.terms_version === terms_version);
+    }
+    assert.equal(a.armed('agreed'), false);
+    const r = a.precommit({ vip_id: 'agreed', budget_eur: 900, terms_version });
+    assert.equal(r.terms_version, terms_version);
+    assert.equal(a.state('agreed').terms_version, terms_version);
+    const armedEvent = a.audit(r.session_id).events.find(e => e.type === 'precommit');
+    assert.equal(armedEvent.terms_version, terms_version); assert.equal(armedEvent.budget_eur, 900);
+    // Without a version the session records the version in force.
+    assert.equal(a.precommit({ vip_id: 'unnamed', budget_eur: 10 }).terms_version, terms_version);
   });
   suite('programme withdrawal covers older unissued sessions once', a => {
     const vip_id = 'withdraw';
     const ids = [];
     for (let i = 0; i < 2; i++) {
+      // The first stopped session holds the guest for the commitment period, so
+      // it is moved back past it before the second budget is armed.
+      if (ids.length) a.age(ids[ids.length - 1], 24 * 3600000 + 1000);
       ids.push(a.precommit({ vip_id, budget_eur: 100 }).session_id);
       a.tick({ vip_id, delta_eur: 50 });
     }
@@ -603,10 +650,13 @@ test('legacy partial issuance can be retried without duplicating credit or conce
 test('newest precommit wins if the wall clock moves backwards', t => {
   const db = database(t);
   const older = E.precommit(db,{vip_id:'clock',budget_eur:20});
-  // The older session is stopped first: a live one would hold the guest for its commitment period.
+  // The older session is stopped and moved past its commitment period first: a
+  // live or a stopped session inside the period holds the guest.
   E.tick(db,{vip_id:'clock',delta_eur:10});
-  db.prepare('UPDATE sessions SET opened_at=? WHERE id=?').run('2099-01-01T00:00:00Z',older.session_id);
+  db.prepare('UPDATE sessions SET opened_at=? WHERE id=?').run(new Date(Date.now()-25*3600000).toISOString(),older.session_id);
   const newer = E.precommit(db,{vip_id:'clock',budget_eur:50});
+  // Then the clock moves: the older session now claims to open in the future.
+  db.prepare('UPDATE sessions SET opened_at=? WHERE id=?').run('2099-01-01T00:00:00Z',older.session_id);
   assert.equal(E.stateOf(db,'clock').session_id,newer.session_id);
   assert.equal(E.tick(db,{vip_id:'clock',delta_eur:25}).locked,true);
 });
@@ -640,7 +690,7 @@ test('stakes asked for at once over HTTP cannot share the last euros, and refusa
   assert.equal(again.status, 409); assert.equal(again.body.error, 'SESSION_LIVE');
   assert.equal(typeof again.body.session_id, 'string'); assert.ok(Number.isFinite(Date.parse(again.body.supersede_after)));
   const route = await fetch(base + '/v3/nothing');
-  assert.equal((await route.json()).routes.length, 8);
+  assert.equal((await route.json()).routes.length, 9);
   assert.equal(B.verify(db).valid, true);
 });
 
@@ -708,5 +758,243 @@ test('guest console checks a stake before reporting it, and a refused stake is n
   assert.equal(stop.overshoot_eur,0);
   assert.equal(db.prepare("SELECT count(*) n FROM events WHERE type='stake.refused'").get().n,1);
   const config = await (await fetch(base + '/vip/config')).json();
-  assert.equal(config.commitment_hours,24); assert.equal(config.spec_routes.length,8);
+  assert.equal(config.commitment_hours,24); assert.equal(config.spec_routes.length,9);
+});
+
+// ── v3.22 / MVP v0.2.16 ────────────────────────────────────────────────────
+// The changes made after the outside review of v3.21: the terms a guest agrees
+// to and their version, the hold of a stopped session, the defaults for the
+// reward cap and the determination lifetime, and the four demos and the index.
+
+const DEFAULTS = { VIP_REWARD_CAP_EUR: undefined, VIP_ELIGIBILITY_TTL_DAYS: undefined };
+function byReference(env, src) {
+  return JSON.parse(execFileSync(process.execPath, ['-e', 'const r = require(process.argv[1]); process.stdout.write(JSON.stringify(' + src + '))', refPath],
+    { cwd: __dirname, env: { ...process.env, ...env }, encoding: 'utf8' }));
+}
+const PACKAGE = path.join(__dirname, '..');
+const inPackage = { skip: !fs.existsSync(path.join(PACKAGE, '00_INDEX.html')) };
+function offlineDemo(filename, values = {}) {
+  const nodes = new Map();
+  const node = key => {
+    if (!nodes.has(key)) nodes.set(key, {
+      value: values[key] ?? '', textContent:'', innerHTML:'', style:{},
+      classList:{ add(){}, remove(){}, toggle(){} }, querySelectorAll(){ return []; }
+    });
+    return nodes.get(key);
+  };
+  const ctx = vm.createContext({ document:{ getElementById:node }, clearInterval(){}, setInterval(){ return 1; } });
+  const html = fs.readFileSync(path.join(PACKAGE, filename), 'utf8');
+  vm.runInContext(html.match(/<script>([\s\S]*?)<\/script>/)[1], ctx);
+  return { node, ctx, html };
+}
+
+test('the terms carry a version that is their fingerprint, the same in both services and different when a term changes', () => {
+  const P = require('./src/policy');
+  const t = E.terms();
+  assert.equal(t.terms_version, 'terms-' + require('node:crypto').createHash('sha256').update(P.canonicalTerms(t.terms)).digest('hex').slice(0, 12));
+  assert.deepEqual(Object.keys(t.terms).sort(), ['advisory_escalate_fraction', 'advisory_nudge_fraction', 'commitment_hours', 'default_mode',
+    'eligibility_default', 'eligibility_ttl_days', 'redirect_split', 'residual_to_guest_fraction', 'reward_cap_eur', 'rollover_fraction', 'stop_fraction']);
+  assert.equal(t.terms.stop_fraction, 0.5); assert.equal(t.terms.commitment_hours, 24);
+  if (ref) assert.deepEqual(ref.terms(), t);
+  const ours = env => inProcess(env, ({ E }) => E.terms().terms_version);
+  const seen = new Set([t.terms_version]);
+  for (const env of [DEFAULTS, { VIP_THRESHOLD: '0.6' }, { VIP_REWARD_CAP_EUR: '2500' }, { VIP_ELIGIBILITY_TTL_DAYS: '30' },
+                     { VIP_COMMITMENT_HOURS: '12' }, { VIP_SPLIT_RETAIL: '0' }, { VIP_MODE: 'advisory' }]) {
+    const v = ours(env);
+    assert.equal(seen.has(v), false, JSON.stringify(env)); seen.add(v);
+    if (ref) assert.equal(byReference(env, 'r.TERMS_VERSION'), v, JSON.stringify(env));
+  }
+  // The same configuration keeps its version across a restart.
+  assert.equal(ours({}), t.terms_version);
+});
+
+test('GET /v3/terms serves the terms over HTTP, and a version that is not in force arms nothing', async t => {
+  const db = database(t), base = await listen(t, createServer(db));
+  const terms = await (await fetch(base + '/v3/terms')).json();
+  assert.deepEqual(terms, JSON.parse(JSON.stringify(E.terms())));
+  const post = body => fetch(base + '/v3/precommit', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+    .then(async r => ({ status: r.status, body: await r.json() }));
+  const refused = await post({ vip_id: 'http-terms', budget_eur: 500, terms_version: 'terms-ffffffffffff' });
+  assert.equal(refused.status, 409); assert.equal(refused.body.error, 'TERMS_CHANGED'); assert.equal(refused.body.terms_version, terms.terms_version);
+  assert.equal(db.prepare("SELECT count(*) n FROM sessions WHERE guest_id='http-terms'").get().n, 0);
+  assert.equal(db.prepare("SELECT count(*) n FROM guests WHERE id='http-terms'").get().n, 0);
+  const armed = await post({ vip_id: 'http-terms', budget_eur: 500, terms_version: terms.terms_version });
+  assert.equal(armed.status, 201); assert.equal(armed.body.terms_version, terms.terms_version);
+  assert.equal(db.prepare("SELECT terms_version FROM sessions WHERE guest_id='http-terms'").get().terms_version, terms.terms_version);
+  assert.equal((await (await fetch(base + '/vip/config')).json()).terms_version, terms.terms_version);
+});
+
+test('an unconfigured install caps the incentive at €5,000 per stop and counts a determination for 90 days, in both services; off switches either off', () => {
+  const probe = ({ E, P, db }) => {
+    const now = new Date().toISOString();
+    const big = P.settle(6000, 'permitted', now), canon = P.settle(5100, 'permitted', now);
+    E.precommit(db, { vip_id: 'undated', budget_eur: 1000 });
+    E.precommit(db, { vip_id: 'dated', budget_eur: 1000, eligibility_at: now });
+    const undated = E.tick(db, { vip_id: 'undated', delta_eur: 500 }), dated = E.tick(db, { vip_id: 'dated', delta_eur: 500 });
+    return { cap: P.REWARD_CAP_EUR, ttl: P.ELIGIBILITY_TTL_DAYS, big: [big.redirect, big.rollover, big.residual, big.capped],
+             canon: [canon.redirect, canon.rollover, canon.residual, canon.capped], undated: undated.eligibility, dated: dated.eligibility };
+  };
+  const expected = { cap: 5000, ttl: 90, big: [3888.89, 1111.11, 1000, true], canon: [3570, 1020, 510, false], undated: 'suppressed', dated: 'permitted' };
+  assert.deepEqual(inProcess(DEFAULTS, probe), expected);
+  // Blank is read as unset, as for every other setting.
+  assert.deepEqual(inProcess({ VIP_REWARD_CAP_EUR: '', VIP_ELIGIBILITY_TTL_DAYS: ' ' }, ({ P }) => [P.REWARD_CAP_EUR, P.ELIGIBILITY_TTL_DAYS]), [5000, 90]);
+  assert.deepEqual(inProcess({ VIP_REWARD_CAP_EUR: 'Off', VIP_ELIGIBILITY_TTL_DAYS: 'OFF' }, ({ P }) => [P.REWARD_CAP_EUR, P.ELIGIBILITY_TTL_DAYS]), [null, null]);
+  if (ref) {
+    const src = "[r.REWARD_CAP_EUR, r.ELIGIBILITY_TTL_DAYS, ...['big', 'canon'].map((k, i) => { const s = r.settle(i ? 5100 : 6000, 'permitted', new Date().toISOString()); return [s.redirect, s.rollover, s.residual, s.capped]; })]";
+    assert.deepEqual(byReference(DEFAULTS, src), [5000, 90, expected.big, expected.canon]);
+    assert.deepEqual(byReference({ VIP_REWARD_CAP_EUR: 'off', VIP_ELIGIBILITY_TTL_DAYS: 'off' }, '[r.REWARD_CAP_EUR, r.ELIGIBILITY_TTL_DAYS]'), [null, null]);
+  }
+  for (const file of ['./src/policy', ...(ref ? [refPath] : [])]) {
+    for (const [key, bad] of [['VIP_REWARD_CAP_EUR', '0'], ['VIP_REWARD_CAP_EUR', 'none'], ['VIP_ELIGIBILITY_TTL_DAYS', '-1'], ['VIP_ELIGIBILITY_TTL_DAYS', 'never']]) {
+      const probeRun = require('node:child_process').spawnSync(process.execPath, ['-e', 'require(process.argv[1])', file],
+        { cwd: __dirname, env: { ...process.env, [key]: bad }, encoding: 'utf8' });
+      assert.notEqual(probeRun.status, 0, file + ' ' + key + '=' + bad);
+      assert.match(probeRun.stderr, new RegExp(key + '.*or off'));
+    }
+  }
+});
+
+test('under the defaults the seeded quarter is still the canon quarter, and the cap binds on the live session with the larger room', () => {
+  const r = inProcess(DEFAULTS, ({ E, db }) => {
+    require('./src/seed').seed(db);
+    const q = E.quarter(db);
+    return { preserved: q.preserved_eur, redirected: q.redirected_eur, rollover: q.rollover_allocated_eur, residual: q.residual_to_guests_eur,
+             issued: q.credits_issued.count, d1: E.stateOf(db, 'VIP-D01').incentive_preview, d1_eligibility: E.stateOf(db, 'VIP-D01').eligibility };
+  });
+  assert.deepEqual(r, { preserved: 306000, redirected: 214200, rollover: 61200, residual: 30600, issued: 180,
+    d1: { redirect_eur: 3888.89, rollover_eur: 1111.11, residual_to_guest_eur: 600, capped: true }, d1_eligibility: 'permitted' });
+});
+
+test('with the commitment period at 0 a stopped guest may commit again at once, in both services', () => {
+  const again = ({ E, db }) => {
+    E.precommit(db, { vip_id: 'z', budget_eur: 100 }); E.tick(db, { vip_id: 'z', delta_eur: 50 });
+    try { return E.precommit(db, { vip_id: 'z', budget_eur: 100 }).armed_at_eur; } catch (e) { return e.message; }
+  };
+  assert.equal(inProcess({ VIP_COMMITMENT_HOURS: '0' }, again), 50);
+  assert.equal(inProcess({}, again), 'COMMITMENT_ACTIVE');
+  if (ref) {
+    const src = "(() => { r.precommit({ vip_id: 'z', budget_eur: 100 }); r.tick({ vip_id: 'z', delta_eur: 50 }); try { return r.precommit({ vip_id: 'z', budget_eur: 100 }).armed_at_eur; } catch (e) { return e.message; } })()";
+    assert.equal(byReference({ VIP_COMMITMENT_HOURS: '0' }, src), 50);
+    assert.equal(byReference({}, src), 'COMMITMENT_ACTIVE');
+  }
+});
+
+test('a database written before 0.2.16 gains the terms column, and its sessions keep null there', t => {
+  const file = path.join(tempDir(t), 'before-terms.db');
+  let db = S.open(file);
+  E.precommit(db, { vip_id: 'older', budget_eur: 1000 });
+  db.exec('ALTER TABLE sessions DROP COLUMN terms_version');
+  db.close();
+  db = S.open(file);
+  t.after(() => db.close());
+  assert.equal(E.stateOf(db, 'older').terms_version, null);
+  assert.equal(E.precommit(db, { vip_id: 'newer', budget_eur: 10 }).terms_version, E.terms().terms_version);
+  assert.equal(B.verify(db).valid, true);
+});
+
+test('the guest console shows the terms, sends their version and the determination, and reloads the terms when they changed', async t => {
+  const db = database(t), base = await listen(t, createServer(db));
+  const html = await (await fetch(base + '/')).text();
+  const elements = new Map();
+  const element = id => {
+    if (!elements.has(id)) elements.set(id, { value:'', addEventListener() {} });
+    return elements.get(id);
+  };
+  const context = vm.createContext({
+    document: { querySelector:element, querySelectorAll:() => [] },
+    fetch:(url, opts) => fetch(base + url, opts), crypto:globalThis.crypto
+  });
+  element('#vip').value = 'informed'; element('#budget').value = '1000'; element('#mode').value = 'hard_stop';
+  element('#determined').checked = true;
+  vm.runInContext(html.match(/<script>([\s\S]*?)<\/script>/)[1], context);
+  await vm.runInContext('loadTerms()', context);
+  const version = E.terms().terms_version;
+  assert.match(element('#terms').textContent, new RegExp('^Terms ' + version));
+  vm.runInContext("termsVersion='terms-000000000000'", context);
+  await vm.runInContext('pre()', context);
+  assert.equal(E.latest(db, 'informed'), undefined, 'other terms arm nothing');
+  await new Promise(r => setTimeout(r, 50));
+  assert.equal(vm.runInContext('termsVersion', context), version, 'the console reloads the terms in force');
+  await vm.runInContext('pre()', context);
+  const s = E.latest(db, 'informed');
+  assert.equal(s.terms_version, version); assert.equal(s.budget_eur, 1000);
+  assert.ok(Number.isFinite(Date.parse(s.eligibility_at)) && Date.parse(s.eligibility_at) <= Date.now());
+});
+
+test('the index and the guide link to every demo, and every local link in the pages resolves', inPackage, () => {
+  const demos = ['05a_Demo_A_Screens.html', '05b_Demo_B_Policy_Engine.html', '05c_Demo_C_Synthetic_Case_Study.html', '05d_Demo_D_Narrative_Proof.html'];
+  for (const page of ['00_INDEX.html', '05_Demo_Guide.html']) {
+    const html = fs.readFileSync(path.join(PACKAGE, page), 'utf8');
+    for (const d of demos) assert.ok(html.includes('href="' + d + '"'), page + ' links ' + d);
+  }
+  let links = 0;
+  for (const page of fs.readdirSync(PACKAGE).filter(f => f.endsWith('.html'))) {
+    const html = fs.readFileSync(path.join(PACKAGE, page), 'utf8');
+    for (const [, href] of html.matchAll(/href="([^"]+)"/g)) {
+      if (/^(https?:|mailto:|#)/.test(href)) continue;
+      links++;
+      assert.ok(fs.existsSync(path.join(PACKAGE, href.split('#')[0])), page + ' → ' + href);
+    }
+  }
+  assert.ok(links >= 40, 'links checked: ' + links);
+});
+
+test('Demo C shows issued, redeemed and still-owed credit, can show a retention worse than the stop alone, and keeps the canon band', inPackage, () => {
+  const c = offlineDemo('05c_Demo_C_Synthetic_Case_Study.html', { n:60, p:5100, g:70, q:50, r:84 });
+  const shown = id => c.node(id).textContent;
+  assert.deepEqual(['tIss', 'tRed', 'tOpen', 'tRoll', 'tRollOpen', 'tRes', 'tOwed'].map(shown),
+    ['€214,200', '€107,100', '€107,100', '€61,200', '€61,200', '€30,600', '€168,300']);
+  assert.equal(shown('mPre'), '€306K'); assert.equal(shown('mRed'), '€214K');
+  assert.doesNotMatch(c.node('verd').innerHTML, /fewer guests than the stop alone/);
+  c.node('r').value = 55; c.node('r').oninput();
+  assert.match(c.node('verd').innerHTML, /keeps fewer guests than the stop alone/);
+  c.node('p3').onclick();
+  assert.equal(c.node('r').value, 52); assert.equal(c.node('g').value, 40);
+  assert.match(c.html, /id="r" min="40" max="92"/);
+  assert.match(c.html, /id="g" min="40" max="80"/);
+  for (const id of ['n', 'p', 'g', 'q', 'r']) {
+    assert.match(c.html, new RegExp('<label for="' + id + '">'));
+    assert.match(c.html, new RegExp('id="' + id + '"[^>]*aria-describedby="h' + id.toUpperCase() + '"'));
+  }
+  const canon = JSON.parse(fs.readFileSync(path.join(PACKAGE, '12_Canon.json'), 'utf8'));
+  assert.match(canon.model_figures._figure_kinds.non_gaming_capture, /Demo slider band 40–80%/);
+});
+
+test('Demo D can be driven from the keyboard, and Demo A shows the version of the terms the engine publishes by default', inPackage, () => {
+  const d = offlineDemo('05d_Demo_D_Narrative_Proof.html');
+  assert.match(d.html, /role=listitem tabindex=0/);
+  assert.match(d.html, /k\.key==="Enter"\|\|k\.key===" "/);
+  assert.match(d.html, /ArrowDown/);
+  vm.runInContext('go(4,false)', d.ctx);
+  assert.equal(d.ctx.cur, 4);
+  assert.match(d.node('nt').textContent, /^W8/);
+  const a = offlineDemo('05a_Demo_A_Screens.html');
+  const version = inProcess(DEFAULTS, ({ E }) => E.terms().terms_version);
+  assert.equal(a.ctx.TERMS_VERSION, version);
+  vm.runInContext('step=3;consent=true;armed=true;draw()', a.ctx);
+  assert.match(a.node('stage').innerHTML, new RegExp('terms ' + version));
+  vm.runInContext('step=2;consent=true;armed=false;draw()', a.ctx);
+  assert.match(a.node('stage').innerHTML, /<label for=slr>/);
+});
+
+test('on a phone the control panel of Demos B and C scrolls with the page instead of covering the results, the settlement table keeps its column names, and no card grid is wider than the screen', inPackage, () => {
+  const pages = fs.readdirSync(PACKAGE).filter(f => f.endsWith('.html'));
+  const withPanel = pages.filter(f => fs.readFileSync(path.join(PACKAGE, f), 'utf8').includes('class="ctrlcard"'));
+  assert.deepEqual(withPanel.sort(), ['05b_Demo_B_Policy_Engine.html', '05c_Demo_C_Synthetic_Case_Study.html']);
+  for (const f of pages) {
+    const html = fs.readFileSync(path.join(PACKAGE, f), 'utf8');
+    if (!html.includes('.ctrlcard{')) continue;
+    assert.match(html, /\.ctrlcard\{[^}]*position:sticky[^}]*max-height:calc\(100vh - 32px\);overflow-y:auto\}/, f);
+    assert.match(html, /@media\(max-width:860px\)\{\.ctrlcard\{position:static;max-height:none;overflow:visible\}\}/, f);
+  }
+  for (const f of pages) {
+    const html = fs.readFileSync(path.join(PACKAGE, f), 'utf8');
+    assert.doesNotMatch(html, /minmax\(\d+px,1fr\)/, f);
+  }
+  const c = offlineDemo('05c_Demo_C_Synthetic_Case_Study.html');
+  assert.match(c.html, /\.calcgrid\{[^}]*grid-template-columns:300px minmax\(0,1fr\)/);
+  for (const id of ['tIss', 'tRed', 'tOpen', 'tRoll', 'tRollOpen', 'tRes', 'tOwed']) {
+    assert.match(c.html, new RegExp('data-h="(Issued|Redeemed or used|Still owed)" id="' + id + '"'), id);
+  }
+  assert.match(c.html, /table\.settle td\[data-h\]::before\{content:attr\(data-h\)/);
 });

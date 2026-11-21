@@ -1,4 +1,4 @@
-// VIP SmartContract · MVP v0.2.15 · policy core
+// VIP SmartContract · MVP v0.2.16 · policy core
 // Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
 //
 // This file is the Body: the pre-commitment decision itself, with no database
@@ -81,8 +81,8 @@ function effectiveEligibility(requested, determined_at, now) {
 
 // ── reward cap ────────────────────────────────────────────────────────────
 // An absolute ceiling in euro on the operator-funded part of a settlement —
-// redirect plus rollover. Unset means uncapped, which is the reference
-// configuration every figure in the canon was computed under.
+// redirect plus rollover. From 0.2.16 it is on by default at €5,000 per stop;
+// `off` removes it, which is the configuration the canon calls uncapped.
 //
 // Why it exists: without a ceiling the incentive grows with the pre-committed
 // budget, so a larger declared budget earns a larger reward. That is an
@@ -91,12 +91,21 @@ function effectiveEligibility(requested, determined_at, now) {
 // answers it. When the cap binds, the excess is NOT retained by the operator —
 // it goes to the guest as residual, so a capped settlement returns more of the
 // guest's own money, never less.
-function capEur(key) {
+//
+// Why €5,000: the canon's reference stop preserves €5,100 and earns €4,590,
+// so every canon figure holds under the default, while a budget declared
+// larger than that no longer earns more. The operator sets its own ceiling
+// with its responsible person; the default is a floor for an unconfigured
+// install, not a recommendation for any jurisdiction.
+const REWARD_CAP_DEFAULT_EUR = 5000;
+const OFF = raw => raw.trim().toLowerCase() === 'off';
+function capEur(key, fallback = REWARD_CAP_DEFAULT_EUR) {
   const raw = process.env[key];
-  if (raw === undefined || raw === '') return null;
+  if (raw === undefined || raw.trim() === '') return fallback;
+  if (OFF(raw)) return null;
   const v = Number(raw);
   if (!Number.isFinite(v) || v <= 0) {
-    throw new Error(`${key} must be a finite number greater than 0 when set, got "${raw}". Refusing to start.`);
+    throw new Error(`${key} must be a finite number greater than 0, or off, got "${raw}". Refusing to start.`);
   }
   return v;
 }
@@ -104,8 +113,8 @@ const REWARD_CAP_EUR = capEur('VIP_REWARD_CAP_EUR');
 
 // ── eligibility lifetime ──────────────────────────────────────────────────
 // How long the operator's responsible-gaming determination stays good for.
-// Unset means it never expires, which is the reference configuration every
-// figure in the canon was computed under.
+// From 0.2.16 it is on by default at 90 days; `off` makes a determination
+// good forever, which is the configuration the canon calls never-expiring.
 //
 // Why it exists: a determination taken once and never revisited is the weakest
 // form of a control. Supervisory expectations in several regimes include
@@ -115,25 +124,32 @@ const REWARD_CAP_EUR = capEur('VIP_REWARD_CAP_EUR');
 // gate falls CLOSED rather than open: the incentive is withheld until the
 // operator supplies a fresh determination. Failing safe is the only defensible
 // direction here, because the alternative is issuing value on stale grounds.
-function ttlDays(key) {
+// With the lifetime on, a pre-commit that carries no determination date issues
+// nothing: an unknown age is not a young age.
+const ELIGIBILITY_TTL_DEFAULT_DAYS = 90;
+function ttlDays(key, fallback = ELIGIBILITY_TTL_DEFAULT_DAYS) {
   const raw = process.env[key];
-  if (raw === undefined || raw === '') return null;
+  if (raw === undefined || raw.trim() === '') return fallback;
+  if (OFF(raw)) return null;
   const v = Number(raw);
   if (!Number.isFinite(v) || v <= 0) {
-    throw new Error(`${key} must be a finite number of days greater than 0 when set, got "${raw}". Refusing to start.`);
+    throw new Error(`${key} must be a finite number of days greater than 0, or off, got "${raw}". Refusing to start.`);
   }
   return v;
 }
 const ELIGIBILITY_TTL_DAYS = ttlDays('VIP_ELIGIBILITY_TTL_DAYS');
 
 // ── the commitment period ────────────────────────────────────────────────
-// A pre-commitment binds for at least this many hours. While a session is live
-// and younger than this, a new pre-commit for the same guest is refused. Before
-// 0.2.14 any pre-commit replaced a live session at once, so one call with a
-// larger budget moved the line in the middle of play: the negotiation the
-// Hard-Stop exists to rule out, available on the engine's own route. After the
-// period a live session may be superseded as before, which is how the next
-// day's budget is armed for a guest who never reached the previous line.
+// A pre-commitment binds for at least this many hours from the moment it was
+// armed. While a session is live and younger than this, a new pre-commit for
+// the same guest is refused. Before 0.2.14 any pre-commit replaced a live
+// session at once, so one call with a larger budget moved the line in the
+// middle of play: the negotiation the Hard-Stop exists to rule out, available
+// on the engine's own route. From 0.2.16 a STOPPED session holds the guest for
+// the same period: the day's budget was spent to its line or settled, and a
+// second budget the same day would be a new limit on top of the first. After
+// the period a live session may be superseded and a stopped guest may commit
+// again, which is how the next day's budget is armed.
 // 0 switches the lock off. That is an operator's setting, and it is stated as one.
 function commitmentHours(key) {
   const raw = process.env[key];
@@ -200,6 +216,35 @@ W.residual = MICRO - W.rollover - W.redirect;
 const fraction = m => m / MICRO;
 const REDIRECT_TOTAL = fraction(W.redirect);                              // 0.7
 const RESIDUAL = fraction(W.residual);                                    // 0.1
+
+// ── the terms a guest agrees to ───────────────────────────────────────────
+// Everything that decides what a pre-commitment does with the guest's money:
+// where the line falls, what the preserved budget becomes, the ceiling on the
+// incentive, how long an eligibility determination counts and how long the
+// commitment binds. GET /v3/terms publishes them with their version, and every
+// pre-commit records the version it was armed under, beside the amount, in the
+// session and in the chain. The version is a fingerprint of exactly these
+// values: change one and the version changes; restart with the same values and
+// it does not. Slot 04b computes it the same way, so both services name the
+// same terms by the same version.
+function canonicalTerms(o) {
+  if (o === null || typeof o !== 'object') return JSON.stringify(o);
+  return '{' + Object.keys(o).sort().map(k => JSON.stringify(k) + ':' + canonicalTerms(o[k])).join(',') + '}';
+}
+const TERMS = Object.freeze({
+  default_mode: CFG.mode,
+  stop_fraction: fraction(W.threshold),
+  advisory_nudge_fraction: fraction(W.nudge),
+  advisory_escalate_fraction: fraction(W.escalate),
+  redirect_split: Object.freeze({ spa: fraction(W.spa), fnb: fraction(W.fnb), retail: fraction(W.retail) }),
+  rollover_fraction: fraction(W.rollover),
+  residual_to_guest_fraction: fraction(W.residual),
+  reward_cap_eur: REWARD_CAP_EUR,
+  eligibility_default: ELIGIBILITY_DEFAULT,
+  eligibility_ttl_days: ELIGIBILITY_TTL_DAYS,
+  commitment_hours: COMMITMENT_HOURS
+});
+const TERMS_VERSION = 'terms-' + require('crypto').createHash('sha256').update(canonicalTerms(TERMS)).digest('hex').slice(0, 12);
 
 // Display rounding for amounts that are sums of cents: two decimals.
 const money = n => eur(cents(n));
@@ -349,9 +394,9 @@ function exceedsStake(consumed_eur, stake_eur) {
 }
 
 module.exports = {
-  COMMITMENT_HOURS, headroomCents, overshootCents, exceedsStake,
+  COMMITMENT_HOURS, headroomCents, overshootCents, exceedsStake, TERMS, TERMS_VERSION, canonicalTerms,
   CFG, MODES, REDIRECT_TOTAL, RESIDUAL, num, MICRO, MAX_EUR, W, cents, eur, lineCents,
-  ELIGIBILITY, ELIGIBILITY_DEFAULT, effectiveEligibility, REWARD_CAP_EUR, capEur,
-  ELIGIBILITY_TTL_DAYS, ttlDays, eligibilityExpired, allocate,
+  ELIGIBILITY, ELIGIBILITY_DEFAULT, effectiveEligibility, REWARD_CAP_EUR, REWARD_CAP_DEFAULT_EUR, capEur,
+  ELIGIBILITY_TTL_DAYS, ELIGIBILITY_TTL_DEFAULT_DAYS, ttlDays, eligibilityExpired, allocate,
   money, armedAt, assess, settle, preview, distanceToThreshold
 };
