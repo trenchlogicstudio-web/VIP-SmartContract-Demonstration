@@ -67,7 +67,7 @@ nothing; `off` switches either off. Every setting is listed in
 npm test
 ```
 
-314 baseline checks and 66 regression scenarios, none skipped. Among them: the settlement
+314 baseline checks and 68 regression scenarios, none skipped. Among them: the settlement
 closes to the cent on every amount from €0.01 to €2,000.00, and the split is
 recomputed independently on every one of them; every stop, nudge and escalation
 line is checked on every budget in the same range; twelve stakes of €300 sent at
