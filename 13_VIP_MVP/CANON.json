@@ -41,7 +41,7 @@
     "advisory_nudge_fraction": 0.4,
     "advisory_escalate_fraction": 0.85,
     "rollover_fraction": 0.2,
-    "_rollover_switch": "VIP_FUTURE_PLAY=off sets the rollover to 0, whatever VIP_ROLLOVER says, and leaves that share with the guest; any value other than on or off refuses to start. Default on, at one fifth, so no figure here changes.",
+    "_rollover_switch": "VIP_FUTURE_PLAY=off sets the rollover to 0, whatever VIP_ROLLOVER says: below the benefit ceiling its share stays with the guest; where the ceiling binds, the ceiling is all resort credit and the guest keeps the rest, as with the switch on; any value other than on or off refuses to start. Default on, at one fifth, so no figure here changes.",
     "residual_to_guest_fraction": 0.1,
     "redirect_split": {
       "spa": 0.3,

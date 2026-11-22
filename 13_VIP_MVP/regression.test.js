@@ -1268,7 +1268,7 @@ test('on the project site the MVP guide opens its Markdown links on GitHub, and 
   assert.equal(offline[0].href, 'file:///x/13_VIP_MVP/README.md');
 });
 
-test('future-play credit switches off in both services: its share stays with the guest, the published terms show it, and a misspelt value refuses to start', () => {
+test('future-play credit switches off in both services: below the ceiling its share stays with the guest, at the ceiling it is all resort credit, the published terms show it, and a misspelt value refuses to start', () => {
   const probe = ({ P, E }) => {
     const now = new Date().toISOString();
     return { fp: P.FUTURE_PLAY, rollover: P.TERMS.rollover_fraction, version: E.terms().terms_version,

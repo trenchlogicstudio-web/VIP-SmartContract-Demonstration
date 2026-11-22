@@ -44,9 +44,11 @@ function num(key, fallback, lo, hi) {
   }
   return v;
 }
-// Future-play credit switch, as in the MVP's policy core: off removes the
-// rollover, which then stays with the guest; on or unset leaves it to
-// VIP_ROLLOVER. The stricter setting wins, and any other value refuses to start.
+// Future-play credit switch, as in the MVP's policy core: off sets the
+// rollover to 0, so below the benefit ceiling its share stays with the guest,
+// and where the ceiling binds the ceiling is all resort credit and the guest
+// keeps the rest; on or unset leaves it to VIP_ROLLOVER. The stricter setting
+// wins, and any other value refuses to start.
 function futurePlay() {
   const raw = process.env.VIP_FUTURE_PLAY;
   if (raw === undefined || raw.trim() === '') return 'on';

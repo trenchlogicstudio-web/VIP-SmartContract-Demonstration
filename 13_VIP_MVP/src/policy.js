@@ -35,9 +35,10 @@ const settlement = require('./settlement');
 // Future-play credit (the rollover) is the one leg of a settlement that returns
 // value to the gaming floor, and it is granted at the moment a guest stops. A
 // jurisdiction, or an operator's counsel, may treat that as an inducement to
-// gamble. VIP_FUTURE_PLAY=off removes it: the rollover share stays with the
-// guest as part of the guest's own balance, and the published terms show a
-// rollover of 0. on, or unset, leaves the rollover to VIP_ROLLOVER (default 20%).
+// gamble. VIP_FUTURE_PLAY=off removes it: the rollover is 0, so below the
+// benefit ceiling its share stays in the guest's own balance, and where the
+// ceiling binds the ceiling is all resort credit and the guest keeps the rest,
+// as with the switch on. The published terms show a rollover of 0. on, or unset, leaves the rollover to VIP_ROLLOVER (default 20%).
 // The stricter setting wins: off applies whatever VIP_ROLLOVER says, which is
 // still validated so that a typo there is caught. Any other value refuses to
 // start, because a misspelt "off" must not leave the credit on.

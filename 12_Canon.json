@@ -106,7 +106,7 @@
     "advisory_nudge_fraction": 0.4,
     "advisory_escalate_fraction": 0.85,
     "rollover_fraction": 0.2,
-    "_rollover_switch": "VIP_FUTURE_PLAY=off sets rollover_fraction to 0 in both services, whatever VIP_ROLLOVER says, and leaves that share with the guest as residual; the published terms and their version change with it. The default is on, at 0.2, so every figure in this canon is unchanged. Future-play credit is the one leg that returns value to the gaming floor, granted at the moment a guest stops; whether that counts as an inducement is for the operator and its counsel, not for the engine.",
+    "_rollover_switch": "VIP_FUTURE_PLAY=off sets rollover_fraction to 0 in both services, whatever VIP_ROLLOVER says: below the benefit ceiling that share stays with the guest as residual, and where the ceiling binds the ceiling is all redirect and the residual is unchanged; the published terms and their version change with it. The default is on, at 0.2, so every figure in this canon is unchanged. Future-play credit is the one leg that returns value to the gaming floor, granted at the moment a guest stops; whether that counts as an inducement is for the operator and its counsel, not for the engine.",
     "redirect_split": {
       "spa": 0.3,
       "fnb": 0.25,

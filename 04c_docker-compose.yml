@@ -8,7 +8,7 @@ x-policy: &policy
   VIP_NUDGE: ${VIP_NUDGE:-0.40}
   VIP_ESCALATE: ${VIP_ESCALATE:-0.85}
   VIP_ROLLOVER: ${VIP_ROLLOVER:-0.20}
-  # on or off; off removes future-play credit and leaves its share with the guest
+  # on or off; off removes future-play credit (see 14_Regulatory_Parameter_Map.html)
   VIP_FUTURE_PLAY: ${VIP_FUTURE_PLAY:-on}
   VIP_SPLIT_SPA: ${VIP_SPLIT_SPA:-0.30}
   VIP_SPLIT_FNB: ${VIP_SPLIT_FNB:-0.25}
