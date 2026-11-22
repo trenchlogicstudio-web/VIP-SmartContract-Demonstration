@@ -1,4 +1,4 @@
-// VIP SmartContract · MVP v0.2.16 · boundary layer
+// VIP SmartContract · MVP v0.2.17 · boundary layer
 // Boundary = everything that touches the outside world or survives it:
 // the hash-chained audit log, the dormant downstream dispatch (Path 2),
 // and guest erasure. The policy itself (policy.js) is the Body and never

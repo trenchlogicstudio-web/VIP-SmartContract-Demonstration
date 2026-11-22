@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Verify a stop and evaluate a pilot · VIP SmartContract</title><style>
+:root{color-scheme:light;--paper:#faf9f5;--ink:#182f37;--accent:#125675;--line:#c3d1d1}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 system-ui,sans-serif}
+main,header,footer{max-width:850px;margin:auto;padding:20px clamp(16px,5vw,40px)}header{border-bottom:1px solid var(--line)}
+nav{display:flex;flex-wrap:wrap;gap:10px 18px}a{color:var(--accent);text-underline-offset:.2em}
+h1,h2{font-family:Georgia,serif;line-height:1.15}h1{font-size:clamp(30px,6vw,48px);margin:18px 0 10px}
+h2{font-size:25px;margin:32px 0 8px}h3{font-size:16px;margin:18px 0 2px}p{max-width:68ch;margin:6px 0 12px}
+.brand{font-weight:700;color:var(--accent);font-size:13px;margin-bottom:10px}code{overflow-wrap:anywhere}pre{padding:12px 16px;background:#e8eeee;white-space:pre-wrap;border-left:3px solid var(--accent)}
+dd{margin:0 0 12px}dt{font-weight:700}li{margin-bottom:8px}footer{margin-top:24px;border-top:1px solid var(--line);font-size:13px}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}@media(max-width:500px){main{padding-top:8px}}
+.groups{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr))}fieldset{min-width:0;margin:0;border:1px solid var(--line);padding:12px}legend{font-weight:700}label,input{display:block}label{margin:0 0 10px}input{max-width:100%;width:12em;padding:7px;font:inherit}#calculated{margin:16px 0;font-weight:600}summary{cursor:pointer}
+</style></head><body><header><div class="brand">TRENCH LOGIC STUDIO · VIP SmartContract v3.23</div><nav aria-label="Project"><a href="00_INDEX.html">Project index</a><a href="05b_Demo_B_Policy_Engine.html">One session</a><a href="05c_Demo_C_Synthetic_Case_Study.html">Quarter model</a></nav></header><main><h1>Verify a stop and evaluate a pilot</h1>
+<p>The package can reproduce a guest’s receipt today. Measuring a change in guest return or resort contribution requires an operator cohort and a comparable observation window.</p>
+<h2 id="receipt">Reproduce the receipt</h2>
+<p>In Demo B leave the €20,000 budget and checked stakes in place, then run the shoe. At €10,000 consumed, the remaining €10,000 divides into €3,888.89 of resort services, €1,111.11 of future-play credit and €5,000 of the guest’s own balance. Choose Hard-stop only to see the same stop with the whole €10,000 allocated to the guest.</p>
+<p>From the extracted package, run the two cases against a fresh in-memory SQLite database. The example verifies both decisions and the audit chain, then exits.</p>
+<pre><code>npm run example</code></pre><p><a href="13_VIP_MVP/index.html">Open the local MVP guide</a> · <a href="05a_Demo_A_Screens.html">Review or decline an offer in Demo A</a></p>
+<h2 id="pilot">Measure a pilot</h2>
+<p><strong>Primary question.</strong> Among consenting guests who meet the same operator eligibility criteria and have the same stop protection, does offering resort benefits change the probability of a later non-gaming visit within 90 days?</p>
+<p>Use the first eligible stop per guest as day zero. Where the operator permits a comparison, assign guests once to the same Hard-Stop with or without the benefit offer. Keep limits, access to support, follow-up and observation windows the same. Eligibility withdrawals always take effect. Set sample size, review dates and stopping criteria before enrolment. With an observational comparison, report the association and explain differences in eligibility and prior visits.</p>
+<dl><dt>Return to the resort</dt><dd>Count distinct assigned guests with at least one recorded non-gaming visit on days 1–90, divided by all assigned guests in that arm with a complete observation window. Use equivalent visit tracking in both groups, including visits without a credit redemption. Show both counts, the absolute difference in percentage points and its uncertainty. List incomplete follow-up separately.</dd>
+<dt>Return to gaming</dt><dd>Report separately the share with a later gaming session over the same window. A restaurant or spa visit alone counts only toward the non-gaming outcome.</dd>
+<dt>Resort economics</dt><dd>Reconcile credit issued, redeemed and outstanding. Compare actual cash receipts net of refunds, fulfillment costs and programme costs per assigned guest. Report credits used separately. Track liabilities for future-play credit and the amount due to guests. An issued credit is a liability and does not establish incremental revenue.</dd>
+<dt>Guest protection</dt><dd>Report checked stops that overshot their line, attempted commitments still under the hold, withdrawn eligibility and any benefits issued after withdrawal. Review an overshoot or post-withdrawal issuance before continuing new offers. The operator retains its existing guest-support process in both groups.</dd></dl>
+<p>The 84% and 61% in the synthetic quarter are model inputs. Demo C includes a downside scenario at 52% against 61%. No operator observations are included in this release.</p><section aria-labelledby="worksheet"><h2 id="worksheet">Calculate the observed visit difference</h2>
+<p>Enter four aggregate counts from independent groups with complete 90-day follow-up. Count each guest once. The worksheet stays blank until you enter your own data.</p>
+<div class="groups">
+<fieldset><legend>Stop with benefit offer</legend><label>Eligible guests followed<input id="nt" type="number" min="1" step="1" inputmode="numeric"></label><label>Guests who visited<input id="xt" type="number" min="0" step="1" inputmode="numeric"></label></fieldset>
+<fieldset><legend>Same stop alone</legend><label>Eligible guests followed<input id="nc" type="number" min="1" step="1" inputmode="numeric"></label><label>Guests who visited<input id="xc" type="number" min="0" step="1" inputmode="numeric"></label></fieldset>
+</div><p id="calculated" role="status" aria-live="polite">Enter all four counts.</p>
+<details><summary>How the interval is calculated</summary><p>The absolute difference is the visit rate with the offer minus the visit rate with the stop alone. The 95% interval uses Newcombe’s independent-group method with Wilson limits. It describes sampling uncertainty. Selection differences, incomplete follow-up, repeat participation and property-level clustering require separate analysis. <a href="https://support.sas.com/documentation/onlinedoc/stat/151/freq.pdf">SAS FREQ, Newcombe confidence limits</a>.</p></details></section>
+<script>
+function wilson(successes,n) {
+  const p=successes/n, z=1.959963984540054, z2=z*z, denom=1+z2/n;
+  const center=(p+z2/(2*n))/denom;
+  const half=z*Math.sqrt(p*(1-p)/n+z2/(4*n*n))/denom;
+  return [Math.max(0,center-half),Math.min(1,center+half)];
+}
+function compareVisits(xt,nt,xc,nc) {
+  const pt=xt/nt, pc=xc/nc, diff=pt-pc;
+  const [lt,ut]=wilson(xt,nt),[lc,uc]=wilson(xc,nc);
+  return { pt,pc,diff,lower:diff-Math.hypot(pt-lt,uc-pc),upper:diff+Math.hypot(ut-pt,pc-lc) };
+}
+function updateWorksheet(){
+  const ids=['xt','nt','xc','nc'];
+  const raw=ids.map(id=>String(document.getElementById(id).value).trim());
+  const output=document.getElementById('calculated');
+  if(raw.some(value=>!value)){output.textContent='Enter all four counts.';return}
+  const counts=raw.map(Number),[xt,nt,xc,nc]=counts;
+  if(counts.some(n=>!Number.isSafeInteger(n)||n<0)||nt===0||nc===0||xt>nt||xc>nc){
+    output.textContent='Enter whole counts. Each group needs at least one guest, and visits cannot exceed the number followed.';return
+  }
+  const q=compareVisits(xt,nt,xc,nc);
+  const pct=x=>(Math.abs(x)<0.0005?'0.0':(100*x).toFixed(1));
+  output.textContent='Visit rate with the offer '+pct(q.pt)+'% ('+xt+'/'+nt+'), with the stop alone '+pct(q.pc)+'% ('+xc+'/'+nc+'). Difference '+pct(q.diff)+' percentage points. 95% interval '+pct(q.lower)+' to '+pct(q.upper)+' percentage points.';
+}
+for(const id of ['xt','nt','xc','nc']) document.getElementById(id).oninput=updateWorksheet;
+updateWorksheet();
+</script>
+</main><footer>© 2026 Miloš Petrović · Trench Logic Studio · MIT License</footer></body></html>

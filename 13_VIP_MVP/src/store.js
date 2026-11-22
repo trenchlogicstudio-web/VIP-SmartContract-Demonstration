@@ -1,4 +1,4 @@
-// VIP SmartContract · MVP v0.2.16 · store (schema + open)
+// VIP SmartContract · MVP v0.2.17 · store (schema + open)
 // Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT · not production infrastructure.
 // Design rule: a person's name lives ONLY in guests.display_name. Sessions, credits,
 // rollover and the event chain carry opaque guest ids, so erasure
@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS sessions(
   eligibility TEXT NOT NULL DEFAULT 'permitted',   -- operator RG determination at pre-commit
   eligibility_at TEXT,                             -- when the operator made that determination
   terms_version TEXT,                              -- the terms the guest agreed to (GET /v3/terms); NULL before 0.2.16
+  agreement_json TEXT,                 -- exact terms, line example and provenance at arming; NULL on legacy sessions
   mode TEXT NOT NULL CHECK(mode IN ('hard_stop','advisory')),
   state TEXT NOT NULL CHECK(state IN ('live','stopped','closed')),
   budget_eur REAL NOT NULL,
@@ -90,6 +91,12 @@ CREATE TABLE IF NOT EXISTS authorizations(
   consumed_eur REAL
 );
 CREATE INDEX IF NOT EXISTS idx_authorizations_session ON authorizations(session_id, closed_at);
+CREATE TABLE IF NOT EXISTS confirmation_receipts(
+  review_id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL UNIQUE REFERENCES sessions(id),
+  request_hash TEXT NOT NULL,
+  response_json TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS tick_receipts(
   session_id TEXT NOT NULL REFERENCES sessions(id),
   event_id TEXT NOT NULL,
@@ -232,6 +239,7 @@ function migrate(db) {
   // keeps NULL: which terms it was armed under was not recorded, and the
   // migration does not guess.
   if (!sc.includes('terms_version')) db.exec('ALTER TABLE sessions ADD COLUMN terms_version TEXT');
+  if (!sc.includes('agreement_json')) db.exec('ALTER TABLE sessions ADD COLUMN agreement_json TEXT');
   const tc = db.prepare('PRAGMA table_info(ticks)').all().map(c => c.name);
   if (!tc.includes('authorization_id')) db.exec('ALTER TABLE ticks ADD COLUMN authorization_id TEXT');
 }

@@ -1,5 +1,13 @@
 # Changelog
 
+## v3.23 · MVP v0.2.17 · 21 November 2026
+
+- Demos A, B and C and the SQLite service use the same integer-cent settlement. The €5,000 combined ceiling applies to each guest before aggregation. The synthetic reference quarter is preserved.
+- Guests can review personalized amounts, accept or decline, and read the resulting session receipt. Advisory and Hard-Stop have distinct threshold copy. The host walkthrough includes a withheld-benefit result.
+- The engine retains the full agreement for new sessions. Restarts keep accepted limits and permit tighter current restrictions. Stops and issuances record both versions and the reason. Identical retries of a reviewed confirmation return the original session.
+- Added an offline entry at the repository root, a local MVP quickstart, a reproducible two-receipt example and a pilot worksheet for 90-day non-gaming visits. The worksheet starts with no observations.
+- Existing contract clients keep the nine `/v3` routes. The three local quote, confirmation and receipt calls use `/vip`.
+
 ## v3.22 · MVP v0.2.16 — 21 November 2026
 
 The corrections after an outside review of v3.21. No threshold, split, model figure or

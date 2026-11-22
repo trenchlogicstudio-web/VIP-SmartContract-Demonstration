@@ -1,8 +1,8 @@
 {
   "name": "vip-smartcontract",
-  "version": "3.22.0",
+  "version": "3.23.0",
   "private": true,
-  "description": "VIP SmartContract v3.22 with the SQLite MVP v0.2.16 and the in-memory reference service.",
+  "description": "VIP SmartContract v3.23 with the SQLite MVP v0.2.17 and the in-memory reference service.",
   "license": "MIT",
   "author": "Miloš Petrović (Trench Logic Studio)",
   "main": "13_VIP_MVP/server.js",
@@ -14,7 +14,8 @@
     "start": "node 13_VIP_MVP/server.js",
     "reference": "node 04b_Integration_Reference.js",
     "test": "node 13_VIP_MVP/test.js && node --test 13_VIP_MVP/regression.test.js",
-    "reset": "node 13_VIP_MVP/reset.js"
+    "reset": "node 13_VIP_MVP/reset.js",
+    "example": "node 13_VIP_MVP/example.js"
   },
   "dependencies": {}
 }

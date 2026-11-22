@@ -1,4 +1,4 @@
-// VIP SmartContract · MVP v0.2.16 · seed
+// VIP SmartContract · MVP v0.2.17 · seed
 // Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
 //
 // SYNTHETIC BY DECLARATION. Nothing here is a measurement of any operator.

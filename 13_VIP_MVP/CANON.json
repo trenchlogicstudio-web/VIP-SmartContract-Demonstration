@@ -3,13 +3,13 @@
   "_stability": "Code, wording and the console may improve in any later revision; the thresholds, splits, model figures and event vocabulary below do not change with them. The verification line is the one exception and says so where it stands: it counts checks, so it moves when a check is added. Restated in canon 1.14: the event vocabulary grew in v0.2.14 by the two types of the pre-stake check, stake.refused and stake.exceeded, which the package canon fixes as well; every earlier type keeps its meaning.",
   "project": "VIP SmartContract — Compliance-as-Revenue Layer",
   "artifact": "VIP MVP — runnable evaluation MVP",
-  "artifact_version": "v0.2.16",
-  "canon_version": "1.16",
+  "artifact_version": "v0.2.17",
+  "canon_version": "1.17",
   "canon_established": "2026-09-09",
   "canon_change_log": "1.0 — first canon for the VIP MVP, which is the first runnable build this product line has had. No value is invented: every threshold, split and model figure is lifted from the package canon at v3.5, and the two figures the seed needs beyond it are labelled where they appear.",
   "parent_package": {
     "name": "VIP SmartContract package",
-    "version": "v3.22",
+    "version": "v3.23",
     "_version_rule": "Names the package revision this MVP shipped with, not a claim about the current package. It is rewritten in the same revision that bumps the package.",
     "canon": "12_Canon.json",
     "registry_slot": "13_VIP_MVP",
@@ -311,5 +311,18 @@
   "canon_change_log_14": "1.13 — MVP v0.2.13 ships with VIP SmartContract v3.19. Transactional writes, exact sub-cent accumulation, protected session quotes, tick receipts, eligibility checks and quarter reporting are covered by the regression suite.",
   "canon_change_log_15": "1.14 — v0.2.14, with the package at v3.20. This build was made from the v0.2.13 that carries the transactional writes, exact sub-cent accumulation, tick receipts and protected quotes, which did not contain the pre-stake check published earlier under the same number. It is now in: POST /v3/session/authorize and POST /v3/session/release, a tick that may name the check it reports, reserved_eur and headroom_eur on the state, overshoot_eur and authorizations_voided on every stop, four identifiers and two events, identical to slot 04b. New in this revision: the commitment period. A pre-commit for a guest whose session is live and younger than VIP_COMMITMENT_HOURS (24) is refused with SESSION_LIVE; before, it replaced the session at once and moved the line. The store gains the authorizations table and two columns, added by the startup migration to a database an earlier build wrote. No threshold, split, model figure or existing event changed value.",
   "canon_change_log_16": "1.15 — v0.2.15, with the package at v3.21: the open-source release. This build is released under the MIT License (LICENSE in this folder), terms says so, and the AS-IS notice and the licence note it used to carry are gone. No behaviour, threshold, split, model figure, route, status code, error identifier or event changed.",
-  "canon_change_log_17": "1.16 — v0.2.16, with the package at v3.22. Four changes of behaviour, on both services, after an outside review of v3.21. First, GET /v3/terms publishes the terms a guest agrees to with a version; every pre-commit records the version beside the amount, and one naming another version is refused with TERMS_CHANGED. Second, a stopped session holds the guest for the rest of the commitment period: a new pre-commit inside it is refused with COMMITMENT_ACTIVE. Third and fourth, the reward cap is on by default at €5,000 per stop and the determination lifetime at 90 days; off switches either off. No threshold, split or model figure changed value: the reference stop earns €4,590, under the default ceiling, and the seed records a fresh determination, so the seeded quarter is the canon quarter under the defaults too. The contract surface is nine /v3 routes; the error identifiers gain COMMITMENT_ACTIVE and TERMS_CHANGED; precommit carries terms_version."
+  "canon_change_log_17": "1.16 — v0.2.16, with the package at v3.22. Four changes of behaviour, on both services, after an outside review of v3.21. First, GET /v3/terms publishes the terms a guest agrees to with a version; every pre-commit records the version beside the amount, and one naming another version is refused with TERMS_CHANGED. Second, a stopped session holds the guest for the rest of the commitment period: a new pre-commit inside it is refused with COMMITMENT_ACTIVE. Third and fourth, the reward cap is on by default at €5,000 per stop and the determination lifetime at 90 days; off switches either off. No threshold, split or model figure changed value: the reference stop earns €4,590, under the default ceiling, and the seed records a fresh determination, so the seeded quarter is the canon quarter under the defaults too. The contract surface is nine /v3 routes; the error identifiers gain COMMITMENT_ACTIVE and TERMS_CHANGED; precommit carries terms_version.",
+  "reviewed_settlement": {
+    "default_example": {
+      "budget_eur": 20000,
+      "consumed_on_line_eur": 10000,
+      "resort_eur": 3888.89,
+      "future_play_eur": 1111.11,
+      "guest_eur": 5000,
+      "withheld_guest_eur": 10000
+    },
+    "snapshot": "New SQLite sessions retain the terms and exact on-line example. Confirmed client review, supplied terms version and configured-only are separately identified. Legacy agreements stay unknown.",
+    "changed_rules": "Pending benefits are limited by both the original agreement and active policy. Tighter restrictions return the difference to the guest. Stops and issuances record agreed and active versions and the reason."
+  },
+  "canon_change_log_18": "1.17 — v0.2.17. Implements I-1, I-2 and I-3 through per-stop cap parity, reviewable allocations and an explicit withheld-benefit path. The reference model, thresholds, nine contract routes and author intent are preserved."
 }

@@ -1,16 +1,22 @@
 # VIP SmartContract MVP
 
-This local Node.js application persists demo sessions and issued credits in SQLite. The guest screen, host console and admin page call the same engine as the HTTP API. Version **0.2.16** ships inside VIP SmartContract **v3.22**, and this folder also runs on its own.
+This local Node.js application persists demo sessions and issued credits in SQLite. The guest screen, host console and admin page call the same engine as the HTTP API. Version **0.2.17** ships inside VIP SmartContract **v3.23**, and this folder also runs on its own.
 
-Use Node 22.13+ on the 22 line or Node 24+ with built-in SQLite. Run `npm test` in this directory, then `npm start`. Open [the guest screen](http://127.0.0.1:3400/). For a worked example, set a budget of €1,000 in hard-stop mode and stake €500 with **Check, then report**. The stake fits exactly, the service returns 423 and preserves €500. Choose **Issue settled credits**. Under the default policy the guest receives €150 in spa credit, €125 in dining credit, €75 in retail credit, €100 in rollover and €50 in residual funds. See [configuration](.env.example), [the API contract](docs/04_API_Spec.yaml) and [the fixes](../docs/FIXES.md).
+Use Node 22.13+ on the 22 line or Node 24+ with built-in SQLite. Run `npm test` in this directory, then `npm start`. Open [the guest screen](http://127.0.0.1:3400/). For a worked example, set a budget of €1,000 in hard-stop mode, review the amounts, confirm, and stake €500 with **Check, then report**. The stake fits exactly, the service returns 423 and preserves €500. Choose **Issue settled credits**. Under the default policy the guest receives €150 in spa credit, €125 in dining credit, €75 in retail credit, €100 in rollover and €50 in residual funds. See [configuration](.env.example), [the API contract](docs/04_API_Spec.yaml) and [the fixes](../docs/FIXES.md).
 
-## What 0.2.16 changes
+## Reviewed receipts in 0.2.17
+
+The guest reviews the estimated amounts if play stops on the line, the selected mode, eligibility, the cap and the commitment. A separate confirmation arms the policy. Declining and editing the preview leave the database untouched. Opening the receipt shows the agreed example and the policy used at settlement. Raw contract clients can still call `/v3/precommit`. Their receipt distinguishes a supplied version from a configured default. Legacy sessions show an unavailable agreement.
+
+Run `npm run example` for a permitted and a withheld €20,000 case in a fresh in-memory database, including an audit-chain check. [Integration details](INTEGRATION.md).
+
+## Changes in 0.2.16
 
 **The guest agrees to stated terms, and the record says which.** `GET /v3/terms` publishes the terms a pre-commitment is made under — the stop line, the split of the preserved budget, the ceiling on the incentive, the lifetime of the operator's determination and the commitment period — with a version that is a fingerprint of exactly those values. Every pre-commit records the version beside the amount: in the session, in `GET /v3/policy/state` and in the `precommit` event of the chain. A pre-commit that sends a `terms_version` other than the one in force is refused with `409 TERMS_CHANGED`, and nothing is armed. The guest screen shows the terms and sends their version.
 
 **A stop holds the guest for the commitment period.** A stopped session holds the guest until `VIP_COMMITMENT_HOURS` (24 by default) after it was armed: a second budget inside that period is refused with `409 COMMITMENT_ACTIVE`, which names the session and `precommit_after`. Until 0.2.15 a stopped guest could arm a second budget at once. `0` switches both holds off.
 
-**The ceiling and the determination lifetime are on by default.** Without configuration the incentive is capped at €5,000 per stop and the operator's eligibility determination counts for 90 days, so a pre-commit without `eligibility_at` issues nothing. `VIP_REWARD_CAP_EUR=off` and `VIP_ELIGIBILITY_TTL_DAYS=off` restore the uncapped, never-expiring reference configuration. The reference stop earns €4,590 and the seed records a fresh determination, so the seeded quarter is the canon quarter under either configuration. The guest screen sends the operator's determination with the pre-commit when **Eligibility determined by the operator today** is ticked.
+**The ceiling and the determination lifetime are on by default.** Without configuration the incentive is capped at €5,000 per stop and the operator's eligibility determination counts for 90 days, so a pre-commit without `eligibility_at` issues nothing. `VIP_REWARD_CAP_EUR=off` and `VIP_ELIGIBILITY_TTL_DAYS=off` restore the uncapped, never-expiring reference configuration. The reference stop earns €4,590 and the seed records a fresh determination, so the seeded quarter is the canon quarter under either configuration. The guest screen can simulate a current operator assessment.
 
 ## What 0.2.15 changes
 
@@ -28,7 +34,7 @@ Copied out of the repository, this folder runs without the in-memory reference s
 
 | Component | Responsibility |
 |---|---|
-| [policy.js](src/policy.js), [values.js](src/values.js) | Decimal inputs, persisted stop line, eligibility, caps and cent allocation |
+| [policy.js](src/policy.js), [settlement.js](src/settlement.js), [values.js](src/values.js) | Decimal inputs, persisted stop line, eligibility, caps and cent allocation |
 | [engine.js](src/engine.js) | Sessions, tick receipts, settlement, withholding and instruments |
 | [store.js](src/store.js) | Schema, migrations, write transactions and commit callbacks |
 | [boundary.js](src/boundary.js) | Local hash chain, optional outbound events and display-name erasure |

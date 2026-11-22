@@ -1,8 +1,8 @@
-# VIP SmartContract · v3.22 · Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
+# VIP SmartContract · v3.23 · Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
 openapi: 3.0.3
 info:
   title: VIP SmartContract — Compliance-as-Revenue API
-  version: "3.22"
+  version: "3.23"
   license:
     name: MIT
     url: https://opensource.org/license/mit
@@ -11,7 +11,7 @@ info:
     the authorization_id it returned. HTTP 423 carries a successful stop decision and says how far past the line consumption
     went (overshoot_eur, 0 when every stake was checked). A pre-commitment binds for the commitment period, and from 3.22 a
     stopped session holds the guest for the same period. GET /v3/terms publishes the terms a guest agrees to and their version;
-    every pre-commit records that version beside the amount. Use a separate issuance call to create credit instruments.
+    every pre-commit records that version beside the amount. A supplied version alone does not attest human confirmation. The SQLite product surface provides a separate reviewed quote and receipt. Use a separate issuance call to create credit instruments.
 paths:
   /v3/terms:
     get:

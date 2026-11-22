@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Run the local VIP engine · VIP SmartContract</title><style>
+:root{color-scheme:light;--paper:#faf9f5;--ink:#182f37;--accent:#125675;--line:#c3d1d1}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 system-ui,sans-serif}
+main,header,footer{max-width:850px;margin:auto;padding:20px clamp(16px,5vw,40px)}header{border-bottom:1px solid var(--line)}
+nav{display:flex;flex-wrap:wrap;gap:10px 18px}a{color:var(--accent);text-underline-offset:.2em}
+h1,h2{font-family:Georgia,serif;line-height:1.15}h1{font-size:clamp(30px,6vw,48px);margin:18px 0 10px}
+h2{font-size:25px;margin:32px 0 8px}h3{font-size:16px;margin:18px 0 2px}p{max-width:68ch;margin:6px 0 12px}
+.brand{font-weight:700;color:var(--accent);font-size:13px;margin-bottom:10px}code{overflow-wrap:anywhere}pre{padding:12px 16px;background:#e8eeee;white-space:pre-wrap;border-left:3px solid var(--accent)}
+dd{margin:0 0 12px}dt{font-weight:700}li{margin-bottom:8px}footer{margin-top:24px;border-top:1px solid var(--line);font-size:13px}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}@media(max-width:500px){main{padding-top:8px}}
+</style></head><body><header><div class="brand">TRENCH LOGIC STUDIO · VIP SmartContract v3.23</div><nav aria-label="Project"><a href="README.md">MVP documentation</a><a href="INTEGRATION.md">Integration guide</a><a href="docs/04_API_Spec.yaml">API contract</a></nav></header><main><h1>Run the local VIP engine</h1>
+<p>This guide opens in a browser. The guest, host and admin consoles run locally using Node.js and SQLite. Use Node 22.13 or newer on the 22 line, or Node 24 or newer. No package installation is required.</p>
+<h2>Run the two example receipts</h2><p>Extract the ZIP and open a terminal in the package root or in the MVP folder. The example uses synthetic guests and leaves no database on disk.</p><pre><code>npm run example</code></pre>
+<h2>Open the guest console</h2><pre><code>npm start</code></pre><p>While the process is running, visit <a href="http://127.0.0.1:3400/">the guest screen on this computer</a>. Use a new guest ID and the €20,000 example. Review the terms before accepting. Hard-Stop blocks play on the checked line. Advisory alerts the host and permits a voluntary stop.</p>
+<h2>Verify the package</h2><pre><code>npm test</code></pre><p>The full package compares the browser calculations, the SQLite engine and the separate in-memory reference. The original nine contract routes also work from existing integrations.</p></main><footer>© 2026 Miloš Petrović · Trench Logic Studio · MIT License</footer></body></html>

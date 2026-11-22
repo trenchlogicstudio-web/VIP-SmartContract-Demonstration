@@ -1,4 +1,4 @@
-// VIP SmartContract · MVP v0.2.16 · policy core
+// VIP SmartContract · MVP v0.2.17 · policy core
 // Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
 //
 // This file is the Body: the pre-commitment decision itself, with no database
@@ -29,6 +29,7 @@ function num(key, fallback, lo, hi) {
   return v;
 }
 
+const settlement = require('./settlement');
 const MODES = ['hard_stop', 'advisory'];
 const MODE = process.env.VIP_MODE ?? 'hard_stop';
 if (!MODES.includes(MODE)) {
@@ -40,16 +41,16 @@ const CFG = {
   threshold: num('VIP_THRESHOLD', 0.50, 0.05, 0.95),   // canon thresholds.hard_stop_fraction
   nudge: num('VIP_NUDGE', 0.40, 0.05, 0.95),           // canon thresholds.advisory_nudge_fraction
   escalate: num('VIP_ESCALATE', 0.85, 0.05, 0.99),     // canon thresholds.advisory_escalate_fraction
-  rollover: num('VIP_ROLLOVER', 0.20, 0, 1),           // canon thresholds.rollover_fraction
+  rollover: num('VIP_ROLLOVER', settlement.defaultRollover, 0, 1),           // canon thresholds.rollover_fraction
   // canon thresholds.redirect_split — per-jurisdiction configurable like every
   // other threshold above. A jurisdiction that caps F&B credit or bars retail
   // vouchers moves the split without touching the engine; each share is
   // validated by the same rule, so a non-finite share stops the process rather
   // than quietly redirecting nothing.
   split: {
-    spa: num('VIP_SPLIT_SPA', 0.30, 0, 1),
-    fnb: num('VIP_SPLIT_FNB', 0.25, 0, 1),
-    retail: num('VIP_SPLIT_RETAIL', 0.15, 0, 1)
+    spa: num('VIP_SPLIT_SPA', settlement.defaultSplit.spa, 0, 1),
+    fnb: num('VIP_SPLIT_FNB', settlement.defaultSplit.fnb, 0, 1),
+    retail: num('VIP_SPLIT_RETAIL', settlement.defaultSplit.retail, 0, 1)
   }
 };
 
@@ -97,7 +98,7 @@ function effectiveEligibility(requested, determined_at, now) {
 // larger than that no longer earns more. The operator sets its own ceiling
 // with its responsible person; the default is a floor for an unconfigured
 // install, not a recommendation for any jurisdiction.
-const REWARD_CAP_DEFAULT_EUR = 5000;
+const REWARD_CAP_DEFAULT_EUR = settlement.defaultCap;
 const OFF = raw => raw.trim().toLowerCase() === 'off';
 function capEur(key, fallback = REWARD_CAP_DEFAULT_EUR) {
   const raw = process.env[key];
@@ -165,12 +166,12 @@ const COMMITMENT_HOURS = commitmentHours('VIP_COMMITMENT_HOURS');
 // Returns true when a determination taken at determined_at is too old to rely
 // on. An absent timestamp is treated as expired when a lifetime is configured:
 // an unknown age is not a young age.
-function eligibilityExpired(determined_at, now) {
-  if (determined_at == null) return ELIGIBILITY_TTL_DAYS !== null;
+function eligibilityExpired(determined_at, now, lifetime = ELIGIBILITY_TTL_DAYS) {
+  if (determined_at == null) return lifetime !== null;
   const t = determinationTime(determined_at);
   const asOf = now === undefined ? Date.now() : now;
   if (!Number.isFinite(t) || t > asOf) return true;
-  return ELIGIBILITY_TTL_DAYS !== null && (asOf - t) / 86400000 > ELIGIBILITY_TTL_DAYS;
+  return lifetime !== null && (asOf - t) / 86400000 > lifetime;
 }
 
 
@@ -266,14 +267,14 @@ function armedAt(budget_eur) { return eur(lineCents(cents(budget_eur), W.thresho
 // `fire` is mode-independent by design — the threshold is the same in both
 // modes and only the ACTION differs (lock in hard_stop, host escalation in
 // advisory). That is the canon rule "both modes run the same engine".
-function assess(consumed_eur, budget_eur, mode, armed_at_eur = armedAt(budget_eur)) {
+function assess(consumed_eur, budget_eur, mode, armed_at_eur = armedAt(budget_eur), terms = TERMS) {
   const b = cents(budget_eur), c = cents(consumed_eur);
   const fire = c >= cents(armed_at_eur);
   return {
     fraction: budget_eur > 0 ? consumed_eur / budget_eur : 0,     // display only
     fire,
-    nudge: mode === 'advisory' && c >= lineCents(b, W.nudge),
-    escalate: mode === 'advisory' && c >= lineCents(b, W.escalate),
+    nudge: mode === 'advisory' && c >= lineCents(b, micro(terms.advisory_nudge_fraction)),
+    escalate: mode === 'advisory' && c >= lineCents(b, micro(terms.advisory_escalate_fraction)),
     locks: mode === 'hard_stop' && fire
   };
 }
@@ -301,59 +302,27 @@ function assess(consumed_eur, budget_eur, mode, armed_at_eur = armedAt(budget_eu
 // always sum to the whole, no part is ever negative, and a weight of zero
 // receives nothing, so a jurisdiction that sets a share to zero gets zero there
 // rather than an undefined amount.
-function allocate(total_c, weights) {
-  const sum = weights.reduce((a, b) => a + b, 0);
-  if (total_c <= 0 || sum === 0) return weights.map(() => 0);
-  const raw = weights.map(w => total_c * w);
-  const out = raw.map(r => Math.floor(r / sum));
-  let left = total_c - out.reduce((a, b) => a + b, 0);
-  const order = raw
-    .map((r, i) => ({ i, rem: r - out[i] * sum }))
-    .sort((a, b) => (b.rem - a.rem) || (a.i - b.i));
-  for (let k = 0; left > 0; k++, left--) out[order[k % order.length].i] += 1;
-  return out;
+const allocate = settlement.allocate;
+
+function settle(preserved_eur, eligibility, determined_at, now = Date.now(), terms = TERMS) {
+  const expired = eligibilityExpired(determined_at, now, terms.eligibility_ttl_days);
+  const permitted = terms.eligibility_default !== 'suppressed' && eligibility !== 'suppressed' && !expired;
+  const w = terms === TERMS ? W : settlement.weights(terms.redirect_split, terms.rollover_fraction);
+  const cap = terms.reward_cap_eur === null ? null : cents(terms.reward_cap_eur, true);
+  return { ...settlement.settleCents(Math.max(0, cents(preserved_eur)), w, cap, permitted),
+    eligibility: permitted ? 'permitted' : 'suppressed', expired };
 }
 
-function settle(preserved_eur, eligibility, determined_at, now) {
-  const p = Math.max(0, cents(preserved_eur));
-  const preserved = eur(p);
-  now ??= Date.now();
-  const expired = eligibilityExpired(determined_at, now);
-  const elig = effectiveEligibility(eligibility, determined_at, now);
-
-  // Suppressed: the stop still happens and the budget is still preserved, but
-  // nothing is issued. The whole preserved amount returns to the guest as
-  // residual, so the model closes exactly as it does when an incentive runs.
-  if (elig === 'suppressed') {
-    return {
-      preserved, eligibility: elig, capped: false, expired,
-      credits: { spa: 0, fnb: 0, retail: 0 },
-      redirect: 0, rollover: 0, residual: preserved
-    };
-  }
-
-  // Two allocations, each exact. The first divides the preserved budget three
-  // ways; the second divides the redirect leg across the three venues. Because
-  // both use largest-remainder on integer cents, spa + fnb + retail === redirect
-  // and redirect + rollover + residual === preserved, always.
-  let [redirect, rollover, residual] = allocate(p, [W.redirect, W.rollover, W.residual]);
-  let capped = false;
-
-  if (REWARD_CAP_EUR !== null && eur(redirect + rollover) > REWARD_CAP_EUR) {
-    capped = true;
-    [redirect, rollover] = allocate(cents(REWARD_CAP_EUR, true), [W.redirect, W.rollover]);
-    // The guest takes the whole difference, computed as the remainder so the
-    // model still closes to the cent.
-    residual = p - redirect - rollover;
-  }
-
-  const [spa, fnb, retail] = allocate(redirect, [W.spa, W.fnb, W.retail]);
-
-  return {
-    preserved, eligibility: elig, capped, expired,
-    credits: { spa: eur(spa), fnb: eur(fnb), retail: eur(retail) },
-    redirect: eur(redirect), rollover: eur(rollover), residual: eur(residual)
-  };
+// A policy change may reduce individual instruments, never expand the accepted offer.
+function restrictSettlement(offered, current) {
+  const credits = {};
+  for (const key of ['spa', 'fnb', 'retail']) credits[key] = Math.min(offered.credits[key], current.credits[key]);
+  const redirect = Object.values(credits).reduce((sum, value) => sum + cents(value), 0);
+  const rollover = Math.min(offered.rollover, current.rollover);
+  return { ...offered, credits, redirect: eur(redirect), rollover,
+    eligibility: offered.eligibility === 'suppressed' || current.eligibility === 'suppressed' ? 'suppressed' : 'permitted',
+    expired: Boolean(offered.expired || current.expired), capped: Boolean(offered.capped || current.capped),
+    residual: eur(cents(offered.preserved) - redirect - cents(rollover)) };
 }
 
 // preview: what the guest is shown BEFORE stopping — the incentive that makes
@@ -398,5 +367,5 @@ module.exports = {
   CFG, MODES, REDIRECT_TOTAL, RESIDUAL, num, MICRO, MAX_EUR, W, cents, eur, lineCents,
   ELIGIBILITY, ELIGIBILITY_DEFAULT, effectiveEligibility, REWARD_CAP_EUR, REWARD_CAP_DEFAULT_EUR, capEur,
   ELIGIBILITY_TTL_DAYS, ELIGIBILITY_TTL_DEFAULT_DAYS, ttlDays, eligibilityExpired, allocate,
-  money, armedAt, assess, settle, preview, distanceToThreshold
+  money, armedAt, assess, settle, restrictSettlement, preview, distanceToThreshold
 };

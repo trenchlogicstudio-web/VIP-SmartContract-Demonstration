@@ -1,8 +1,8 @@
-// VIP SmartContract · MVP v0.2.16 · engine (persistent session operations)
+// VIP SmartContract · MVP v0.2.17 · engine (persistent session operations)
 // Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
 //
 // This layer binds the pure policy core (policy.js) to storage and to the
-// audit chain. The six /v3 routes answer with the response fields of registry
+// audit chain. The nine /v3 routes answer with the response fields of registry
 // slot 04b_Integration_Reference.js, except inside the events on the audit
 // route, which are this build's own record (README, Documented divergences).
 // Everything this file adds — voluntary stop, credit redemption, rollover
@@ -56,7 +56,7 @@ function terms() {
 }
 
 // ── /v3 · POST /v3/precommit ──────────────────────────────────────────────
-function precommit(db, { vip_id, budget_eur, mode, eligibility, eligibility_at, terms_version }) {
+function buildQuote(db, { vip_id, budget_eur, mode, eligibility, eligibility_at, terms_version }, review_id) {
   if (!validVip(vip_id)) fail('INVALID_VIP', 400);
   // A budget is at least one cent and at most P.MAX_EUR: below a cent there is
   // no line to arm, and above the bound the cent arithmetic stops being exact.
@@ -91,11 +91,50 @@ function precommit(db, { vip_id, budget_eur, mode, eligibility, eligibility_at, 
     fail('TERMS_CHANGED', 409, { terms_version: P.TERMS_VERSION });
   }
 
-  ensureGuest(db, vip_id);
   // A guest withdrawn from the programme, excluded, or removed by the
   // operator's own assessment cannot be re-enrolled by opening a session.
   const sup = db.prepare('SELECT suppressed_at FROM guests WHERE id = ?').get(vip_id);
   const elig = sup && sup.suppressed_at ? 'suppressed' : P.effectiveEligibility(requested, elig_at);
+  const armed = P.armedAt(budget_eur);
+  const at_line = P.preview(armed, budget_eur, elig, elig_at);
+  const offer = { review_id, vip_id, budget_eur, mode: m, eligibility: elig, eligibility_at: elig_at,
+    terms_version: P.TERMS_VERSION, terms: P.TERMS, armed_at_eur: armed, at_line };
+  const quote_id = crypto.createHash('sha256').update(P.canonicalTerms(offer)).digest('hex');
+  return { ...offer, quote_id };
+}
+
+function quote(db, input) {
+  return buildQuote(db, input, crypto.randomUUID());
+}
+
+function confirm(db, input) {
+  if (typeof input.review_id !== 'string' || !/^[0-9a-f-]{36}$/.test(input.review_id) ||
+      typeof input.quote_id !== 'string') fail('QUOTE_CHANGED', 409);
+  const fields = ['review_id','vip_id','budget_eur','mode','eligibility','eligibility_at','terms_version','quote_id'];
+  const body = Object.fromEntries(fields.filter(k => input[k] !== undefined).map(k => [k, input[k]]));
+  const hash = crypto.createHash('sha256').update(P.canonicalTerms(body)).digest('hex');
+  const prior = db.prepare('SELECT request_hash, response_json FROM confirmation_receipts WHERE review_id=?').get(input.review_id);
+  if (prior) {
+    if (hash !== prior.request_hash) fail('QUOTE_CHANGED', 409);
+    return JSON.parse(prior.response_json);
+  }
+  const result = precommit(db, input, true);
+  db.prepare('INSERT INTO confirmation_receipts(review_id,session_id,request_hash,response_json) VALUES(?,?,?,?)')
+    .run(input.review_id, result.session_id, hash, JSON.stringify(result));
+  return result;
+}
+
+// Receipt provenance describes what the client submitted. A conventional API
+// pre-commit still works, but cannot be mistaken for a confirmed review screen.
+function precommit(db, input, reviewed = false) {
+  const offer = buildQuote(db, input, reviewed ? input.review_id : null);
+  if (reviewed && (typeof input.quote_id !== 'string' || input.quote_id !== offer.quote_id)) {
+    fail('QUOTE_CHANGED', 409, { terms_version: P.TERMS_VERSION });
+  }
+  const { vip_id, budget_eur, mode: m, eligibility: elig, eligibility_at: elig_at, armed_at_eur: armed } = offer;
+  const agreement = { ...offer, confirmation: reviewed ? 'quote_confirmed' :
+    (input.terms_version === undefined ? 'configured_only' : 'version_supplied') };
+  ensureGuest(db, vip_id);
   // A pre-commitment binds for the commitment period. While a session is live
   // and younger than that, a new pre-commit is refused and the answer says when
   // one will be accepted: before 0.2.14 it superseded the session at once, so a
@@ -107,18 +146,17 @@ function precommit(db, { vip_id, budget_eur, mode, eligibility, eligibility_at, 
   // settled, and a second budget inside the period would be a second limit on
   // top of the first. Until 0.2.15 that was left to the property's own rule.
   const last = latest(db, vip_id);
-  if (last && last.state === 'stopped') {
-    const after = new Date(last.opened_at).getTime() + P.COMMITMENT_HOURS * 3600000;
-    if (!(Date.now() >= after)) {
-      fail('COMMITMENT_ACTIVE', 409, { session_id: last.id, precommit_after: new Date(after).toISOString() });
+  if (last && (last.state === 'stopped' || last.state === 'live')) {
+    const hours = Math.max(P.COMMITMENT_HOURS, agreedTerms(last).commitment_hours);
+    const after = new Date(last.opened_at).getTime() + hours * 3600000;
+    if (Date.now() < after) {
+      const until = new Date(after).toISOString();
+      if (last.state === 'stopped') fail('COMMITMENT_ACTIVE', 409, { session_id: last.id, precommit_after: until });
+      fail('SESSION_LIVE', 409, { session_id: last.id, supersede_after: until });
     }
   }
-  const live = db.prepare("SELECT id, opened_at FROM sessions WHERE guest_id = ? AND state = 'live'").get(vip_id);
-  if (live) {
-    const free_at = new Date(live.opened_at).getTime() + P.COMMITMENT_HOURS * 3600000;
-    if (Date.now() < free_at) {
-      fail('SESSION_LIVE', 409, { session_id: live.id, supersede_after: new Date(free_at).toISOString() });
-    }
+  if (last && last.state === 'live') {
+    const live = last;
     db.prepare("UPDATE sessions SET state = 'closed', reserved_eur = 0 WHERE id = ?").run(live.id);
     // A stake checked under the superseded session cannot be reported against
     // the new one: its check closes with the session that granted it.
@@ -127,25 +165,72 @@ function precommit(db, { vip_id, budget_eur, mode, eligibility, eligibility_at, 
   }
 
   const session_id = crypto.randomUUID();
-  const armed = P.armedAt(budget_eur);
-  db.prepare(`INSERT INTO sessions(id, guest_id, mode, eligibility, eligibility_at, terms_version, state, budget_eur, armed_at_eur, consumed_eur, opened_at)
-              VALUES(?,?,?,?,?,?,'live',?,?,0,?)`)
-    .run(session_id, vip_id, m, elig, elig_at, P.TERMS_VERSION, budget_eur, armed, new Date().toISOString());
+  db.prepare(`INSERT INTO sessions(id, guest_id, mode, eligibility, eligibility_at, terms_version, agreement_json, state, budget_eur, armed_at_eur, consumed_eur, opened_at)
+              VALUES(?,?,?,?,?,?,?,'live',?,?,0,?)`)
+    .run(session_id, vip_id, m, elig, elig_at, P.TERMS_VERSION, JSON.stringify(agreement), budget_eur, armed, new Date().toISOString());
 
   // The amount and the terms the guest agreed to are one link in the chain.
-  const e = B.append(db, 'precommit', { vip_id, session_id, budget_eur, mode: m, armed_at_eur: armed, eligibility: elig, eligibility_at: elig_at, terms_version: P.TERMS_VERSION });
+  const e = B.append(db, 'precommit', { vip_id, session_id, budget_eur, mode: m, armed_at_eur: armed, eligibility: elig, eligibility_at: elig_at, terms_version: P.TERMS_VERSION, agreement });
   return { session_id, armed_at_eur: armed, mode: m, eligibility: elig, eligibility_at: elig_at, terms_version: P.TERMS_VERSION, fingerprint: e.fingerprint };
+}
+
+function agreedTerms(s) {
+  if (!s.agreement_json || s.terms_version === P.TERMS_VERSION) return P.TERMS;
+  return JSON.parse(s.agreement_json).terms;
+}
+
+function effectiveLifetime(s) {
+  const accepted = agreedTerms(s).eligibility_ttl_days, active = P.ELIGIBILITY_TTL_DAYS;
+  if (accepted === null) return active;
+  return active === null ? accepted : Math.min(accepted, active);
+}
+
+function expiredForSession(s, now) {
+  return P.eligibilityExpired(s.eligibility_at, now, effectiveLifetime(s));
+}
+
+function sessionEligibility(s, now) {
+  if (expiredForSession(s, now)) return 'suppressed';
+  return P.effectiveEligibility(s.eligibility, s.eligibility_at, now);
+}
+
+function liveSettlement(s, now = Date.now()) {
+  const consumed = s.consumed_exact ?? s.consumed_eur;
+  const current = P.preview(consumed, s.budget_eur, s.eligibility, s.eligibility_at, now);
+  const accepted = agreedTerms(s);
+  if (accepted === P.TERMS) return current;
+  const offered = P.settle(current.preserved, s.eligibility, s.eligibility_at, now, accepted);
+  return P.restrictSettlement(offered, current);
+}
+
+function policyEvidence(s, settlement) {
+  let reason = 'agreed_terms';
+  if (!s.agreement_json) reason = 'legacy_terms_unavailable';
+  else if (settlement.expired) reason = 'determination_expired_or_missing';
+  else if (settlement.eligibility === 'suppressed') reason = 'incentives_withheld';
+  else if (s.terms_version !== P.TERMS_VERSION) reason = 'original_and_current_limits';
+  const evidence = { agreed_version: s.terms_version ?? null, current_version: P.TERMS_VERSION, reason };
+  if (s.terms_version !== P.TERMS_VERSION) evidence.current_terms = P.TERMS;
+  return evidence;
+}
+
+function receipt(db, vip_id, session_id) {
+  const s = sessionForIssue(db, vip_id, session_id);
+  if (!s) fail('SESSION_UNKNOWN', 404);
+  const agreement = s.agreement_json ? JSON.parse(s.agreement_json) : null;
+  const events = audit(db, s.id).events.filter(e => ['policy.stop','redirect.issue','incentive.suppressed'].includes(e.type));
+  return { session_id: s.id, state: s.state, opened_at: s.opened_at, agreement, events };
 }
 
 // ── /v3 · GET /v3/policy/state ────────────────────────────────────────────
 function view(s, db) {
   const consumed = s.consumed_exact ?? s.consumed_eur;
-  const a = P.assess(consumed, s.budget_eur, s.mode, s.armed_at_eur);
+  const a = P.assess(consumed, s.budget_eur, s.mode, s.armed_at_eur, agreedTerms(s));
   const now = Date.now();
-  const eligibility = P.effectiveEligibility(s.eligibility, s.eligibility_at, now);
+  const eligibility = sessionEligibility(s, now);
   const pv = s.state === 'stopped'
     ? settlementForIssue(db, s, now)
-    : P.preview(consumed, s.budget_eur, s.eligibility, s.eligibility_at, now);
+    : liveSettlement(s, now);
   return {
     vip_id: s.guest_id,
     session_id: s.id,
@@ -162,7 +247,7 @@ function view(s, db) {
     headroom_eur: s.state === 'stopped' ? 0 : P.eur(P.headroomCents(s.armed_at_eur, consumed, s.reserved_eur)),
     nudge_active: a.nudge,
     escalate_active: a.escalate,
-    eligibility, eligibility_expired: P.eligibilityExpired(s.eligibility_at, now),
+    eligibility, eligibility_expired: expiredForSession(s, now),
     redirect_issued: Boolean(s.redirect_issued),
     incentive_preview: {
       redirect_eur: pv.redirect,
@@ -185,7 +270,7 @@ function stateOf(db, vip_id) {
 // are identical on a voluntary stop, so both paths run this one function.
 function doStop(db, s, trigger) {
   const consumed = s.consumed_exact ?? s.consumed_eur;
-  const st = P.preview(consumed, s.budget_eur, s.eligibility, s.eligibility_at);
+  const st = liveSettlement(s);
   const at = new Date().toISOString();
   // How far consumption went past the line. Zero while the platform asks before
   // every stake and no wager consumes more than its check; above zero only when
@@ -208,6 +293,7 @@ function doStop(db, s, trigger) {
     consumed_eur: P.money(consumed), preserved_eur: st.preserved,
     redirect_eur: st.redirect, rollover_eur: st.rollover, residual_to_guest_eur: st.residual,
     eligibility: st.eligibility, capped: st.capped, eligibility_expired: st.expired,
+    policy: policyEvidence(s, st), credits: st.credits,
     overshoot_eur: overshoot, authorizations_voided: voided
   });
   // An expiry is recorded separately from a suppression, because the two are
@@ -217,7 +303,7 @@ function doStop(db, s, trigger) {
   if (st.expired) {
     B.append(db, 'eligibility.expired', {
       vip_id: s.guest_id, session_id: s.id,
-      determined_at: s.eligibility_at || null, ttl_days: P.ELIGIBILITY_TTL_DAYS
+      determined_at: s.eligibility_at || null, ttl_days: effectiveLifetime(s)
     });
   }
   // A refusal to issue is its own link in the chain. A regulator asking this
@@ -376,7 +462,7 @@ function recordTick(db, { vip_id, delta_eur, session_id, authorization_id }) {
     }
   }
 
-  const a = P.assess(consumed, s.budget_eur, s.mode, s.armed_at_eur);
+  const a = P.assess(consumed, s.budget_eur, s.mode, s.armed_at_eur, agreedTerms(s));
 
   if (a.locks) return { locked: true, ...doStop(db, s, 'threshold') };
 
@@ -431,7 +517,7 @@ function storedSettlement(db, s) {
 }
 
 function settlementForIssue(db, s, now) {
-  if (!s.redirect_issued && P.effectiveEligibility(s.eligibility, s.eligibility_at, now) === 'suppressed') {
+  if (!s.redirect_issued && sessionEligibility(s, now) === 'suppressed') {
     return P.settle(s.preserved_eur, 'suppressed', s.eligibility_at, now);
   }
   const st = storedSettlement(db, s);
@@ -440,30 +526,22 @@ function settlementForIssue(db, s, now) {
   // policy. A disabled venue or smaller share returns the difference to the
   // guest; reallocating it to another venue could exceed the original offer.
   const current = P.settle(st.preserved, s.eligibility, s.eligibility_at, now);
-  const credits = {};
-  let redirectCents = 0;
-  for (const category of ['spa', 'fnb', 'retail']) {
-    credits[category] = Math.min(st.credits[category], current.credits[category]);
-    redirectCents += P.cents(credits[category]);
-  }
-  const rollover = Math.min(st.rollover, current.rollover);
-  const capBinds = P.REWARD_CAP_EUR !== null && P.money(st.redirect + st.rollover) > P.REWARD_CAP_EUR;
-  return { ...st, credits, redirect: P.eur(redirectCents), rollover, capped: st.capped || capBinds,
-           residual: P.eur(P.cents(st.preserved) - redirectCents - P.cents(rollover)) };
+  return P.restrictSettlement(st, current);
 }
 
 function withhold(db, s, now) {
   const st = P.settle(s.preserved_eur, 'suppressed', s.eligibility_at, now);
+  st.expired = expiredForSession(s, now);
   db.prepare("UPDATE sessions SET eligibility='suppressed', redirect_eur=0, rollover_eur=0, residual_eur=preserved_eur, settlement_json=? WHERE id=?")
     .run(JSON.stringify(st), s.id);
   const written = db.prepare("SELECT 1 FROM events WHERE json_valid(payload) AND json_extract(payload,'$.session_id')=? AND type='incentive.suppressed' LIMIT 1").get(s.id);
   if (written) return;
   if (st.expired) {
     B.append(db, 'eligibility.expired', { vip_id: s.guest_id, session_id: s.id,
-      determined_at: s.eligibility_at, ttl_days: P.ELIGIBILITY_TTL_DAYS });
+      determined_at: s.eligibility_at, ttl_days: effectiveLifetime(s) });
   }
   B.append(db, 'incentive.suppressed', { vip_id: s.guest_id, session_id: s.id, scope: 'settlement',
-    preserved_eur: st.preserved, returned_to_guest_eur: st.preserved });
+    preserved_eur: st.preserved, returned_to_guest_eur: st.preserved, policy: policyEvidence(s, st) });
 }
 
 function redirectIssue(db, payload) {
@@ -479,7 +557,7 @@ function issue(db, { vip_id, session_id }) {
   if (s.state !== 'stopped') fail('NOT_STOPPED', 409);
   if (s.redirect_issued) fail('ALREADY_ISSUED', 409);
   const now = Date.now();
-  if (P.effectiveEligibility(s.eligibility, s.eligibility_at, now) === 'suppressed') {
+  if (sessionEligibility(s, now) === 'suppressed') {
     withhold(db, s, now);
     return null;
   }
@@ -513,7 +591,7 @@ function issue(db, { vip_id, session_id }) {
     .run(st.redirect, st.rollover, st.residual, JSON.stringify(st), s.id);
 
   const e = B.append(db, 'redirect.issue', {
-    vip_id, session_id: s.id, credits: st.credits,
+    vip_id, session_id: s.id, credits: st.credits, policy: policyEvidence(s, st),
     rollover_eur: st.rollover, residual_to_guest_eur: st.residual
   });
   return {
@@ -611,7 +689,7 @@ function redeem(db, { credit_id }) {
   // `true` or "1" redeem credit 1, and a boolean handed to SQLite as a bind
   // value is a driver error, not an answer.
   if (!Number.isInteger(credit_id) || credit_id < 1) fail('CREDIT_UNKNOWN', 404);
-  const c = db.prepare(`SELECT c.*, s.eligibility, s.eligibility_at, g.suppressed_at FROM credits c
+  const c = db.prepare(`SELECT c.*, s.eligibility, s.eligibility_at, s.agreement_json, s.terms_version, g.suppressed_at FROM credits c
                         JOIN sessions s ON s.id=c.session_id JOIN guests g ON g.id=c.guest_id WHERE c.id=? AND s.redirect_issued=1`).get(credit_id);
   if (!c) fail('CREDIT_UNKNOWN', 404);
   if (c.redeemed_at) fail('CREDIT_REDEEMED', 409);
@@ -619,7 +697,7 @@ function redeem(db, { credit_id }) {
   // credit issued before the suppression arrived is not redeemed after it. An
   // excluded patron may not redeem comps, and the engine does not wait for the
   // next session to honour that.
-  if (c.suppressed_at || P.effectiveEligibility(c.eligibility, c.eligibility_at) === 'suppressed') fail('INCENTIVE_SUPPRESSED', 409);
+  if (c.suppressed_at || sessionEligibility(c, Date.now()) === 'suppressed') fail('INCENTIVE_SUPPRESSED', 409);
   const at = new Date().toISOString();
   db.prepare('UPDATE credits SET redeemed_at = ? WHERE id = ?').run(at, c.id);
   const e = B.append(db, 'credit.redeem', {
@@ -632,12 +710,12 @@ function redeem(db, { credit_id }) {
 // and is only extinguished when the guest comes back and uses it.
 function applyRollover(db, { vip_id }) {
   if (!validVip(vip_id)) fail('NO_ROLLOVER', 404);
-  const held = db.prepare(`SELECT r.*, s.eligibility, s.eligibility_at, g.suppressed_at FROM rollover r
+  const held = db.prepare(`SELECT r.*, s.eligibility, s.eligibility_at, s.agreement_json, s.terms_version, g.suppressed_at FROM rollover r
     JOIN sessions s ON s.id=r.session_id JOIN guests g ON g.id=r.guest_id
     WHERE r.guest_id=? AND r.applied_at IS NULL AND s.redirect_issued=1 ORDER BY r.id`).all(vip_id);
   if (!held.length) fail('NO_ROLLOVER', 404);
   const now = Date.now();
-  const r = held.find(row => !row.suppressed_at && P.effectiveEligibility(row.eligibility, row.eligibility_at, now) === 'permitted');
+  const r = held.find(row => !row.suppressed_at && sessionEligibility(row, now) === 'permitted');
   if (!r) fail('INCENTIVE_SUPPRESSED', 409);
   const at = new Date().toISOString();
   db.prepare('UPDATE rollover SET applied_at = ? WHERE id = ?').run(at, r.id);
@@ -682,7 +760,8 @@ function guests(db) {
 }
 
 module.exports = {
-  terms, precommit: atomic(precommit), tick: atomic(tick), authorize: atomic(authorize), release: atomic(release), stateOf, redirectIssue, audit, view, latest,
+  terms, quote, receipt, confirm: atomic(confirm),
+  precommit: atomic((db, input) => precommit(db, input)), tick: atomic(tick), authorize: atomic(authorize), release: atomic(release), stateOf, redirectIssue, audit, view, latest,
   programmeSuppress: atomic(programmeSuppress), SUPPRESS_REASONS,
   voluntaryStop: atomic(voluntaryStop), redeem: atomic(redeem), applyRollover: atomic(applyRollover), quarter, guests, fail
 };

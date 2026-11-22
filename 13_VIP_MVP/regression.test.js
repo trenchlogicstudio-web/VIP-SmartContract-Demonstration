@@ -585,7 +585,9 @@ test('guest console arms, stops and issues a real settlement', async t => {
   element('#vip').value = 'screen';
   element('#budget').value = '1000';
   element('#mode').value = 'hard_stop';
+  element('#determined').checked = true;
   vm.runInContext(html.match(/<script>([\s\S]*?)<\/script>/)[1],context);
+  await vm.runInContext('reviewQuote()',context);
   await vm.runInContext('pre()',context);
   assert.equal(E.stateOf(db,'screen').stopped,false);
   await vm.runInContext('tick(500)',context);
@@ -611,11 +613,11 @@ test('offline demo controls preserve terms, model ceiling and playback position'
     const ctx = vm.createContext({ document:{ getElementById:node }, clearInterval(){nextFrame=null;},
       setInterval(fn){ nextFrame=fn; return 1; } });
     const html = fs.readFileSync(path.join(root,filename),'utf8');
-    vm.runInContext(html.match(/<script>([\s\S]*?)<\/script>/)[1],ctx);
+    runPageScripts(html, ctx);
     return { node, ctx, frame:() => nextFrame(), html };
   }
   const a = demo('05a_Demo_A_Screens.html');
-  vm.runInContext('step=2;consent=true;armed=true;draw()',a.ctx);
+  vm.runInContext("step=2;decision='permitted';armed=true;draw()",a.ctx);
   assert.match(a.node('stage').innerHTML,/id=slr[^>]* disabled/);
   a.node('slr').oninput.call({value:'9000'});
   assert.equal(a.ctx.bud,3000);
@@ -745,7 +747,9 @@ test('guest console checks a stake before reporting it, and a refused stake is n
   element('#vip').value = 'careful';
   element('#budget').value = '1000';
   element('#mode').value = 'hard_stop';
+  element('#determined').checked = true;
   vm.runInContext(html.match(/<script>([\s\S]*?)<\/script>/)[1],context);
+  await vm.runInContext('reviewQuote()',context);
   await vm.runInContext('pre()',context);
   await vm.runInContext('checked(1500)',context);
   assert.equal(E.stateOf(db,'careful').consumed_eur,0,'a stake the check refused is not reported');
@@ -773,6 +777,12 @@ function byReference(env, src) {
 }
 const PACKAGE = path.join(__dirname, '..');
 const inPackage = { skip: !fs.existsSync(path.join(PACKAGE, '00_INDEX.html')) };
+function runPageScripts(html, ctx) {
+  for (const [, src, inline] of html.matchAll(/<script(?: src="([^"]+)")?>([\s\S]*?)<\/script>/g)) {
+    const code = src ? fs.readFileSync(path.join(PACKAGE, src), 'utf8') : inline;
+    vm.runInContext(code, ctx);
+  }
+}
 function offlineDemo(filename, values = {}) {
   const nodes = new Map();
   const node = key => {
@@ -784,7 +794,7 @@ function offlineDemo(filename, values = {}) {
   };
   const ctx = vm.createContext({ document:{ getElementById:node }, clearInterval(){}, setInterval(){ return 1; } });
   const html = fs.readFileSync(path.join(PACKAGE, filename), 'utf8');
-  vm.runInContext(html.match(/<script>([\s\S]*?)<\/script>/)[1], ctx);
+  runPageScripts(html, ctx);
   return { node, ctx, html };
 }
 
@@ -892,7 +902,7 @@ test('a database written before 0.2.16 gains the terms column, and its sessions 
   assert.equal(B.verify(db).valid, true);
 });
 
-test('the guest console shows the terms, sends their version and the determination, and reloads the terms when they changed', async t => {
+test('the guest console shows the terms, sends their version and the determination, and requires a fresh review when terms change', async t => {
   const db = database(t), base = await listen(t, createServer(db));
   const html = await (await fetch(base + '/')).text();
   const elements = new Map();
@@ -907,18 +917,23 @@ test('the guest console shows the terms, sends their version and the determinati
   element('#vip').value = 'informed'; element('#budget').value = '1000'; element('#mode').value = 'hard_stop';
   element('#determined').checked = true;
   vm.runInContext(html.match(/<script>([\s\S]*?)<\/script>/)[1], context);
-  await vm.runInContext('loadTerms()', context);
+  await vm.runInContext('pre()', context);
+  assert.equal(E.latest(db, 'informed'), undefined);
+  await vm.runInContext('reviewQuote()', context);
   const version = E.terms().terms_version;
   assert.match(element('#terms').textContent, new RegExp('^Terms ' + version));
-  vm.runInContext("termsVersion='terms-000000000000'", context);
+  assert.match(element('#line').textContent, /Hard-Stop locks play/);
+  vm.runInContext("review.quote.terms_version='terms-000000000000'", context);
   await vm.runInContext('pre()', context);
-  assert.equal(E.latest(db, 'informed'), undefined, 'other terms arm nothing');
-  await new Promise(r => setTimeout(r, 50));
-  assert.equal(vm.runInContext('termsVersion', context), version, 'the console reloads the terms in force');
+  assert.equal(E.latest(db, 'informed'), undefined, 'different terms arm nothing');
+  assert.equal(element('#confirm').disabled, true);
+  await vm.runInContext('reviewQuote()', context);
+  assert.equal(vm.runInContext('review.quote.terms_version', context), version);
   await vm.runInContext('pre()', context);
   const s = E.latest(db, 'informed');
   assert.equal(s.terms_version, version); assert.equal(s.budget_eur, 1000);
   assert.ok(Number.isFinite(Date.parse(s.eligibility_at)) && Date.parse(s.eligibility_at) <= Date.now());
+  assert.equal(E.receipt(db,'informed').agreement.confirmation,'quote_confirmed');
 });
 
 test('the index and the guide link to every demo, and every local link in the pages resolves', inPackage, () => {
@@ -971,9 +986,9 @@ test('Demo D can be driven from the keyboard, and Demo A shows the version of th
   const a = offlineDemo('05a_Demo_A_Screens.html');
   const version = inProcess(DEFAULTS, ({ E }) => E.terms().terms_version);
   assert.equal(a.ctx.TERMS_VERSION, version);
-  vm.runInContext('step=3;consent=true;armed=true;draw()', a.ctx);
+  vm.runInContext("step=3;decision='permitted';armed=true;draw()", a.ctx);
   assert.match(a.node('stage').innerHTML, new RegExp('terms ' + version));
-  vm.runInContext('step=2;consent=true;armed=false;draw()', a.ctx);
+  vm.runInContext("step=2;decision='permitted';armed=false;draw()", a.ctx);
   assert.match(a.node('stage').innerHTML, /<label for=slr>/);
 });
 
@@ -997,4 +1012,225 @@ test('on a phone the control panel of Demos B and C scrolls with the page instea
     assert.match(c.html, new RegExp('data-h="(Issued|Redeemed or used|Still owed)" id="' + id + '"'), id);
   }
   assert.match(c.html, /table\.settle td\[data-h\]::before\{content:attr\(data-h\)/);
+});
+
+// v3.23. These scenarios exercise UI entry points, the local wire format and real restarts.
+function confirmation(input, offer) {
+  return { ...input, review_id: offer.review_id, quote_id: offer.quote_id, terms_version: offer.terms_version };
+}
+test('review is read-only and binds the guest, budget, mode, decision and terms to the confirmed receipt', t => {
+  const db = database(t);
+  const input = { vip_id:'reader', budget_eur:20000, mode:'hard_stop', eligibility:'permitted', eligibility_at:new Date().toISOString() };
+  const offer = E.quote(db, input), body = confirmation(input, offer);
+  assert.equal(db.prepare('SELECT count(*) n FROM guests').get().n,0);
+  assert.equal(db.prepare('SELECT count(*) n FROM events').get().n,0);
+  for (const change of [{vip_id:'other'}, {budget_eur:19999}, {mode:'advisory'}, {eligibility:'suppressed'}, {quote_id:'old'}]) {
+    assert.throws(()=>E.confirm(db,{...body,...change}), /QUOTE_CHANGED/);
+  }
+  assert.equal(E.latest(db,'reader'),undefined);
+  const a=E.confirm(db,body), rec=E.receipt(db,'reader',a.session_id);
+  assert.deepEqual(rec.agreement,{...offer,confirmation:'quote_confirmed'});
+  assert.equal(rec.agreement.terms_version,E.terms().terms_version);
+  assert.throws(()=>E.receipt(db,'other',a.session_id),/SESSION_UNKNOWN/);
+  assert.equal(B.verify(db).valid,true);
+});
+
+test('a withdrawal between review and confirmation invalidates the offer and the next quote shows the guest their full balance', t => {
+  const db=database(t), input={vip_id:'withdrawn',budget_eur:20000,eligibility_at:new Date().toISOString()};
+  const previous=E.quote(db,input);
+  E.programmeSuppress(db,{vip_id:input.vip_id,reason:'player_request'});
+  assert.throws(()=>E.confirm(db,confirmation(input,previous)),/QUOTE_CHANGED/);
+  assert.equal(E.latest(db,input.vip_id),undefined);
+  const offer=E.quote(db,input);
+  assert.deepEqual([offer.at_line.redirect,offer.at_line.rollover,offer.at_line.residual],[0,0,10000]);
+  E.confirm(db,confirmation(input,offer));
+  assert.equal(E.tick(db,{vip_id:input.vip_id,delta_eur:10000}).eligibility,'suppressed');
+});
+
+test('repeated concurrent HTTP confirmations return one session and the same receipt', async t => {
+  const db=database(t), base=await listen(t,createServer(db));
+  async function post(route, payload) {
+    const resp = await fetch(base+route,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+    return {status:resp.status,body:await resp.json()};
+  }
+  const input={vip_id:'twice',budget_eur:1000}, q=await post('/vip/quote',input);
+  const body=confirmation(input,q.body);
+  const responses=await Promise.all(Array.from({length:5},()=>post('/vip/confirm',body)));
+  assert.equal(responses[0].status,201);
+  for(const r of responses) assert.deepEqual(r,responses[0]);
+  assert.equal(db.prepare("SELECT count(*) n FROM events WHERE type='precommit'").get().n,1);
+  assert.equal((await post('/vip/confirm',{...body,budget_eur:2000})).status,409);
+  const state=await (await fetch(base+'/vip/session/receipt?vip_id=twice&session_id='+responses[0].body.session_id)).json();
+  assert.equal(state.agreement.review_id,q.body.review_id);
+});
+
+test('fresh review IDs permit a new explicit decision when the commitment is genuinely over', () => {
+  const run=inProcess({VIP_COMMITMENT_HOURS:'0'},({E,db})=>{
+    const input={vip_id:'again',budget_eur:100};
+    const q=E.quote(db,input), first={...input,review_id:q.review_id,quote_id:q.quote_id};
+    const a=E.confirm(db,first); E.tick(db,{vip_id:'again',delta_eur:50});
+    const replay=E.confirm(db,first), second=E.quote(db,input);
+    const b=E.confirm(db,{...input,review_id:second.review_id,quote_id:second.quote_id});
+    return [a.session_id===replay.session_id,q.review_id!==second.review_id,a.session_id!==b.session_id];
+  });
+  assert.deepEqual(run,[true,true,true]);
+});
+
+test('legacy and API-created sessions never acquire a simulated guest confirmation', t => {
+  const file=path.join(tempDir(t),'old.db');
+  let db=S.open(file);
+  E.precommit(db,{vip_id:'old',budget_eur:500});
+  db.exec('ALTER TABLE sessions DROP COLUMN agreement_json'); db.close();
+  db=S.open(file); t.after(()=>db.close());
+  assert.equal(E.receipt(db,'old').agreement,null);
+  E.tick(db,{vip_id:'old',delta_eur:250});
+  assert.equal(E.receipt(db,'old').events[0].policy.reason,'legacy_terms_unavailable');
+  E.precommit(db,{vip_id:'raw',budget_eur:500});
+  E.precommit(db,{vip_id:'version',budget_eur:500,terms_version:E.terms().terms_version});
+  assert.equal(E.receipt(db,'raw').agreement.confirmation,'configured_only');
+  assert.equal(E.receipt(db,'version').agreement.confirmation,'version_supplied');
+  assert.equal(B.verify(db).valid,true);
+});
+
+test('an accepted €5,000 cap survives a restart with looser rules; a tighter €2,000 cap leaves a reconciled audit record', t => {
+  const file=path.join(tempDir(t),'terms.db'), config={...DEFAULTS, VIP_DB:file};
+  const arm=({E,db},id)=>{
+    const b={vip_id:id,budget_eur:20000,eligibility_at:new Date().toISOString()};
+    const q=E.quote(db,b); E.confirm(db,{...b,quote_id:q.quote_id,review_id:q.review_id});
+    return q.terms_version;
+  };
+  const saved=inProcess(config,({E,db})=>{
+    const input={vip_id:'retry-restart',budget_eur:20000}, q=E.quote(db,input);
+    const body={...input,review_id:q.review_id,quote_id:q.quote_id,terms_version:q.terms_version};
+    return {body,result:E.confirm(db,body)};
+  });
+  const replay=inProcess({...config,VIP_REWARD_CAP_EUR:'2000'},({E,db},body)=>E.confirm(db,body),saved.body);
+  assert.deepEqual(replay,saved.result);
+  const first=inProcess(config,arm,'tight');
+  inProcess(config,arm,'loose');inProcess(config,arm,'issue');
+  function stop({E,db},id) {
+    E.tick(db,{vip_id:id,delta_eur:10000});
+    const receipt=E.receipt(db,id), event=receipt.events.find(e=>e.type==='policy.stop');
+    return {guest:event.residual_to_guest_eur,agreement:receipt.agreement.at_line.residual,policy:event.policy};
+  }
+  const tight=inProcess({...config,VIP_REWARD_CAP_EUR:'2000'},stop,'tight');
+  assert.equal(tight.guest,8000);assert.equal(tight.agreement,5000);
+  assert.equal(tight.policy.agreed_version,first);assert.notEqual(tight.policy.current_version,first);
+  assert.equal(tight.policy.reason,'original_and_current_limits');
+  assert.equal(tight.policy.current_terms.reward_cap_eur,2000);
+  const loose=inProcess({...config,VIP_REWARD_CAP_EUR:'off'},stop,'loose');
+  assert.equal(loose.guest,5000);
+  inProcess(config,stop,'issue');
+  const issued=inProcess({...config,VIP_REWARD_CAP_EUR:'2000'},({E,db})=>{
+    const r=E.redirectIssue(db,{vip_id:'issue'}),e=E.receipt(db,'issue').events.at(-1);
+    return [r.residual,e.type,e.policy.reason,e.policy.agreed_version,e.policy.current_version];
+  });
+  assert.deepEqual(issued,[8000,'redirect.issue','original_and_current_limits',first,tight.policy.current_version]);
+});
+
+test('the original hold, advisory warning lines and expiry survive a restart with relaxed settings', t => {
+  const config={VIP_DB:path.join(tempDir(t),'hold.db'),VIP_COMMITMENT_HOURS:'24',VIP_ELIGIBILITY_TTL_DAYS:'2'};
+  inProcess(config,({E,db})=>{
+    const time=new Date(Date.now()-86400000).toISOString();
+    E.precommit(db,{vip_id:'policy',mode:'advisory',budget_eur:1000,eligibility_at:time});
+    E.precommit(db,{vip_id:'aging',budget_eur:1000,eligibility_at:time});
+    return true;
+  });
+  const result=inProcess({...config,VIP_COMMITMENT_HOURS:'0',VIP_NUDGE:'.75',VIP_ESCALATE:'.95',VIP_ELIGIBILITY_TTL_DAYS:'off'},({E,db})=>{
+    const t=E.tick(db,{vip_id:'policy',delta_eur:450});
+    let refusal;try{E.precommit(db,{vip_id:'policy',budget_eur:2000})}catch(e){refusal=e.message}
+    const clock=Date.now;Date.now=()=>clock()+2*86400000;
+    try {
+      const expiry=E.tick(db,{vip_id:'aging',delta_eur:500});
+      const events=E.audit(db,E.latest(db,'aging').id).events;
+      return [t.state.nudge_active,refusal,expiry.eligibility,expiry.residual_to_guest_eur,events.find(e=>e.type==='eligibility.expired').ttl_days];
+    }finally{Date.now=clock}
+  });
+  assert.deepEqual(result,[true,'SESSION_LIVE','suppressed',500,2]);
+});
+
+test('Demo B renders the same guest receipt as the default engine on both checked and reported-only stakes',inPackage,()=>{
+  const expected=inProcess(DEFAULTS,({P},values)=>values.map(v=>P.settle(v,'permitted',new Date().toISOString())),[10000,9100]);
+  for(const checked of [true,false]){
+    const b=offlineDemo('05b_Demo_B_Policy_Engine.html',{s:50,r:70});
+    if(!checked)b.node('cA').onclick();
+    for(let i=0;i<50&&!b.ctx.fired;i++)b.node('deal').onclick();
+    assert.equal(b.ctx.fired,true);
+    const preserved=20000-b.ctx.dd;
+    const amounts=expected[0].preserved===preserved?expected[0]:inProcess(DEFAULTS,({P},x)=>P.settle(x,'permitted',new Date().toISOString()),preserved);
+    const formatted=vm.runInContext('fmc',b.ctx);
+    for(const field of ['redirect','rollover','residual'])assert.ok(b.node('amounts').textContent.includes(formatted(amounts[field])));
+    assert.match(b.node('log').innerHTML,/cap applied/);
+    b.node('reset').onclick();b.node('mH').onclick();
+    for(let i=0;i<50&&!b.ctx.fired;i++)b.node('deal').onclick();
+    assert.match(b.node('amounts').textContent,/Resort services €0 · future-play credit €0/);
+    assert.ok(b.node('amounts').textContent.includes(formatted(preserved)));
+  }
+});
+
+test('Demo C applies the cap before aggregation and resets all five inputs on the Ceiling preset',inPackage,()=>{
+  const c=offlineDemo('05c_Demo_C_Synthetic_Case_Study.html',{n:60,p:5100,g:70,q:50,r:84});
+  c.node('q').value=10; c.node('p2').onclick();
+  const per=inProcess({...DEFAULTS,VIP_SPLIT_SPA:'.4',VIP_SPLIT_FNB:'.25',VIP_SPLIT_RETAIL:'.15'},({P})=>P.settle(8000,'permitted',new Date().toISOString()));
+  for(const [id,value] of [['tIss',per.redirect],['tRoll',per.rollover],['tRes',per.residual]]){
+    assert.equal(c.node(id).textContent,'€'+(value*110).toLocaleString('en-US'));
+  }
+  assert.equal(c.node('q').value,50);
+  assert.match(c.node('capStatus').textContent,/€550,000.*€330,000/);
+  c.node('q').value=100;c.node('q').oninput();assert.equal(c.node('tOpen').textContent,'€0');
+  c.node('q').value=0;c.node('q').oninput();assert.equal(c.node('tOwed').textContent,'€550,000');
+});
+
+test('Demo A offers a real decline, a protected stop without incentives and a capped receipt',inPackage,()=>{
+  for(const permitted of [true,false]){
+    const a=offlineDemo('05a_Demo_A_Screens.html');
+    vm.runInContext('go(1)',a.ctx); a.node(permitted?'allow':'withhold').onclick();
+    vm.runInContext('go(2)',a.ctx);a.node('slr').oninput.call({value:'20000'});
+    vm.runInContext('go(3)',a.ctx);
+    assert.match(a.node('stage').innerHTML,permitted?/€3,888.89/:/€10,000/);
+    a.node('decline').onclick();assert.equal(a.ctx.armed,false);
+    vm.runInContext('go(5)',a.ctx);assert.match(a.node('stage').innerHTML,/accept the amounts/);
+    vm.runInContext('go(2);go(3)',a.ctx);a.node('arm').onclick();
+    vm.runInContext('go(4)',a.ctx);a.node('fire').onclick();vm.runInContext('go(5)',a.ctx);
+    assert.match(a.node('stage').innerHTML,permitted?/€5,000/:/Benefits withheld/);
+  }
+});
+
+test('the shared cents calculation agrees with the independent reference at the cap boundary and across all Demo B share settings',inPackage,()=>{
+  const math=require('./src/settlement');
+  const inputs=[0,.01,5100,5555.55,5555.56,5555.57,8000,10000,12000];
+  const expected=inProcess(DEFAULTS,({P},xs)=>xs.map(v=>P.settle(v,'permitted',new Date().toISOString())),inputs);
+  for(const [i,n] of inputs.entries()){
+    const actual=math.demoSettlement(n);
+    assert.deepEqual([actual.redirect,actual.rollover,actual.residual,actual.credits,actual.capped],
+      [expected[i].redirect,expected[i].rollover,expected[i].residual,expected[i].credits,expected[i].capped]);
+  }
+  for(let share=40;share<=80;share++){
+    for(const n of inputs){
+      const q=math.demoSettlement(n,share);
+      const cents=x=>Math.round(x*100);
+      assert.equal(cents(q.redirect)+cents(q.rollover)+cents(q.residual),cents(n));
+      assert.ok(cents(q.redirect)+cents(q.rollover)<=500000);
+    }
+  }
+  if(ref){
+    const result=byReference(DEFAULTS,"[0.01,5100,5555.55,5555.56,5555.57,8000,10000].map(v=>r.settle(v,'permitted',new Date().toISOString()))");
+    for(const entry of result) assert.deepEqual(math.demoSettlement(entry.preserved).credits,entry.credits);
+  }
+});
+
+test('pilot worksheet starts empty, rejects inconsistent counts and reports absolute rates with uncertainty',inPackage,()=>{
+  const d=offlineDemo('16_Evaluation.html');
+  const result=()=>d.node('calculated').textContent;
+  assert.equal(result(),'Enter all four counts.');
+  for(const [id,n] of Object.entries({xt:30,nt:100,xc:20,nc:100}))d.node(id).value=n;
+  d.node('nt').oninput();
+  assert.match(result(),/30.0% \(30\/100\).*20.0% \(20\/100\).*10.0 percentage points/);
+  // For no events in the first group and all ten in the second, Wilson's
+  // nonzero endpoint is z²/(10+z²), which also fixes the Newcombe upper limit.
+  const limits=d.ctx.compareVisits(0,10,10,10);
+  assert.equal(limits.lower,-1);
+  assert.ok(Math.abs(limits.upper-(-1+Math.SQRT2*3.841458820694124/(10+3.841458820694124)))<1e-10);
+  d.node('nt').value=0; d.node('nt').oninput();assert.match(result(),/each group needs/i);
+  d.node('nt').value=29; d.node('nt').oninput();assert.match(result(),/visits cannot exceed/);
 });

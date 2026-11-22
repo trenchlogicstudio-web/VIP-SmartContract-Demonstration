@@ -30,6 +30,14 @@ Record a past or current determination timestamp with a time zone, such as `2026
 
 Session IDs isolate delayed operations. An anonymous retry of a pre-commit can still open a new session. Persist the operator's pre-commit decision before retrying across a network failure. SQLite keeps the new tick receipts in the same transaction as the tick and its decision. Receipts last as long as their sessions. Restarting the reference service clears its memory.
 
+## Reviewed quote and receipt
+
+`POST /vip/quote` accepts the same guest, budget, mode, eligibility and assessment timestamp as a pre-commit. It writes no rows. Show the returned threshold example, terms, mode and eligibility to the guest. Reuse the exact input, including the timestamp, when confirming with `POST /vip/confirm`. Add the returned `review_id`, `quote_id` and `terms_version`. A changed quote produces `409 QUOTE_CHANGED`; a changed terms version produces `409 TERMS_CHANGED`. Display a fresh review before accepting again. For an uncertain delivery, retry the original confirmation unchanged. An idempotent replay returns the original session, including after a restart.
+
+`GET /vip/session/receipt?vip_id=…&session_id=…` returns the agreement and settlement events. The agreement includes a complete policy snapshot and the hypothetical split exactly on the line. To compare actual amounts, use the preserved total at the actual stop. A late tick or a voluntary stop can change that total. The evidence labels are `quote_confirmed`, `version_supplied` and `configured_only`. They describe a client action. An operator would supply identity and authenticated consent in its own integration.
+
+The hosted SQLite service keeps the original stop line, advisory lines and minimum commitment for new sessions after a restart. Across a change of rules the lower allowance for each pending instrument applies and the difference returns to the guest. Eligibility uses the stricter determination lifetime. The stop and issue events name the agreed and active policy versions and a reason. When the versions differ, the audit event also includes the full active terms. A legacy agreement is reported as null. The reference service has no persistent sessions after restart.
+
 ## Local product operations
 
 | Route | Result |
@@ -45,12 +53,12 @@ Session IDs isolate delayed operations. An anonymous retry of a pre-commit can s
 
 ## Downstream delivery
 
-Set both `VIP_DOWNSTREAM_URL` and `VIP_DOWNSTREAM_KEY` to activate the optional dispatcher. It posts JSON after the local transaction commits, using bearer authentication and a 1.5 second timeout. The envelope is `{ "source": "vip-mvp/0.2.16", "event": { "seq": 1, "type": "…", "payload": {}, "at": "…", "hash": "…", "fingerprint": "…" } }`. The sequence in this example is illustrative.
+Set both `VIP_DOWNSTREAM_URL` and `VIP_DOWNSTREAM_KEY` to activate the optional dispatcher. It posts JSON after the local transaction commits, using bearer authentication and a 1.5 second timeout. The envelope is `{ "source": "vip-mvp/0.2.17", "event": { "seq": 1, "type": "…", "payload": {}, "at": "…", "hash": "…", "fingerprint": "…" } }`. The sequence in this example is illustrative.
 
 | Mirrored event | Payload fields |
 |---|---|
-| `policy.stop` | `vip_id`, `session_id`, `trigger`, `consumed_eur`, `preserved_eur`, `redirect_eur`, `rollover_eur`, `residual_to_guest_eur`, `eligibility`, `capped`, `eligibility_expired`, `overshoot_eur`, `authorizations_voided` |
-| `redirect.issue` | `vip_id`, `session_id`, `credits` (spa, fnb, retail), `rollover_eur`, `residual_to_guest_eur` |
+| `policy.stop` | `vip_id`, `session_id`, `trigger`, `consumed_eur`, `preserved_eur`, `redirect_eur`, `rollover_eur`, `residual_to_guest_eur`, `eligibility`, `capped`, `eligibility_expired`, `overshoot_eur`, `authorizations_voided`, `policy`, `credits` |
+| `redirect.issue` | `vip_id`, `session_id`, `credits` (spa, fnb, retail), `rollover_eur`, `residual_to_guest_eur`, `policy` |
 | `credit.redeem` | `vip_id`, `session_id`, `category`, `amount_eur` |
 | `guest.erase` | `guest_id` |
 
@@ -60,7 +68,7 @@ Audit data uses operator-supplied opaque IDs. Use synthetic IDs for evaluation. 
 
 ## Earlier databases
 
-Startup migrates the original MVP schema in one transaction. A database written before 0.2.14 gains the `authorizations` table, the reservation column on its sessions and the link from a tick to its check; its sessions keep their budgets and lines, and a live one is held for the commitment period counted from its opening. A database written before 0.2.16 gains the `terms_version` column; its sessions keep `null` there, because which terms they were armed under was not recorded, and a stopped one holds its guest for the rest of the commitment period like any other. Live sub-cent totals are rebuilt from recorded ticks. Completed historical monetary amounts and hashes are retained. A legacy pending stop contains the redirect, rollover and residual totals but lacks a per-venue quote. The service divides that recorded redirect using the current venue proportions. If every venue is disabled, it returns the redirect to the guest. New stops persist the exact per-venue offer.
+An upgrade from 0.2.16 adds nullable agreement storage and idempotent confirmation receipts. Earlier sessions and hashes retain their provenance. Startup migrates the original MVP schema in one transaction. A database written before 0.2.14 gains the `authorizations` table, the reservation column on its sessions and the link from a tick to its check; its sessions keep their budgets and lines, and a live one is held for the commitment period counted from its opening. A database written before 0.2.16 gains the `terms_version` column; its sessions keep `null` there, because which terms they were armed under was not recorded, and a stopped one holds its guest for the rest of the commitment period like any other. Live sub-cent totals are rebuilt from recorded ticks. Completed historical monetary amounts and hashes are retained. A legacy pending stop contains the redirect, rollover and residual totals but lacks a per-venue quote. The service divides that recorded redirect using the current venue proportions. If every venue is disabled, it returns the redirect to the guest. New stops persist the exact per-venue offer.
 
 An interrupted legacy issue can leave unused credit rows. A new issue replaces these atomically if no issuance was recorded and nothing was spent. The service returns `409 LEDGER_CONFLICT` when there is evidence of previous use or issuance for a supposedly unissued stop. Reconcile that existing ledger against the source records before changing balances. Previously redeemed duplicates in a completed historical settlement require the same review.
 

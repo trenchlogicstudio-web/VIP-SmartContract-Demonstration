@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT -->
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>VIP v3.22 · Demo A · Screens</title><style>
+<title>VIP v3.23 · Demo A · Screens</title><style>
 :root{--paper:#F3F5F4;--panel:#E9EEEC;--ink:#122B33;--accent:#1E5A78;--accent-deep:#143E54;--accent-light:#7FB0C4;--seal:#973A3A;--graphite:#54646A;--line:#C7D2D1;--wash:#D8E2E4;--lavender:#D6D3E6;--rose:#DFB3BE;--display:"Schibsted Grotesk",Arial,sans-serif;--body:"Source Serif 4",Georgia,serif;--mono:"Fragment Mono","Courier New",monospace;--r:3px;--rule:1px solid var(--line)}
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
@@ -107,11 +107,12 @@ details.assume .in li{margin-bottom:6px;margin-left:16px}
 a{color:var(--accent-deep);text-underline-offset:2px}a:hover{color:var(--accent)}
 a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .backnav{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 14px}
-</style></head><body><div class="wrap"><header><div class="mark"><div class="tile">TL</div><div class="word">TRENCH LOGIC STUDIO<span>VIP v3.22 · Demo A</span></div></div>
+.quotegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(120px,100%),1fr));gap:12px}.quotegrid div{padding:10px;background:var(--panel);border-top:2px solid var(--accent)}.quotegrid dd{font:700 18px var(--display);margin:4px 0}.quotegrid dt{font:12px var(--display)}.sbody p{max-width:67ch}.sbody button[aria-pressed=true]{background:var(--accent);color:white}.steps{flex-wrap:wrap}
+</style></head><body><div class="wrap"><header><div class="mark"><div class="tile">TL</div><div class="word">TRENCH LOGIC STUDIO<span>VIP v3.23 · Demo A</span></div></div>
 <p class="backnav"><a href="00_INDEX.html">Index</a> · <a href="05_Demo_Guide.html">Demo guide</a> · <a href="05b_Demo_B_Policy_Engine.html">Demo B</a></p>
 <span class="eyebrow">Demo A · registry slot 05a · interactive walkthrough</span>
-<h1>The host console, live</h1>
-<p class="lede">Six steps from risk flag to retained VIP. Click what the host would click. Toggle annotations for the design intent — including why consent comes before the contract, always.</p>
+<h1>From operator review to guest receipt</h1>
+<p class="lede">Follow a single guest through assessment, a budget they can review or decline, and a checked stop. Try the same case with benefits withheld.</p>
 <div class="asis"><p><b>MIT LICENSE · SYNTHETIC BY DECLARATION.</b> This page runs a synthetic scenario in the browser. The external limit-setting study is cited below. No live resort data exists. Assumptions are printed beside each model; whoever integrates it validates independently.</p></div></header>
 <div class="wrap"><div class="dim"></div></div>
 <section class="wrap">
@@ -121,60 +122,81 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 <div class="ann l2" id="annbox" style="display:none;margin-top:14px"><h3>Design intent</h3><p id="anntext"></p></div>
 <p class="note">Auer, Hopfgartner and Griffiths report the 2.92 odds ratio for voluntary limit-setting in Table 5. The quarter assumptions on this page are illustrative. <a href="https://doi.org/10.1007/s11469-019-00084-3">Read the study</a>.</p>
 </section>
+<script src="13_VIP_MVP/src/settlement.js"></script>
 <script>
-var step=0,consent=false,bud=3000,armed=false,fired=false,redirected=false;
-var THRESHOLD=50,SPA=30,FNB=25,RETAIL=15,ROLLOVER=20,RESIDUAL=10; /* 12_Canon.json · thresholds */
-var CAP=5000,TTL_DAYS=90,COMMIT_H=24; /* the engine's defaults from v3.22 */
-/* the version GET /v3/terms publishes for exactly these terms; the MVP suite checks it against the engine */
-var TERMS_VERSION="terms-f443efadc782";
-function el(i){return document.getElementById(i)}
-/* the same allocation 04b_Integration_Reference.js settles with, on integers:
-   c is a whole number of cents, w are whole-number weights (millionths); every
-   share is c*w/sum floored, the leftover cents go to the largest remainders,
-   ties by position. The parts close on the whole, always, and a zero weight
-   receives nothing. */
-var MICRO=1000000;function micro(x){return Math.round(x*MICRO)}
-function allocate(c,w){var sum=w.reduce(function(a,b){return a+b},0);if(c<=0||sum===0)return w.map(function(){return 0});
-var raw=w.map(function(x){return c*x});var out=raw.map(function(r){return Math.floor(r/sum)});
-var left=c-out.reduce(function(a,b){return a+b},0);
-var ord=raw.map(function(r,i){return {i:i,rem:r-out[i]*sum}}).sort(function(a,b){return (b.rem-a.rem)||(a.i-b.i)});
-for(var k=0;left>0;k++,left--)out[ord[k%ord.length].i]+=1;return out}
-/* the weights are built exactly as 04b builds them — each share in whole
-   millionths, the redirect total their SUM, the residual what is left after it
-   and the rollover; the stop line is the first cent at or above the threshold
-   share of the budget, which is also the amount the engine publishes */
-function shares(){return {spa:micro(SPA/100),fnb:micro(FNB/100),retail:micro(RETAIL/100)}}
-function redirectTotal(){var s=shares();return s.spa+s.fnb+s.retail}
-function preservedC(){var b=Math.round(bud*100);return b-Math.ceil(b*micro(THRESHOLD/100)/MICRO)}
-function preserved(){return preservedC()/100}
-function legsC(){var rt=redirectTotal(),ro=micro(ROLLOVER/100);return allocate(preservedC(),[rt,ro,MICRO-ro-rt])}
-function legs(){return legsC().map(function(x){return x/100})}
-function credits(){var s=shares();return allocate(legsC()[0],[s.spa,s.fnb,s.retail]).map(function(x){return x/100})}
-function fm(e){return "€"+e.toLocaleString("en-US",{minimumFractionDigits:(Math.round(e*100)%100?2:0),maximumFractionDigits:2})}
-var STEPS=[
-{c:"STEP 1 · THE FLAG",a:"Concentration is the fragility: with ~30% of GGR in the top 1%, one burned-out whale is a P&L event. The flag is velocity-based, not moralizing, and it is the property's own — from its analytics or a detection vendor; this engine forms no view of risk.",r:function(){return "<h3>Guest V-1108 · velocity flag</h3><table class=tls style=max-width:560px><tr><th>Signal</th><th>Read</th></tr><tr><td>Monthly theoretical</td><td class=mono>€5,500 · +38% vs the prior month</td></tr><tr><td>Session length</td><td class=mono>outlier · 97th pct</td></tr><tr><td>Cool-off pattern</td><td class=mono>collapsing</td></tr><tr><td>Status</td><td class=mono>1 of 60 flagged this quarter</td></tr></table>"}},
-{c:"STEP 2 · CONSENT",a:"The contract is opt-in, framed as a private banking instrument — discipline as privilege, never punishment. No consent, no policy: the pre-commit is sent only after the guest says yes.",r:function(){return "<h3>Offer the instrument</h3>"+(consent?"<div class=log><span class=ok>guest</span> V-1108 accepts · \"stop-loss like my brokerage, finally\"</div>":"<div class=\"card\" style=max-width:560px><p style=\"font-family:var(--display);font-size:14px;margin:0 0 10px\">\"We can put a floor under your season — your limits, on rails no one can quietly move, us included.\"</p><button class=\"btn pri\" id=cons>GUEST CONSENTS</button></div>")}},
-{c:"STEP 3 · SET POLICY",a:"The guest sets the numbers, the host witnesses. A limit imposed is churn; a limit chosen is loyalty. In the cited study, players who set their own limit had 2.92× the odds of still being active a year later than players who set none; it does not measure what an incentive adds.",r:function(){if(!consent)return "<p style=\"font-family:var(--display);color:var(--seal)\">Consent required in Step 2 first.</p>";return "<h3>Policy terms · guest-authored</h3><label for=slr>pre-committed budget · <b id=slv>"+fm(bud)+"</b></label><input type=range id=slr aria-describedby=slrd min=1000 max=10000 step=100 value="+bud+(armed?" disabled":"")+" style=max-width:380px><p id=slrd style=\"font-family:var(--display);font-size:13px;color:var(--graphite)\">Hard-Stop fires at "+THRESHOLD+"% of the pre-committed budget — the reference threshold, configured per jurisdiction, never per guest. The preserved budget then settles: "+(SPA+FNB+RETAIL)+"% as resort credit (spa "+SPA+" · F&B "+FNB+" · retail "+RETAIL+"), "+ROLLOVER+"% as next-visit rollover, "+RESIDUAL+"% back to the guest. The incentive is capped at "+fm(CAP)+" per stop, the operator's eligibility determination counts for "+TTL_DAYS+" days, and no second budget is accepted for "+COMMIT_H+" hours. These are the terms the guest agrees to, under version "+TERMS_VERSION+".</p>"}},
-{c:"STEP 4 · ARM THE POLICY",a:"Middleware, not a chain: funds never go on chain and the rules stay off it — only the proof is anchored. In Hard-Stop there is no override, so the limit is not a setting anyone can talk their way out of at 2am, and either way the attempt leaves a record.",r:function(){if(!consent)return "<p style=\"font-family:var(--display);color:var(--seal)\">Complete Steps 2–3 first.</p>";return armed?"<h3>Armed.</h3><div class=log><span class=ok>precommit</span> hard_stop · stop at "+THRESHOLD+"% of "+fm(bud)+" · no override<br><b>recorded</b> amount "+fm(bud)+" · terms "+TERMS_VERSION+", the version the guest was shown<br><b>audit</b> illustrative fingerprint 0x7f3a…c412 · funds stay off chain</div>":"<button class=\"btn seal\" id=arm>ARM THE POLICY</button>"}},
-{c:"STEP 5 · THE TRIGGER",a:"When the threshold hits, the policy fires without a human in the loop — the host arrives after, as concierge, never as enforcer.",r:function(){if(!armed)return "<p style=\"font-family:var(--display);color:var(--seal)\">Arm the policy in Step 4 first.</p>";return fired?"<h3>Policy stop · gaming locked</h3><div class=log><span class=seal>policy.stop</span> "+THRESHOLD+"% of "+fm(bud)+" consumed · session locked, further stakes refused<br><b>ledger</b> preserved "+fm(preserved())+" this session · recorded, not held</div>":"<button class=\"btn seal\" id=fire>SIMULATE THRESHOLD HIT</button>"}},
-{c:"STEP 6 · THE REDIRECT",a:"The preserved budget stays in the building: 70% issued as resort credit in the model — €214K across the synthetic quarter, which becomes spend when guests redeem it. Quarter retention of limited VIPs with the incentive layer: 84% vs 61% hard-stop-only. MODELED, and labeled; no pilot has measured either.",r:function(){if(!fired)return "<p style=\"font-family:var(--display);color:var(--seal)\">Fire the policy in Step 5 first.</p>";var cr=credits(),lg3=legs(),sp=cr[0],fb=cr[1],rt=cr[2],ro=lg3[1],rs=lg3[2];return "<h3>Concierge screen · spend it here</h3><div style=\"display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px\"><span class=\"chip "+(redirected?"lock":"")+"\" id=r1>Spa "+fm(sp)+"</span><span class=\"chip "+(redirected?"lock":"")+"\" id=r2>F&B "+fm(fb)+"</span><span class=\"chip "+(redirected?"lock":"")+"\" id=r3>Retail "+fm(rt)+"</span></div><p style=\"font-family:var(--display);font-size:13px;color:var(--graphite)\">Next-visit rollover "+fm(ro)+" · back to the guest "+fm(rs)+" — the three legs close to "+fm(preserved())+", the whole preserved budget.</p>"+(redirected?"<div class=log><span class=ok>redirect.issue</span> "+fm(lg3[0])+" resort credit · "+fm(ro)+" rollover · "+fm(rs)+" returned · guest keeps the night, house keeps the guest</div>":"<p class=hint>click any credit to issue the settlement</p>")}}];
-function draw(){el("prev").disabled=step===0;el("next").disabled=step===STEPS.length-1;el("rail").innerHTML=STEPS.map(function(s,i){return "<button class=\""+(i==step?"on":(i<step?"done":""))+"\" data-s="+i+">"+(i+1)+"</button>"}).join("");
-el("crumb").textContent=STEPS[step].c;el("stage").innerHTML=STEPS[step].r();el("anntext").textContent=STEPS[step].a;bind();}
-function bind(){var c=document.getElementById("cons");if(c)c.onclick=function(){consent=true;draw();};
-var s=document.getElementById("slr");if(s)s.oninput=function(){if(armed)return;bud=+this.value;document.getElementById("slv").textContent=fm(bud);};
-var d=document.getElementById("arm");if(d)d.onclick=function(){armed=true;draw();};
-var f=document.getElementById("fire");if(f)f.onclick=function(){fired=true;draw();};
-["r1","r2","r3"].forEach(function(id){var x=document.getElementById(id);if(x)x.onclick=function(){redirected=true;draw();};});
-el("rail").querySelectorAll("button").forEach(function(b){b.onclick=function(){step=+b.dataset.s;draw();};});}
-el("resetDemo").onclick=function(){step=0;consent=false;bud=3000;armed=false;fired=false;redirected=false;draw();};
-el("next").onclick=function(){if(step<5){step++;draw();}};
-el("prev").onclick=function(){if(step>0){step--;draw();}};
-el("anno").onchange=function(){el("annbox").style.display=this.checked?"block":"none";};
+var step=0, bud=3000, decision=null, armed=false, fired=false, redirected=false, declined=false;
+var TERMS_VERSION="terms-f443efadc782"; // Fingerprint of the shipped defaults, checked against GET /v3/terms.
+const titles=['Review','Assessment','Budget','Confirm','Stop','Receipt'];
+const notes=[
+  'The simulated resort identifies a change in play. Only the operator can assess eligibility.',
+  'Withholding benefits leaves the budget protection available. An assessment may also be withdrawn later.',
+  'The amounts below use the same cent allocation and combined cap as the SQLite service.',
+  'The final choice refers to this budget, determination, mode and version. Declining leaves the guest without a new session.',
+  'This example checks each stake before play. A reporting-only platform may learn of a crossing after the event.',
+  'The browser receipt is illustrative. The local MVP records the reviewed quote, the decision and the settlement in SQLite.'
+];
+function el(id){return document.getElementById(id)}
+function fm(value){return '€'+value.toLocaleString('en-US',{minimumFractionDigits:Number.isInteger(value)?0:2,maximumFractionDigits:2})}
+function threshold(){return Math.ceil(Math.round(bud*100)/2)/100}
+function atLine(){return VIPSettlement.demoSettlement(bud-threshold(),70,decision==='permitted')}
+function breakdown(){
+  const q=atLine();
+  return '<dl class="quotegrid"><div><dt>Resort services</dt><dd>'+fm(q.redirect)+'</dd></div>'+
+    '<div><dt>Future-play credit</dt><dd>'+fm(q.rollover)+'</dd></div>'+
+    '<div><dt>Your own balance</dt><dd>'+fm(q.residual)+'</dd></div></dl>'+
+    '<p>Spa '+fm(q.credits.spa)+' · dining '+fm(q.credits.fnb)+' · retail '+fm(q.credits.retail)+'.</p>';
+}
+function guard(text){return '<p>'+text+'</p>'}
+function screen(){
+  if(step===0) return '<h3>Guest V-1108 · host review</h3><p>Session duration is at the 97th percentile in this synthetic example, and breaks are getting shorter. The host requests an operator review before mentioning a benefit.</p>';
+  if(step===1) return '<h3>Operator assessment</h3><p>Choose which determination the operator has already made for this scenario.</p>'+
+    '<button class="btn" id="allow" aria-pressed="'+(decision==='permitted')+'" '+(armed?'disabled':'')+'>Current assessment permits benefits</button> '+
+    '<button class="btn" id="withhold" aria-pressed="'+(decision==='suppressed')+'" '+(armed?'disabled':'')+'>Withhold benefits and offer protection</button>'+
+    '<p role="status">'+(decision==='permitted'?'Benefits permitted for this case.':decision==='suppressed'?'No benefits will be offered. The guest keeps the full remainder.':'Decision pending.')+'</p>';
+  if(decision===null) return guard('Choose an operator determination in step 2.');
+  if(step===2) return '<h3>Choose your budget</h3><label for=slr>Session budget · <b id=slv>'+fm(bud)+'</b></label>'+
+    '<input id=slr type="range" min="1000" max="30000" step="100" aria-describedby="budgetHelp" value="'+bud+'" '+(armed?'disabled':'')+'>'+
+    '<p id="budgetHelp">Hard-Stop checks every stake. The line is 50% of the budget.</p><div id="estimate">'+lineExample()+'</div>';
+  if(step===3) return '<h3>'+(armed?'Policy armed':declined?'Offer declined':'Review and confirm')+'</h3>'+
+    (declined?'<p>No budget was armed. Return to the budget to review a new offer.</p>':
+      '<p>Hard-Stop · budget '+fm(bud)+' · checked stakes stop at '+fm(threshold())+'.</p>'+breakdown()+
+      '<p>Combined benefit cap €5,000 per stop. Operator assessment valid for 90 days. One budget for 24 hours from arming. A later restriction can return more to your own balance. The operator handles payment.</p>'+
+      '<p class="hint">Policy terms '+TERMS_VERSION+'</p>'+
+      (armed?'<p role="status">This offer was accepted.</p>':'<button class="btn pri" id="arm">I accept these amounts and rules</button> <button class="btn" id="decline">Decline</button>'));
+  if(!armed) return guard('Review and accept the amounts in step 4 to run the session.');
+  if(step===4) return '<h3>'+(fired?'Gaming stopped':'Approach the stop line')+'</h3>'+
+    (fired?'<p>Consumption '+fm(threshold())+'. Remaining budget '+fm(atLine().preserved)+'. Further stakes are refused.</p>':'<button class="btn seal" id="fire">Run checked stakes to the limit</button>');
+  if(!fired) return guard('Run the checked stakes in step 5 to see the receipt.');
+  return '<h3>Guest settlement receipt</h3><p>'+fm(atLine().preserved)+' remaining at stop · terms '+TERMS_VERSION+'</p>'+breakdown()+
+    (decision==='suppressed'?'<p role="status">Benefits withheld. No credit issued. All remaining funds are allocated to the guest.</p>':
+      redirected?'<p role="status">Simulated credits issued. The amounts match the offer at the threshold.</p>':'<button class="btn pri" id="issue">Issue the quoted credits</button>');
+}
+function lineExample(){return '<p>At '+fm(threshold())+' consumed, '+fm(atLine().preserved)+' remains.</p>'+breakdown()}
+function choose(value){if(!armed){decision=value;declined=false;draw()}}
+function draw(){
+  el('prev').disabled=step===0; el('next').disabled=step===5;
+  el('rail').innerHTML=titles.map((t,i)=>'<button class="'+(i===step?'on':'')+'" data-s="'+i+'" aria-label="Step '+(i+1)+', '+t+'" '+(i===step?'aria-current="step"':'')+'>'+(i+1)+' · '+t+'</button>').join('');
+  el('crumb').textContent='STEP '+(step+1)+' · '+titles[step].toUpperCase();
+  el('stage').innerHTML=screen(); el('anntext').textContent=notes[step];
+  function bind(id,fn){const node=el(id);if(node)node.onclick=fn}
+  bind('allow',()=>choose('permitted')); bind('withhold',()=>choose('suppressed'));
+  bind('arm',()=>{if(step===3 && decision && !declined){armed=true;draw()}});
+  bind('decline',()=>{if(!armed){declined=true;draw()}});
+  bind('fire',()=>{if(armed){fired=true;draw()}});
+  bind('issue',()=>{if(fired && decision==='permitted'){redirected=true;draw()}});
+  const slider=el('slr');
+  if(slider) slider.oninput=function(){if(armed)return;bud=Number(this.value);declined=false;el('slv').textContent=fm(bud);el('estimate').innerHTML=lineExample()};
+  el('rail').querySelectorAll('button').forEach(b=>b.onclick=()=>go(Number(b.dataset.s)));
+}
+function go(target){step=target;if(step===2&&!armed)declined=false;draw()}
+el('resetDemo').onclick=()=>{bud=3000;decision=null;armed=false;fired=false;redirected=false;declined=false;go(0)};
+el('next').onclick=()=>go(Math.min(5,step+1));el('prev').onclick=()=>go(Math.max(0,step-1));
+el('anno').onchange=function(){el('annbox').style.display=this.checked?'block':'none'};
 draw();
 </script><footer class="wrap"><div class="titleblock">
 <div class="tb-row"><div class="k">Studio</div><div class="v2">© 2026 Miloš Petrović · Trench Logic Studio · milos@trench-logic.com · trenchlogicstudio.com</div></div>
 <div class="tb-row"><div class="k">Project</div><div class="v2">VIP SmartContract — Compliance-as-Revenue Layer</div></div>
 <div class="tb-row"><div class="k">Document</div><div class="v2 mono">05a_Demo_A_Screens.html</div></div>
-<div class="tb-row"><div class="k">Revision</div><div class="v2 mono">v3.22 · 2026</div></div>
+<div class="tb-row"><div class="k">Revision</div><div class="v2 mono">v3.23 · 2026</div></div>
 <div class="tb-row"><div class="k">Licence</div><div class="v2 seal">MIT LICENSE · OPEN SOURCE · PROVIDED AS IS, WITHOUT WARRANTY</div></div>
 </div></footer></body></html>

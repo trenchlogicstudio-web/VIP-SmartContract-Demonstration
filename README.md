@@ -1,18 +1,13 @@
 # VIP SmartContract — Compliance-as-Revenue Layer
 
-**A policy engine that turns a responsible-gambling limit into a revenue event.**
-The guest pre-commits a budget. The engine watches the session. At the threshold it
-stops gaming and converts the preserved budget into non-gaming spend, rollover
-credit and a residual returned to the guest — every decision hash-chained.
+**A guest can set a gaming limit, review the amounts and see how the resort applied the agreement.** Hard-Stop checks each stake against the remaining room. Advisory alerts the host. When the guest stops, the engine allocates the unspent budget under the operator’s eligibility decision and records the settlement. Resort credit, future-play credit and the guest’s own balance are tracked separately.
 
-Middleware: funds never go on chain, rules stay off chain, only proofs are anchored.
+The operator handles funds. The local service maintains a hash-chained decision history.
 
-Open source under the [MIT License](LICENSE). This is package **v3.22**; the runnable
-build is **VIP MVP v0.2.16** in [`13_VIP_MVP`](13_VIP_MVP). Every figure in the
-package is synthetic and labelled as such: no live deployment has occurred and no
-pilot data exists.
+Open source under the [MIT License](LICENSE). This is package **v3.23**; the runnable
+build is **VIP MVP v0.2.17** in [`13_VIP_MVP`](13_VIP_MVP). The operating scenarios and business outcomes are synthetic. The cited external limit-setting study is identified separately.
 
-**Try it in the browser, nothing to install:** [the index and the four demos](https://trenchlogicstudio-web.github.io/VIP-SmartContract-Demonstration/00_INDEX.html).
+**Start with this release.** Extract the complete archive and open [the project index](00_INDEX.html). Read [a worked receipt and the pilot worksheet](16_Evaluation.html), or run the same two receipts against SQLite with `npm run example`. The [public project site](https://trenchlogicstudio-web.github.io/VIP-SmartContract-Demonstration/00_INDEX.html) displays the version currently deployed.
 
 ---
 
@@ -32,9 +27,7 @@ in-memory reference service of slot 04b on port 8080.
 ### What to do on the screen
 
 1. **Arm a policy.** Pick a guest and commit a budget. The console shows the terms
-   the guest agrees to and their version, and prints the euro amount at which the
-   policy will fire — before the session, not at the stop. The session and the
-   audit chain record the amount and the terms version agreed to.
+   in euros at the threshold, the mode, version and benefit ceiling. Choose **Review amounts**, then accept or decline. Changes invalidate the review. The receipt records what the client confirmed and the rules applied at the stop.
 2. **Run the session.** Press **Check, then report**: the wager path a platform
    should run. The engine is asked before each stake, reserves it against what is
    left to the line, and the console shows the largest stake allowed now. The
@@ -45,8 +38,8 @@ in-memory reference service of slot 04b on port 8080.
    counted in full, and the stop says how far past the line it went
    (`overshoot_eur`). In Hard-Stop mode the lock returns **423 Locked** — a state,
    not an error — and the session settles: 70% of the preserved budget as resort
-   credit (spa 30 · F&B 25 · retail 15), 20% as next-visit rollover, 10% back to
-   the guest, to the cent.
+   credit (spa 30 · F&B 25 · retail 15) and 20% as future-play credit before the
+   €5,000 combined cap. The guest keeps the entire remainder. Withholding benefits leaves all preserved funds with the guest.
 4. **Issue settled credits.** With a budget of €1,000 and one checked stake of
    €500, the guest receives €150 spa credit, €125 dining credit, €75 retail
    credit, €100 rollover and €50 residual.
@@ -66,13 +59,13 @@ eligibility determination counts for 90 days, so a pre-commit without one issues
 nothing; `off` switches either off. Every setting is listed in
 [`13_VIP_MVP/.env.example`](13_VIP_MVP/.env.example).
 
-### Then break it
+### Run the verification suite
 
 ```bash
 npm test
 ```
 
-314 checks and 54 regression scenarios, none skipped. Among them: the settlement
+314 baseline checks and 66 regression scenarios, none skipped. Among them: the settlement
 closes to the cent on every amount from €0.01 to €2,000.00, and the split is
 recomputed independently on every one of them; every stop, nudge and escalation
 line is checked on every budget in the same range; twelve stakes of €300 sent at
@@ -109,7 +102,7 @@ reference implementation.
 
 | | |
 |---|---|
-| **The problem** | A limit imposed is churn. A limit chosen is loyalty. Operators lose high-value guests at the moment protection kicks in, because the moment feels like punishment. |
+| **The problem** | A guest can reach the agreed limit and still want to use the resort. The design tests whether a protected stop can support a later non-gaming visit. |
 | **The inversion** | The guest sets the budget and the host witnesses. At the stop the guest is *paid* for stopping — rollover toward the next visit, resort credit for tonight. |
 | **The boundary** | The engine forms no view of risk and holds no harm model. It consumes the operator's responsible-gaming determination and records that it honoured it. |
 | **The proof** | Every decision — including every refusal to reward — is a link in a SHA-256 chain. A regulator asking the system to prove itself needs the occasions it said no, and an absent row proves nothing. |

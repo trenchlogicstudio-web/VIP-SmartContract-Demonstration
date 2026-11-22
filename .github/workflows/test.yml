@@ -1,4 +1,4 @@
-# VIP SmartContract v3.22 · Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
+# VIP SmartContract v3.23 · Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
 #
 # On every push and pull request: the MVP's whole suite inside the package, so
 # the parity checks against slot 04b and the offline demos run and none is

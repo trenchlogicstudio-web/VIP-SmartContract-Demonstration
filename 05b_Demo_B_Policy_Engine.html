@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT -->
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>VIP v3.22 · Demo B · Policy Engine</title><style>
+<title>VIP v3.23 · Demo B · Policy Engine</title><style>
 :root{--paper:#F3F5F4;--panel:#E9EEEC;--ink:#122B33;--accent:#1E5A78;--accent-deep:#143E54;--accent-light:#7FB0C4;--seal:#973A3A;--graphite:#54646A;--line:#C7D2D1;--wash:#D8E2E4;--lavender:#D6D3E6;--rose:#DFB3BE;--display:"Schibsted Grotesk",Arial,sans-serif;--body:"Source Serif 4",Georgia,serif;--mono:"Fragment Mono","Courier New",monospace;--r:3px;--rule:1px solid var(--line)}
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
@@ -107,11 +107,11 @@ details.assume .in li{margin-bottom:6px;margin-left:16px}
 a{color:var(--accent-deep);text-underline-offset:2px}a:hover{color:var(--accent)}
 a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .backnav{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 14px}
-</style></head><body><div class="wrap"><header><div class="mark"><div class="tile">TL</div><div class="word">TRENCH LOGIC STUDIO<span>VIP v3.22 · Demo B</span></div></div>
-<p class="backnav"><a href="00_INDEX.html">Index</a> · <a href="05_Demo_Guide.html">Demo guide</a> · <a href="05a_Demo_A_Screens.html">Demo A</a> · <a href="05c_Demo_C_Synthetic_Case_Study.html">Demo C</a></p>
+</style></head><body><div class="wrap"><header><div class="mark"><div class="tile">TL</div><div class="word">TRENCH LOGIC STUDIO<span>VIP v3.23 · Demo B</span></div></div>
+<p class="backnav"><a href="00_INDEX.html">Index</a> · <a href="05_Demo_Guide.html">Demo guide</a> · <a href="16_Evaluation.html">Verification and pilot</a> · <a href="05a_Demo_A_Screens.html">Demo A</a> · <a href="05c_Demo_C_Synthetic_Case_Study.html">Demo C</a></p>
 <span class="eyebrow">Demo B · registry slot 05b · the engine, running</span>
 <h1>Policy Engine</h1>
-<p class="lede">One VIP session against a live policy. Set the stop-loss and deal the shoe: every stake is checked before the hand is dealt, so the policy fires on the line, not past it. Reset and switch the stakes to “Reported after” to see what a platform that only reports gets. Then reset the session, select the hard-stop-only baseline and read, in the retention line, what the incentive layer is for.</p>
+<p class="lede">One VIP session against a live policy. The default €20,000 budget reaches its stop at €10,000 consumed. Set the stop-loss and deal the shoe: every stake is checked before the hand is dealt, so the policy fires on the line, not past it. Reset and switch the stakes to “Reported after” to see what a platform that only reports gets. Then reset the session, select the hard-stop-only baseline and read, in the retention line, what the incentive layer is for.</p>
 <div class="asis"><p><b>MIT LICENSE · SYNTHETIC BY DECLARATION.</b> This page runs a synthetic scenario in the browser. The external limit-setting study is cited below. No live resort data exists. Assumptions are printed beside each model; whoever integrates it validates independently.</p></div></header>
 <div class="wrap"><div class="dim"></div></div>
 <section class="wrap"><div class="calcgrid">
@@ -119,7 +119,8 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 <label id="lMode">mode</label><div class="seg" role="group" aria-labelledby="lMode"><button class="on" id="mI">Incentive</button><button id="mH">Hard-stop only</button></div>
 <label id="lStakes" style="margin-top:14px">stakes</label><div class="seg" role="group" aria-labelledby="lStakes"><button class="on" id="cC">Checked first</button><button id="cA">Reported after</button></div>
 <label for="s" style="margin-top:14px">stop-loss · <b id="vS">50%</b> of pre-committed budget <span style="opacity:.6">· reference preset</span></label><input type="range" id="s" min="20" max="80" value="50" step="1">
-<label for="r">redirect to non-gaming · <b id="vR">70%</b> of preserved budget <span style="opacity:.6">· with the rollover at 20% of the preserved budget, the ceiling the engine accepts here is 80%</span></label><input type="range" id="r" min="40" max="80" value="70" step="1">
+<label for="r">resort share before cap · <b id="vR">70%</b> of preserved budget <span style="opacity:.6">· with the rollover set to 20% before the combined cap, the ceiling the engine accepts here is 80%</span></label><input type="range" id="r" min="40" max="80" value="70" step="1">
+<p class="hint">Combined resort and future-play benefits are capped at €5,000 per guest and stop. The guest keeps the excess.</p>
 <label style="margin-top:14px">run the session</label>
 <button class="btn pri" id="deal" style="width:100%;margin-bottom:8px">DEAL · next hand</button>
 <button class="btn" id="auto" style="width:100%">AUTO-PLAY SHOE</button>
@@ -134,41 +135,27 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 </div>
 <div class="bar seal" style="margin-bottom:6px"><i id="bar"></i></div>
 <p class="hint" id="barh">consumption toward stop-line</p>
-<h3>After the trigger · resort credit issued</h3>
+<h3>Settlement at the stop</h3><p id="amounts" role="status">Run the session to see the three amounts.</p>
 <div id="alloc" style="margin-bottom:10px"><span class="chip dis">Spa</span><span class="chip dis">F&amp;B</span><span class="chip dis">Retail</span></div>
 <h3>Ledger log</h3><div class="log" id="log"><b>engine</b> policy armed · hard-stop · illustrative fingerprint 0x7f3a…c412, funds off chain</div>
 </div></div>
 <p class="note">Model: the deterministic shoe loses on a fixed pattern so every reader sees the same trigger. Stakes checked first is the default and the wager path a platform should run: the hand that would pass the line is refused before it is dealt, the next hand is offered at most what is left, and the stop lands on the line. Reported after is what a platform gets when it reports only after the hand: the crossing hand counts in full, and the stop records how far past the line it went. Incentive mode retains 84% of limited VIPs across the quarter vs 61% under hard-stop-only — MODELED, and not yet measured. The cited study (limit-setters at 2.92× the odds of remaining active at 1 year, against players who set none) does not measure this difference: both modes here have a limit. Full quarter economics: 05c. Contract suite: 04 / 04b / 04c.</p>
 <p class="note">Auer, Hopfgartner and Griffiths report the 2.92 odds ratio for voluntary limit-setting in Table 5. The quarter assumptions on this page are illustrative. <a href="https://doi.org/10.1007/s11469-019-00084-3">Read the study</a>.</p>
 </section>
+<script src="13_VIP_MVP/src/settlement.js"></script>
 <script>
 function el(i){return document.getElementById(i)}
 var BR=20000,dd=0,fired=false,mode="I",hand=0,timer=null,checked=true,seqI=0,capNext=0;
-var ROLLOVER=20,SPA=30,FNB=25,RETAIL=15; /* 12_Canon.json · thresholds */
-/* the same allocation 04b_Integration_Reference.js settles with, on integers:
-   c is a whole number of cents, w are whole-number weights (millionths); every
-   share is c*w/sum floored, the leftover cents go to the largest remainders,
-   ties by position. The parts close on the whole, always, and a zero weight
-   receives nothing. */
-var MICRO=1000000;function micro(x){return Math.round(x*MICRO)}
-function allocate(c,w){var sum=w.reduce(function(a,b){return a+b},0);if(c<=0||sum===0)return w.map(function(){return 0});
-var raw=w.map(function(x){return c*x});var out=raw.map(function(r){return Math.floor(r/sum)});
-var left=c-out.reduce(function(a,b){return a+b},0);
-var ord=raw.map(function(r,i){return {i:i,rem:r-out[i]*sum}}).sort(function(a,b){return (b.rem-a.rem)||(a.i-b.i)});
-for(var k=0;left>0;k++,left--)out[ord[k%ord.length].i]+=1;return out}
-/* the settlement of a stop in incentive mode, as 04b would settle it with the
-   three venue shares scaled together to `red` percent of the preserved budget:
-   each share in whole millionths, redirect total = their sum, residual = what
-   is left after it and the rollover. Pure, so it can be compared with 04b. */
-function settleDemo(pres,red){var k=red/(SPA+FNB+RETAIL);
- var sS=micro(SPA/100*k),sF=micro(FNB/100*k),sR=micro(RETAIL/100*k),rt=sS+sF+sR,ro=micro(ROLLOVER/100);
- var L=allocate(Math.round(pres*100),[rt,ro,MICRO-ro-rt]),C=allocate(L[0],[sS,sF,sR]);
- return {legs:L.map(function(x){return x/100}),credits:C.map(function(x){return x/100})}}
+function settleDemo(preserved, percent, permitted=true) {
+  return VIPSettlement.demoSettlement(preserved, percent, permitted);
+}
 function fmc(e){return "€"+e.toLocaleString("en-US",{minimumFractionDigits:(Math.round(e*100)%100?2:0),maximumFractionDigits:2})}
 var SEQ=[-1200,-800,600,-1500,-900,-1300,700,-1600,-1100,-1400,-900,-1200];
 function lg(h){var L=el("log");L.innerHTML+="<br>"+h;L.scrollTop=1e6}
 function fm(x){return "€"+Math.round(x).toLocaleString("en-US")}
-function upd(){["s","r","mI","mH","cC","cA"].forEach(function(id){el(id).disabled=hand>0||seqI>0});
+function upd(){
+for(const [id,pressed] of [["mI",mode==="I"],["mH",mode==="H"],["cC",checked],["cA",!checked]])el(id).setAttribute?.("aria-pressed",String(pressed));
+["s","r","mI","mH","cC","cA"].forEach(function(id){el(id).disabled=hand>0||seqI>0});
 el("deal").disabled=fired;el("auto").disabled=fired;
 var lim=BR*(+el("s").value)/100;el("kL").textContent=fm(lim);el("kD").textContent=fm(dd);
 el("bar").style.width=Math.min(100,100*dd/lim)+"%";el("vS").textContent=el("s").value+"%";el("vR").textContent=el("r").value+"%";
@@ -196,13 +183,12 @@ if(dd>=lim){fired=true;
 var pres=Math.max(0,BR-dd),over=Math.max(0,dd-lim);
 el("kP").textContent=fm(pres);
 lg("<span class=seal>POLICY STOP</span> threshold "+el("s").value+"% · session locked · "+(over>0?fm(over)+" past the line — that hand was reported after it was played, so it counts in full, and the stop records it (overshoot_eur)":"on the line, nothing past it")+" · no human in the loop");
-if(mode=="I"){var red=+el("r").value,resid=Math.round((100-red-ROLLOVER)*100)/100;
- var S=settleDemo(pres,red),L=S.legs,C=S.credits;
- var sp=C[0],fb=C[1],rt=C[2],rol=L[1],res=L[2];
- lg("<span class=ok>redirect.issue</span> "+fmc(pres)+" preserved · resort credit "+red+"% of the preserved budget ("+fmc(L[0])+": spa "+fmc(sp)+" · F&amp;B "+fmc(fb)+" · retail "+fmc(rt)+") · rollover "+ROLLOVER+"% ("+fmc(rol)+") · back to the guest "+resid+"% ("+fmc(res)+") · closes to "+fmc(L[0]+rol+res));
- var lab=["Spa "+fmc(sp),"F&amp;B "+fmc(fb),"Retail "+fmc(rt)];
- el("alloc").querySelectorAll(".chip").forEach(function(c,i){c.classList.remove("dis");c.classList.add("lock");c.innerHTML=lab[i];});}
-else{lg("<span class=warn>hard-stop</span> session ends · nothing offered · modeled quarter retention of limited VIPs at this mode: 61% — the difference is the product");}
+var result=settleDemo(pres,Number(el("r").value),mode==="I");
+el("amounts").textContent="Resort services "+fmc(result.redirect)+" · future-play credit "+fmc(result.rollover)+" · guest balance "+fmc(result.residual)+".";
+lg("<b>Settlement</b> "+fmc(result.preserved)+" remaining · "+el("amounts").textContent+
+  (result.capped?" Combined €5,000 cap applied.":"")+(mode==="H"?" Benefits withheld.":""));
+var lab=["Spa "+fmc(result.credits.spa),"F&amp;B "+fmc(result.credits.fnb),"Retail "+fmc(result.credits.retail)];
+el("alloc").querySelectorAll(".chip").forEach(function(c,i){c.classList.remove("dis");c.classList.add("lock");c.innerHTML=lab[i]});
 stop();}
 upd();}
 function stop(){if(timer){clearInterval(timer);timer=null;el("auto").textContent="AUTO-PLAY SHOE";}}
@@ -213,12 +199,12 @@ el("mH").onclick=function(){mode="H";el("mH").classList.add("on");el("mI").class
 el("cC").onclick=function(){checked=true;el("cC").classList.add("on");el("cA").classList.remove("on");lg("<b>engine</b> stakes → CHECKED FIRST · every stake asked for before the hand is dealt");upd();};
 el("cA").onclick=function(){checked=false;el("cA").classList.add("on");el("cC").classList.remove("on");lg("<span class=warn>engine</span> stakes → REPORTED AFTER · each hand reported once it is played, no check — the limit of such a platform");upd();};
 ["s","r"].forEach(function(i){el(i).oninput=upd});
-el("reset").onclick=function(){stop();dd=0;hand=0;fired=false;seqI=0;capNext=0;el("kP").textContent="€0";el("log").innerHTML="<b>engine</b> policy armed · hard-stop · illustrative fingerprint 0x7f3a…c412, funds off chain";el("alloc").innerHTML='<span class="chip dis">Spa</span><span class="chip dis">F&amp;B</span><span class="chip dis">Retail</span>';upd();};
+el("reset").onclick=function(){stop();dd=0;hand=0;fired=false;seqI=0;capNext=0;el("kP").textContent="€0";el("amounts").textContent="Run the session to see the three amounts.";el("log").innerHTML="<b>engine</b> policy armed · hard-stop · illustrative fingerprint 0x7f3a…c412, funds off chain";el("alloc").innerHTML='<span class="chip dis">Spa</span><span class="chip dis">F&amp;B</span><span class="chip dis">Retail</span>';upd();};
 upd();
 </script><footer class="wrap"><div class="titleblock">
 <div class="tb-row"><div class="k">Studio</div><div class="v2">© 2026 Miloš Petrović · Trench Logic Studio · milos@trench-logic.com · trenchlogicstudio.com</div></div>
 <div class="tb-row"><div class="k">Project</div><div class="v2">VIP SmartContract — Compliance-as-Revenue Layer</div></div>
 <div class="tb-row"><div class="k">Document</div><div class="v2 mono">05b_Demo_B_Policy_Engine.html</div></div>
-<div class="tb-row"><div class="k">Revision</div><div class="v2 mono">v3.22 · 2026</div></div>
+<div class="tb-row"><div class="k">Revision</div><div class="v2 mono">v3.23 · 2026</div></div>
 <div class="tb-row"><div class="k">Licence</div><div class="v2 seal">MIT LICENSE · OPEN SOURCE · PROVIDED AS IS, WITHOUT WARRANTY</div></div>
 </div></footer></body></html>

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT -->
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>VIP v3.22 · Demo Guide</title><style>
+<title>VIP v3.23 · Demo Guide</title><style>
 :root{--paper:#F3F5F4;--panel:#E9EEEC;--ink:#122B33;--accent:#1E5A78;--accent-deep:#143E54;--accent-light:#7FB0C4;--seal:#973A3A;--graphite:#54646A;--line:#C7D2D1;--wash:#D8E2E4;--lavender:#D6D3E6;--rose:#DFB3BE;--display:"Schibsted Grotesk",Arial,sans-serif;--body:"Source Serif 4",Georgia,serif;--mono:"Fragment Mono","Courier New",monospace;--r:3px;--rule:1px solid var(--line)}
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
@@ -110,14 +110,14 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-off
 .ann .open{display:inline-block;margin-top:10px;font-family:var(--display);font-weight:700;font-size:13.5px}
 .cta{display:inline-block;font-family:var(--display);font-weight:700;font-size:14.5px;padding:11px 18px;border-radius:var(--r);background:var(--accent);color:#fff;text-decoration:none;border:1px solid var(--accent-deep)}
 .cta:hover{background:var(--accent-deep);color:#fff}
-</style></head><body><div class="wrap"><header><div class="mark"><div class="tile">TL</div><div class="word">TRENCH LOGIC STUDIO<span>VIP v3.22 · Demo Guide</span></div></div>
+</style></head><body><div class="wrap"><header><div class="mark"><div class="tile">TL</div><div class="word">TRENCH LOGIC STUDIO<span>VIP v3.23 · Demo Guide</span></div></div>
 <p class="backnav"><a href="00_INDEX.html">Index</a></p>
 <span class="eyebrow">Demo Guide · registry slot 05 · start here</span>
 <h1>Four windows onto one contract</h1>
 <p class="lede">The VIP demo layer is interactive: the contract fires to your clicks. This guide routes each reader to the demo they will trust first — and names which figures are modeled and which are empirical, before anyone asks.</p>
 <div class="asis"><p><b>MIT LICENSE · SYNTHETIC BY DECLARATION.</b> Every figure on this page is synthetic — a model output generated for demonstration, or a modelled assumption — except the one marked empirical. No live resort data exists. Assumptions are printed beside each model; whoever integrates it validates independently.</p></div></header>
 <div class="wrap"><div class="dim"></div></div>
-<section class="wrap" style="margin-bottom:30px"><a class="cta" href="05b_Demo_B_Policy_Engine.html">Run the policy engine — Demo B →</a></section>
+<section class="wrap" style="margin-bottom:30px"><a class="cta" href="05b_Demo_B_Policy_Engine.html">Run the policy engine — Demo B →</a> · <a href="16_Evaluation.html">Verify a receipt and review the pilot design</a></section>
 <section class="wrap"><span class="eyebrow">Choose your seat</span><h2>Recommended path by role</h2>
 <div class="seg" style="max-width:560px" id="roles" role="group" aria-label="Reader"><button class="on" data-r="0">Decision-maker</button><button data-r="1">VIP operations</button><button data-r="2">Engineering</button></div>
 <div class="card" style="margin-top:14px"><h3 id="rt">Decision-maker · 12 minutes</h3><p id="rp" aria-live="polite" style="font-family:var(--display);font-size:14.5px;color:var(--graphite)"><a href="05d_Demo_D_Narrative_Proof.html">05d Narrative Proof</a> (play the quarter) → <a href="05c_Demo_C_Synthetic_Case_Study.html">05c Ledger Model</a> (drag the preserved budget, watch the credit answer) → <a href="01_Executive_Brief.docx">01 Executive Brief</a>.</p></div>
@@ -126,12 +126,12 @@ document.querySelectorAll("#roles button").forEach(function(x){x.onclick=functio
 </section>
 <section class="wrap" style="margin-top:34px"><span class="eyebrow">The four demos</span><h2>What each one proves</h2>
 <div class="grid g2">
-<div class="ann"><h3>05a · Host Console</h3><p>The host’s screen, six clickable steps: flag, consent, policy, arm, trigger, redirect — one VIP walked from risk to retained.</p><a class="open" href="05a_Demo_A_Screens.html">Open Demo A →</a></div>
+<div class="ann"><h3>05a · Host Console</h3><p>Six steps cover operator review, a permitted or withheld benefit, the budget, explicit confirmation, the stop and the guest receipt.</p><a class="open" href="05a_Demo_A_Screens.html">Open Demo A →</a></div>
 <div class="ann l2"><h3>05b · Policy Engine</h3><p>A live session against a real policy: set the stop-loss and deal the shoe. Every stake is checked before the hand is dealt, so a hand that would pass the line is refused and the policy fires exactly on it; the preserved budget settles into resort credit, rollover and the guest’s own residual. Switch the stakes to “Reported after” to see what a platform that reports only after the hand gets: the crossing hand counts in full, and the stop says how far past the line it went. Then flip to the hard-stop-only baseline and read the modeled retention difference.</p><a class="open" href="05b_Demo_B_Policy_Engine.html">Open Demo B →</a></div>
 <div class="ann l3"><h3>05c · Ledger Model</h3><p>The quarter economics, recomputable. The reference preset reproduces the canon's quarter figures exactly: 84% vs 61% retention of limited VIPs, €214K issued as resort credit at 70% of preserved budget, and beside it what is redeemed and what the resort still owes at quarter end.</p><a class="open" href="05c_Demo_C_Synthetic_Case_Study.html">Open Demo C →</a></div>
 <div class="ann lg"><h3>05d · Narrative Proof</h3><p>One synthetic resort quarter, event by event. Click any point, or reach it from the keyboard, and the KPI board morphs to that week’s state.</p><a class="open" href="05d_Demo_D_Narrative_Proof.html">Open Demo D →</a></div>
 </div></section>
-<section class="wrap" style="margin-top:34px"><span class="eyebrow">Canon · v3.22 reference block</span><h2>The numbers every document shares</h2>
+<section class="wrap" style="margin-top:34px"><span class="eyebrow">Canon · v3.23 reference block</span><h2>The numbers every document shares</h2>
 <div class="grid g4">
 <div class="metric"><div class="v">84% v 61%</div><div class="l">quarter retention of limited VIPs · incentive vs hard-stop-only</div><span class="src">MODELED · not yet measured by any pilot</span></div>
 <div class="metric lav"><div class="v">2.92×</div><div class="l">odds of limit-setters remaining active at 1 year</div><span class="src">EMPIRICAL · peer-reviewed RG literature</span></div>
@@ -143,6 +143,6 @@ document.querySelectorAll("#roles button").forEach(function(x){x.onclick=functio
 <div class="tb-row"><div class="k">Studio</div><div class="v2">© 2026 Miloš Petrović · Trench Logic Studio · milos@trench-logic.com · trenchlogicstudio.com</div></div>
 <div class="tb-row"><div class="k">Project</div><div class="v2">VIP SmartContract — Compliance-as-Revenue Layer</div></div>
 <div class="tb-row"><div class="k">Document</div><div class="v2 mono">05_Demo_Guide.html</div></div>
-<div class="tb-row"><div class="k">Revision</div><div class="v2 mono">v3.22 · 2026</div></div>
+<div class="tb-row"><div class="k">Revision</div><div class="v2 mono">v3.23 · 2026</div></div>
 <div class="tb-row"><div class="k">Licence</div><div class="v2 seal">MIT LICENSE · OPEN SOURCE · PROVIDED AS IS, WITHOUT WARRANTY</div></div>
 </div></footer></body></html>

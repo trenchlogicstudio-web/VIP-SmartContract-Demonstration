@@ -1,4 +1,4 @@
-// VIP SmartContract · MVP v0.2.16 · entry
+// VIP SmartContract · MVP v0.2.17 · entry
 // Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
 'use strict';
 // A configuration the build refuses is reported as one sentence and exit code

@@ -1,4 +1,4 @@
-// VIP SmartContract · MVP v0.2.16 · web layer
+// VIP SmartContract · MVP v0.2.17 · web layer
 // Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
 //
 // Two surfaces, deliberately separated:
@@ -50,7 +50,11 @@ header{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;
 header h1{font-size:17px;margin:0;letter-spacing:.02em}
 header .v{color:var(--dim);font-size:13px}
 nav a{color:var(--accent);text-decoration:none;margin-right:14px;font-size:14px}
-main{padding:22px;max-width:1040px}
+main{padding:22px;max-width:1040px;min-width:0}
+a{color:var(--accent)}
+#offer{margin:16px 0;padding:14px;border-left:3px solid var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media(max-width:600px){main{padding:12px} .panel{overflow-wrap:anywhere} pre{white-space:pre-wrap} #state tr{display:grid;grid-template-columns:1fr 1fr} #state th,#state td{min-width:0} .panel input,.panel select{max-width:100%}}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;
        padding:16px;margin-bottom:16px;overflow-x:auto}
 .panel h2{font-size:14px;margin:0 0 12px;text-transform:uppercase;
@@ -99,24 +103,22 @@ const NAV = '<a href="/">Guest</a><a href="/host">Host console</a><a href="/admi
 // ── pages ─────────────────────────────────────────────────────────────────
 function guestPage() {
   return page('Guest screen', NAV, `
-<div class="panel"><h2>Pre-commit</h2>
-  <p class="note">The guest sets the number before the session. The engine publishes the euro
-  amount at which the policy fires, so the limit is known in advance rather than discovered at the stop.</p>
-  <label>Guest ID <input id="vip" placeholder="vip_id" value="VIP-D02"></label>
-  <label>Budget (€) <input id="budget" type="number" min="0.01" max="10000000" step="0.01" value="8000"></label>
-  <select id="mode"><option value="hard_stop">hard_stop</option><option value="advisory" selected>advisory</option></select>
-  <label><input id="determined" type="checkbox" checked> Eligibility determined by the operator today</label>
-  <button onclick="pre()">Arm policy</button>
-  <span class="note">POST /v3/precommit</span>
-  <p class="note" id="terms">Terms: GET /v3/terms</p>
-  <p class="note">The guest agrees to these terms. The pre-commit sends their version back, so the engine
-  arms nothing if the terms changed after they were shown, and the session and the audit chain record the
-  amount and the version agreed to. Without today's determination the incentive is withheld: a
-  determination is good for a limited number of days.</p>
+<div class="panel"><h2>Review your budget</h2>
+  <label>Guest ID <input id="vip" value="VIP-REVIEW" required></label>
+  <label>Budget (€) <input id="budget" type="number" min="0.01" max="10000000" step="0.01" value="20000"></label>
+  <label>Policy mode <select id="mode"><option value="hard_stop"${P.CFG.mode === 'hard_stop' ? ' selected' : ''}>Hard-Stop</option><option value="advisory"${P.CFG.mode === 'advisory' ? ' selected' : ''}>Advisory</option></select></label>
+  <label><input id="determined" type="checkbox" checked> Simulate a current operator assessment permitting benefits</label>
+  <button type="button" id="review" onclick="reviewQuote()">Review amounts</button>
+  <section id="offer" hidden aria-labelledby="offerTitle">
+    <h3 id="offerTitle">Your terms at the threshold</h3>
+    <p id="terms"></p><p id="line"></p><p id="split"></p><p id="gate" class="note"></p>
+    <button id="confirm" disabled onclick="pre()">I accept these amounts and rules</button>
+    <button class="ghost" onclick="decline()">Decline</button>
+  </section>
+  <p id="notice" class="note" role="status" aria-live="polite">Review the amounts before confirming.</p>
 </div>
 <div class="panel"><h2>Live session</h2>
-  <p class="note">A checked stake asks first: the engine refuses a stake larger than what is left to the
-  line, so the line holds. A plain tick reports consumption after it happened: in hard_stop the session
+  <p class="note">In Hard-Stop the engine refuses a checked stake larger than what is left to the line. Advisory records checked stakes and permits continued play. A plain tick reports consumption after it happened: in hard_stop the session
   locks on the tick that crosses the line, and that tick counts in full. A platform that wants the line
   held runs every stake through the check.</p>
   <div id="meterwrap"></div>
@@ -128,6 +130,8 @@ function guestPage() {
   <button id="issue" hidden onclick="issue()">Issue settled credits</button>
   <button class="ghost" onclick="load()">Refresh state</button>
   <div id="state"></div>
+  <section id="receiptPanel" hidden><h3>Session receipt</h3><p id="acceptedLine"></p><p id="settledLine"></p>
+  <a id="receipt">View the full receipt as JSON</a></section>
 </div>
 <div class="panel"><h2>Response</h2><pre id="out">—</pre></div>
 <script>
@@ -136,22 +140,62 @@ const $=s=>document.querySelector(s);
 const show=o=>{$('#out').textContent=JSON.stringify(o,null,2)};
 async function call(m,u,b){const r=await fetch(u,{method:m,headers:{'content-type':'application/json'},
   body:b?JSON.stringify(b):undefined});const j=await r.json();show({status:r.status,body:j});return j}
-let termsVersion=null;
-async function loadTerms(){
-  const r=await fetch('/v3/terms');const j=await r.json();const t=j.terms;termsVersion=j.terms_version;
-  $('#terms').textContent='Terms '+j.terms_version+' · stop at '+Math.round(t.stop_fraction*1000)/10+'% of the budget · '+
-    (t.reward_cap_eur===null?'no ceiling on the incentive':'incentive capped at €'+t.reward_cap_eur.toLocaleString('en-US')+' per stop')+' · '+
-    (t.eligibility_ttl_days===null?'a determination never expires':'a determination counts for '+t.eligibility_ttl_days+' days')+' · '+
-    'no second budget for '+t.commitment_hours+' h after one is armed';
+let review = null, reviewNumber = 0, busy = false;
+const euros = n => new Intl.NumberFormat('en-IE',{style:'currency',currency:'EUR'}).format(n);
+function invalidate(message) {
+  reviewNumber++;
+  review = null;
+  $('#offer').hidden = true;
+  $('#confirm').disabled = true;
+  $('#notice').textContent = message || 'Review the current amounts before confirming.';
 }
-function pre(){
-  const body={vip_id:$('#vip').value,budget_eur:Number($('#budget').value),mode:$('#mode').value};
-  if(termsVersion)body.terms_version=termsVersion;
-  // The operator's determination, dated a minute back so a client clock a little
-  // ahead of the engine's is not read as a determination from the future.
-  if($('#determined').checked)body.eligibility_at=new Date(Date.now()-60000).toISOString();
-  return call('POST','/v3/precommit',body).then(j=>{if(j&&j.error==='TERMS_CHANGED')loadTerms();return load()})}
-loadTerms().catch(()=>{});
+function decline() { invalidate('Declined. No new policy was armed.'); }
+function inputs() {
+  return {vip_id:$('#vip').value, budget_eur:Number($('#budget').value), mode:$('#mode').value};
+}
+async function reviewQuote() {
+  if (busy) return;
+  invalidate('Loading your terms…');
+  const number = reviewNumber, body = inputs();
+  body.eligibility = $('#determined').checked ? 'permitted' : 'suppressed';
+  if ($('#determined').checked) body.eligibility_at = new Date(Date.now()-60000).toISOString();
+  try {
+    const res = await fetch('/vip/quote',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+    const q = await res.json();
+    if (number !== reviewNumber) return;
+    if (!res.ok) { invalidate('Review unavailable · '+q.error); return; }
+    review = { body, quote:q };
+    const t=q.terms, a=q.at_line;
+    $('#terms').textContent='Terms '+q.terms_version+' · budget '+euros(q.budget_eur)+' · commitment '+t.commitment_hours+' h from arming.';
+    $('#line').textContent=q.mode==='hard_stop'
+      ? 'Hard-Stop locks play at '+euros(q.armed_at_eur)+' consumed when each stake is checked first. A reported-only stake can cross the line.'
+      : 'Advisory alerts the host at '+euros(q.armed_at_eur)+' consumed. Play stays open. You can stop voluntarily.';
+    $('#split').textContent='If you stop on that line, '+euros(a.preserved)+' remains. Resort credit '+euros(a.redirect)+' (spa '+euros(a.credits.spa)+', dining '+euros(a.credits.fnb)+', retail '+euros(a.credits.retail)+'). Future-play credit '+euros(a.rollover)+'. Your own balance '+euros(a.residual)+'.';
+    $('#gate').textContent=(a.eligibility==='suppressed'?'Benefits withheld. ':'Benefits permitted by the simulated assessment. ')+
+      (t.reward_cap_eur===null?'No configured benefit ceiling. ':'Combined benefit ceiling '+euros(t.reward_cap_eur)+' per stop. ')+
+      (t.eligibility_ttl_days===null?'The assessment has no configured expiry. ':'Assessment lifetime '+t.eligibility_ttl_days+' days. ')+
+      'A later restriction or withdrawal can reduce benefits and increase your balance. The operator handles payment.';
+    $('#offer').hidden=false; $('#confirm').disabled=false;
+    $('#notice').textContent='Confirm to arm this budget, or decline.';
+  } catch { if (number===reviewNumber) invalidate('Review unavailable. Try again.'); }
+}
+async function pre() {
+  if (!review || busy) return;
+  const accepted=review, q=accepted.quote;
+  busy=true;
+  invalidate('Submitting your confirmation…');
+  try {
+    const result=await call('POST','/vip/confirm',{...accepted.body,terms_version:q.terms_version,quote_id:q.quote_id,review_id:q.review_id});
+    $('#notice').textContent=result.session_id && !result.error ? 'Policy armed. Your session receipt is available below.'
+      : 'Policy was not armed · '+result.error+'. Review the current amounts.';
+    await load();
+  } catch { $('#notice').textContent='Confirmation status unavailable. Refresh the session before retrying.'; }
+  finally { busy=false; }
+}
+for (const id of ['#vip','#budget','#mode','#determined']) {
+  $(id).addEventListener('input',()=>invalidate());
+  $(id).addEventListener('change',()=>invalidate());
+}
 let currentSession = null, requestNumber = 0;
 function sessionAction(path, extra) {
   if (!currentSession) return;
@@ -177,12 +221,14 @@ async function load(){
   const number=++requestNumber, vip=$('#vip').value;
   currentSession=null;
   document.querySelectorAll('.requires-live').forEach(b=>b.disabled=true);
-  $('#issue').hidden=true;
+  $('#issue').hidden=true; $('#receiptPanel').hidden=true;
   const r=await fetch('/v3/policy/state?vip_id='+encodeURIComponent(vip));
   const s=await r.json();
   if(number!==requestNumber || vip!==$('#vip').value)return;
   if(!r.ok){$('#state').innerHTML='<p class="note">'+esc(s.error||'no session')+'</p>';$('#meterwrap').innerHTML='';return}
   currentSession=s.session_id;
+  $('#receipt').href='/vip/session/receipt?vip_id='+encodeURIComponent(vip)+'&session_id='+encodeURIComponent(s.session_id);
+
   document.querySelectorAll('.requires-live').forEach(b=>b.disabled=s.stopped);
   $('#issue').hidden=!s.stopped || s.redirect_issued || s.eligibility!=='permitted';
   const pct=Math.round(s.consumed_fraction*1000)/10;
@@ -197,11 +243,28 @@ async function load(){
     '<tr><th>Distance to threshold</th><td class="num">'+s.distance_to_threshold_eur.toFixed(2)+'</td>'+
     '<th>Session</th><td>'+esc(s.session_id.slice(0,8))+'</td></tr>'+
     '<tr><th>Reserved by checked stakes</th><td class="num">'+s.reserved_eur.toFixed(2)+'</td>'+
-    '<th>Largest stake allowed now</th><td class="num">'+s.headroom_eur.toFixed(2)+'</td></tr>'+
+    '<th>'+(s.mode==='advisory'?'Room to advisory line':'Largest stake allowed now')+'</th><td class="num">'+s.headroom_eur.toFixed(2)+'</td></tr>'+
     '<tr><th>'+(s.stopped?'Settled resort credit':'Resort credit if you stop')+'</th><td class="num">'+s.incentive_preview.redirect_eur.toFixed(2)+' resort credit</td>'+
     '<th>plus rollover</th><td class="num">'+s.incentive_preview.rollover_eur.toFixed(2)+'</td></tr>'+
     '<tr><th>returned to you</th><td class="num">'+s.incentive_preview.residual_to_guest_eur.toFixed(2)+'</td>'+
     '<th></th><td class="note">the residual is the guest\\'s own money</td></tr></table>';
+  const response=await fetch($('#receipt').href);
+  if (!response.ok) return;
+  const rec=await response.json();
+  if (number!==requestNumber || vip!==$('#vip').value) return;
+  const agreement=rec.agreement;
+  const provenance={quote_confirmed:'Confirmed after review',version_supplied:'Terms version supplied by API',configured_only:'Configured on the API call'};
+  $('#acceptedLine').textContent=agreement ? provenance[agreement.confirmation]+' · '+agreement.mode+' · '+agreement.terms_version+
+    '. At the line, resort '+euros(agreement.at_line.redirect)+', future play '+euros(agreement.at_line.rollover)+', guest '+euros(agreement.at_line.residual)+'.'
+    : 'Legacy session. The original quote was not recorded.';
+  const last=rec.events.filter(e=>e.policy).at(-1);
+  const reasons={agreed_terms:'Agreed rules applied',original_and_current_limits:'Both the agreed rules and the current restrictions were applied',
+    legacy_terms_unavailable:'Original rules unavailable',determination_expired_or_missing:'Assessment expired or missing',incentives_withheld:'Benefits withheld'};
+  $('#settledLine').textContent=last ? 'Recorded decision · '+(reasons[last.policy.reason]||last.policy.reason)+
+    '. Current terms '+last.policy.current_version+(last.policy.current_terms && last.policy.current_terms.reward_cap_eur!==null?' · benefit ceiling '+euros(last.policy.current_terms.reward_cap_eur):'')+'. Guest balance '+euros(last.residual_to_guest_eur??last.returned_to_guest_eur)+'.'
+    : 'The final allocation will appear here when the session stops.';
+  $('#receiptPanel').hidden=false;
+
 }
 $('#vip').addEventListener('input',load);
 load();
@@ -379,6 +442,9 @@ function createServer(db) {
         if (path.startsWith('/v3/')) return send(404, { error: 'NO_ROUTE', routes: SPEC_ROUTES });
 
         // /vip — the product surface of this running system
+        if (req.method === 'POST' && path === '/vip/quote') return send(200, E.quote(db, payload));
+        if (req.method === 'POST' && path === '/vip/confirm') return send(201, E.confirm(db, payload));
+        if (req.method === 'GET' && path === '/vip/session/receipt') return send(200, E.receipt(db, url.searchParams.get('vip_id'), url.searchParams.get('session_id') ?? undefined));
         if (req.method === 'GET' && path === '/vip/guests') return send(200, { guests: E.guests(db) });
         if (req.method === 'GET' && path === '/vip/sessions') {
           const rows = db.prepare("SELECT * FROM sessions WHERE state='live' ORDER BY opened_at ASC").all();
