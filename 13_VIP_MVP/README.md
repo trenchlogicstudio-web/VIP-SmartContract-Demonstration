@@ -16,6 +16,8 @@ Run `npm run example` for a permitted and a withheld €20,000 case in a fresh i
 
 **A stop holds the guest for the commitment period.** A stopped session holds the guest until `VIP_COMMITMENT_HOURS` (24 by default) after it was armed: a second budget inside that period is refused with `409 COMMITMENT_ACTIVE`, which names the session and `precommit_after`. Until 0.2.15 a stopped guest could arm a second budget at once. `0` switches both holds off.
 
+**Future-play credit has a switch.** Future-play credit is the one part of a settlement that returns value to the gaming floor, and it is granted at the moment a guest stops. Where the operator's counsel treats that as an inducement to gamble, `VIP_FUTURE_PLAY=off` removes it: the rollover is 0, its share stays in the guest's balance, and the published terms and their version show it. `off` wins over any `VIP_ROLLOVER`; a value other than `on` or `off` refuses to start. The default is `on`, at 20%, and Demos B and C carry the same switch.
+
 **The ceiling and the determination lifetime are on by default.** Without configuration the incentive is capped at €5,000 per stop and the operator's eligibility determination counts for 90 days, so a pre-commit without `eligibility_at` issues nothing. `VIP_REWARD_CAP_EUR=off` and `VIP_ELIGIBILITY_TTL_DAYS=off` restore the uncapped, never-expiring reference configuration. The reference stop earns €4,590 and the seed records a fresh determination, so the seeded quarter is the canon quarter under either configuration. The guest screen can simulate a current operator assessment.
 
 ## What 0.2.15 changes

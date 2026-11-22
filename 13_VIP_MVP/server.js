@@ -35,7 +35,7 @@ createServer(db).listen(p, bindHost, () => {
   const pct = m => `${m / 10000}%`;
   console.log(` policy      mode ${P.CFG.mode} · stop ${pct(P.W.threshold)} · nudge ${pct(P.W.nudge)}` +
               ` · escalate ${pct(P.W.escalate)}`);
-  console.log(` settlement  redirect ${pct(P.W.redirect)} · rollover ${pct(P.W.rollover)}` +
+  console.log(` settlement  redirect ${pct(P.W.redirect)} · rollover ${pct(P.W.rollover)} · future-play credit ${P.FUTURE_PLAY}` +
               ` · residual to guest ${pct(P.W.residual)}`);
   console.log(` guest terms ${P.TERMS_VERSION} · cap ${P.REWARD_CAP_EUR === null ? 'off' : '€' + P.REWARD_CAP_EUR} per stop` +
               ` · determination ${P.ELIGIBILITY_TTL_DAYS === null ? 'never expires' : P.ELIGIBILITY_TTL_DAYS + ' days'}` +

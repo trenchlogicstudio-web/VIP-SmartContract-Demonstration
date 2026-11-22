@@ -1267,3 +1267,63 @@ test('on the project site the MVP guide opens its Markdown links on GitHub, and 
   require('node:vm').runInNewContext(script, { location: { href: 'file:///x/13_VIP_MVP/index.html' }, document: { querySelectorAll: () => offline } });
   assert.equal(offline[0].href, 'file:///x/13_VIP_MVP/README.md');
 });
+
+test('future-play credit switches off in both services: its share stays with the guest, the published terms show it, and a misspelt value refuses to start', () => {
+  const probe = ({ P, E }) => {
+    const now = new Date().toISOString();
+    return { fp: P.FUTURE_PLAY, rollover: P.TERMS.rollover_fraction, version: E.terms().terms_version,
+      small: P.settle(2000, 'permitted', now), big: P.settle(10000, 'permitted', now) };
+  };
+  const on = inProcess(DEFAULTS, probe), off = inProcess({ ...DEFAULTS, VIP_FUTURE_PLAY: 'off' }, probe);
+  assert.equal(on.fp, 'on'); assert.equal(on.rollover, 0.2);
+  assert.deepEqual([on.small.redirect, on.small.rollover, on.small.residual], [1400, 400, 200]);
+  assert.equal(off.fp, 'off'); assert.equal(off.rollover, 0);
+  assert.deepEqual([off.small.redirect, off.small.rollover, off.small.residual], [1400, 0, 600]);
+  // At €10,000 preserved the €5,000 ceiling binds either way; switched off, all of it is resort credit.
+  assert.deepEqual([off.big.redirect, off.big.rollover, off.big.residual, off.big.capped], [5000, 0, 5000, true]);
+  assert.notEqual(off.version, on.version);
+  // The stricter setting wins over a configured rollover, and blank or "on" changes nothing.
+  assert.deepEqual(inProcess({ ...DEFAULTS, VIP_FUTURE_PLAY: ' OFF ', VIP_ROLLOVER: '0.20' }, probe), off);
+  assert.deepEqual(inProcess({ ...DEFAULTS, VIP_FUTURE_PLAY: '' }, probe), on);
+  assert.deepEqual(inProcess({ ...DEFAULTS, VIP_FUTURE_PLAY: 'On' }, probe), on);
+  if (ref) {
+    const env = { ...DEFAULTS, VIP_FUTURE_PLAY: 'off' };
+    assert.deepEqual(byReference(env, "[r.FUTURE_PLAY, r.TERMS_VERSION, r.settle(2000, 'permitted', new Date().toISOString()).rollover]"),
+      ['off', off.version, 0]);
+  }
+  for (const file of ['./src/policy', ...(ref ? [refPath] : [])]) {
+    for (const bad of ['of', 'false', '0', 'no']) {
+      const run = require('node:child_process').spawnSync(process.execPath, ['-e', 'require(process.argv[1])', file],
+        { cwd: __dirname, env: { ...process.env, VIP_FUTURE_PLAY: bad }, encoding: 'utf8' });
+      assert.notEqual(run.status, 0, file + ' VIP_FUTURE_PLAY=' + bad);
+      assert.match(run.stderr, /VIP_FUTURE_PLAY must be on or off/);
+    }
+  }
+});
+
+test('Demos B and C switch future-play credit off exactly as the engine does, and the presets return to the reference setting', inPackage, () => {
+  const engine = inProcess({ ...DEFAULTS, VIP_FUTURE_PLAY: 'off' }, ({ P }, values) =>
+    values.map(v => P.settle(v, 'permitted', new Date().toISOString())), [10000, 5100]);
+  const b = offlineDemo('05b_Demo_B_Policy_Engine.html', { s: 50, r: 70 });
+  assert.equal(b.ctx.fp, true);
+  b.node('fX').onclick();
+  for (let i = 0; i < 50 && !b.ctx.fired; i++) b.node('deal').onclick();
+  assert.equal(b.ctx.fired, true);
+  assert.equal(20000 - b.ctx.dd, engine[0].preserved);
+  const formatted = vm.runInContext('fmc', b.ctx);
+  for (const field of ['redirect', 'rollover', 'residual']) assert.ok(b.node('amounts').textContent.includes(formatted(engine[0][field])), field);
+  assert.match(b.node('amounts').textContent, /future-play credit €0/);
+  assert.match(b.node('log').innerHTML, /Future-play credit off/);
+  const c = offlineDemo('05c_Demo_C_Synthetic_Case_Study.html', { n: 60, p: 5100, g: 70, q: 50, r: 84 });
+  assert.equal(c.node('tRoll').textContent, '€61,200');
+  c.node('fX').onclick();
+  assert.equal(c.ctx.FP, false);
+  assert.equal(c.node('tRollPct').textContent, 'off');
+  assert.equal(c.node('tRoll').textContent, '€0');
+  assert.equal(c.node('tIss').textContent, '€' + (engine[1].redirect * 60).toLocaleString('en-US'));
+  assert.equal(c.node('tRes').textContent, '€' + (engine[1].residual * 60).toLocaleString('en-US'));
+  assert.match(c.node('verd').innerHTML, /future-play credit off/);
+  c.node('p1').onclick();
+  assert.equal(c.ctx.FP, true);
+  assert.equal(c.node('tRoll').textContent, '€61,200');
+});

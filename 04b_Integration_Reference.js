@@ -44,6 +44,17 @@ function num(key, fallback, lo, hi) {
   }
   return v;
 }
+// Future-play credit switch, as in the MVP's policy core: off removes the
+// rollover, which then stays with the guest; on or unset leaves it to
+// VIP_ROLLOVER. The stricter setting wins, and any other value refuses to start.
+function futurePlay() {
+  const raw = process.env.VIP_FUTURE_PLAY;
+  if (raw === undefined || raw.trim() === '') return 'on';
+  const v = raw.trim().toLowerCase();
+  if (v !== 'on' && v !== 'off') refuse(`VIP_FUTURE_PLAY must be on or off, got "${raw}". Refusing to start.`);
+  return v;
+}
+const FUTURE_PLAY_SETTING = futurePlay();
 const MODES = ['hard_stop', 'advisory'];
 const MODE = process.env.VIP_MODE ?? 'hard_stop';
 if (!MODES.includes(MODE)) {
@@ -54,7 +65,8 @@ const CFG = {
   threshold: num('VIP_THRESHOLD', 0.50, 0.05, 0.95),   // canon thresholds.hard_stop_fraction
   nudge: num('VIP_NUDGE', 0.40, 0.05, 0.95),           // canon thresholds.advisory_nudge_fraction
   escalate: num('VIP_ESCALATE', 0.85, 0.05, 0.99),     // canon thresholds.advisory_escalate_fraction
-  rollover: num('VIP_ROLLOVER', 0.20, 0, 1),           // canon thresholds.rollover_fraction
+  rollover: FUTURE_PLAY_SETTING === 'off' ? (num('VIP_ROLLOVER', 0.20, 0, 1), 0)
+    : num('VIP_ROLLOVER', 0.20, 0, 1),                  // canon thresholds.rollover_fraction
   // canon thresholds.redirect_split — per-jurisdiction configurable like every
   // threshold above, validated by the same rule.
   split: {
@@ -792,14 +804,14 @@ if (require.main === module) {
   server.listen(CFG.port, process.env.VIP_BIND_HOST || '127.0.0.1', () => {
     const pct = m => `${m / 10000}%`;
     console.log(`VIP SmartContract reference v3.23 · mode=${CFG.mode} · threshold=${pct(W.threshold)} · ` +
-                `rollover=${pct(W.rollover)} · redirect=${pct(W.redirect)} · residual=${pct(W.residual)} · ` +
+                `rollover=${pct(W.rollover)} (future-play credit ${CFG.rollover > 0 ? 'on' : 'off'}) · redirect=${pct(W.redirect)} · residual=${pct(W.residual)} · ` +
                 `eligibility=${ELIGIBILITY_DEFAULT} · cap=${REWARD_CAP_EUR === null ? 'off' : REWARD_CAP_EUR} · ` +
                 `determination=${ELIGIBILITY_TTL_DAYS === null ? 'never expires' : ELIGIBILITY_TTL_DAYS + 'd'} · ` +
                 `commitment=${COMMITMENT_HOURS}h · ${TERMS_VERSION} · :${CFG.port} · ${ROUTES.length}/9 spec routes live`);
   });
 }
 
-module.exports = { server, terms, TERMS, TERMS_VERSION, precommit, tick, authorize, release, COMMITMENT_HOURS, stop, view, redirectIssue, audit, settle, MAX_EUR, W, lineCents, cents,
+module.exports = { FUTURE_PLAY: CFG.rollover > 0 ? 'on' : 'off', server, terms, TERMS, TERMS_VERSION, precommit, tick, authorize, release, COMMITMENT_HOURS, stop, view, redirectIssue, audit, settle, MAX_EUR, W, lineCents, cents,
                    ELIGIBILITY_TTL_DAYS, eligibilityExpired, allocate,
                    programmeSuppress, SUPPRESS_REASONS, ELIGIBILITY, effectiveEligibility,
                    REWARD_CAP_EUR, CFG, _state: state };

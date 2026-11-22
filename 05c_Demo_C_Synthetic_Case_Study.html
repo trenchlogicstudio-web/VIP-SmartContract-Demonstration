@@ -126,6 +126,8 @@ td.owed{font-weight:700}
 <p class="hint" id="hP">One stop per guest in this model. The €5,000 ceiling applies separately to each stop before the quarter is added up.</p>
 <label for="g">resort share before the cap · <b id="vG">70%</b></label><input type="range" id="g" min="40" max="80" value="70" step="1" aria-describedby="hG">
 <p class="hint" id="hG">40% for a gaming-only property. 80% is the most the engine accepts while the rollover keeps its 20%.</p>
+<label id="lFp">future-play credit</label><div class="seg" role="group" aria-labelledby="lFp" aria-describedby="hFp"><button class="on" id="fO">On · 20%</button><button id="fX">Off</button></div>
+<p class="hint" id="hFp">Off where future-play credit counts as an inducement to gamble: its share stays with the guest, and the quarter owes no future-play credit. The presets and the reset use the reference setting, on.</p>
 <label for="q">resort credit redeemed in the quarter · <b id="vQ">50%</b></label><input type="range" id="q" min="0" max="100" value="50" step="5" aria-describedby="hQ">
 <p class="hint" id="hQ">ASSUMPTION. No redemption has been measured: the MVP's seeded quarter has redeemed none of its 180 credits.</p>
 <label for="r">quarter retention of limited VIPs, incentive mode · <b id="vR">84%</b></label><input type="range" id="r" min="40" max="92" value="84" step="1" aria-describedby="hR">
@@ -164,7 +166,8 @@ td.owed{font-weight:700}
 <script src="13_VIP_MVP/src/settlement.js"></script>
 <script>
 function el(i){return document.getElementById(i)}
-var DEF={n:60,p:5100,g:70,q:50,r:84},ROLL=20,BASE=61;
+var DEF={n:60,p:5100,g:70,q:50,r:84},ROLL=20,BASE=61,FP=true;
+function setFP(on){FP=on;el("fO").classList.toggle("on",on);el("fX").classList.toggle("on",!on);el("fO").setAttribute?.("aria-pressed",String(on));el("fX").setAttribute?.("aria-pressed",String(!on));}
 function fm(x){return x.toLocaleString("en-US",{maximumFractionDigits:2})}
 function K(x){return x>=1e6?"€"+(x/1e6).toFixed(2)+"M":"€"+Math.round(x/1000)+"K"}
 function vt(i,t){var x=el(i);if(x.setAttribute)x.setAttribute("aria-valuetext",t)}
@@ -172,7 +175,7 @@ function calc(){var n=+el("n").value,p=+el("p").value,g=+el("g").value,q=+el("q"
 el("vN").textContent=n;el("vP").textContent="€"+fm(p);el("vG").textContent=g+"%";el("vQ").textContent=q+"%";el("vR").textContent=r+"%";
 vt("n",n+" limited VIPs");vt("p","€"+fm(p)+" per VIP");vt("g",g+"% of preserved budget");vt("q",q+"% of the credit issued");vt("r",r+"% retained");
 /* the canon settlement: credit g%, rollover 20%, the remainder back to the guest */
-var single=VIPSettlement.demoSettlement(p,g);
+var single=VIPSettlement.demoSettlement(p,g,true,FP?VIPSettlement.defaultRollover:0);
 var pre=n*p, redC=n*Math.round(single.redirect*100), rollC=n*Math.round(single.rollover*100);
 var usedC=Math.round(redC*q/100), red=redC/100, roll=rollC/100, res=n*Math.round(single.residual*100)/100;
 var used=usedC/100, open=(redC-usedC)/100, owed=(redC-usedC+rollC)/100;
@@ -180,7 +183,7 @@ el("capStatus").textContent=single.capped?"€5,000 ceiling applies per guest. "
 el("mPre").textContent=K(pre);el("mRed").textContent=K(red);
 el("mRet").textContent=r+"% v "+BASE+"%";
 el("tIss").textContent="€"+fm(red);el("tRed").textContent="€"+fm(used);el("tOpen").textContent="€"+fm(open);
-el("tRollPct").textContent=ROLL+"%";el("tRoll").textContent="€"+fm(roll);el("tRollOpen").textContent="€"+fm(roll);
+el("tRollPct").textContent=FP?ROLL+"%":"off";el("tRoll").textContent="€"+fm(roll);el("tRollOpen").textContent="€"+fm(roll);
 el("tRes").textContent="€"+fm(res);el("tOwed").textContent="€"+fm(owed);
 var kept=Math.round(n*r/100), base=Math.round(n*BASE/100);
 el("ch").setAttribute?.("aria-label","Modeled retained guests: "+kept+" with incentives and "+base+" with a stop alone.");
@@ -191,16 +194,18 @@ s+='<text x="'+(x+bw/2)+'" y="'+(H-P-h-8)+'" text-anchor="middle" font-family="S
 s+='<text x="'+(x+bw/2)+'" y="'+(H-12)+'" text-anchor="middle" font-family="Fragment Mono" font-size="10" fill="#54646A">'+lab+'</text>';}
 bar(150,kept,"#1E5A78","INCENTIVE · RETAINED");bar(370,base,"#DFB3BE","HARD-STOP ONLY · RETAINED");
 el("ch").innerHTML=s;
-el("verd").innerHTML="At these assumptions the quarter preserves <b>"+K(pre)+"</b> of the budgets <b>"+n+"</b> limited VIPs committed and issues <b>"+K(red)+"</b> of it as resort credit with a "+g+"% share before the per-stop cap. At the assumed "+q+"% redemption, <b>"+K(used)+"</b> becomes spend in the building and the quarter ends owing <b>"+K(owed)+"</b>: unredeemed credit plus <b>"+K(roll)+"</b> of future-play credit. It retains <b>"+kept+"</b> of the limited VIPs ("+r+"%) against <b>"+base+"</b> ("+BASE+"%) under hard-stop-only. All MODELED: no pilot has measured the retention difference or the redemption."+(r<BASE?" <span style=color:var(--seal)>Below "+BASE+"% the incentive layer keeps fewer guests than the stop alone: at these assumptions it costs retention instead of buying it.</span>":"")+(r>90?" <span style=color:var(--seal)>Above 90% strains even the incentive story — treat as fantasy until piloted.</span>":"");}
+el("verd").innerHTML="At these assumptions the quarter preserves <b>"+K(pre)+"</b> of the budgets <b>"+n+"</b> limited VIPs committed and issues <b>"+K(red)+"</b> of it as resort credit with a "+g+"% share before the per-stop cap. At the assumed "+q+"% redemption, <b>"+K(used)+"</b> becomes spend in the building and the quarter ends owing <b>"+K(owed)+"</b>: "+(FP?"unredeemed credit plus <b>"+K(roll)+"</b> of future-play credit.":"unredeemed credit only, with future-play credit off.")+" It retains <b>"+kept+"</b> of the limited VIPs ("+r+"%) against <b>"+base+"</b> ("+BASE+"%) under hard-stop-only. All MODELED: no pilot has measured the retention difference or the redemption."+(r<BASE?" <span style=color:var(--seal)>Below "+BASE+"% the incentive layer keeps fewer guests than the stop alone: at these assumptions it costs retention instead of buying it.</span>":"")+(r>90?" <span style=color:var(--seal)>Above 90% strains even the incentive story — treat as fantasy until piloted.</span>":"");}
 ["n","p","g","q","r"].forEach(function(i){el(i).oninput=function(){seg(-1);calc()}});
-function set(o){el("n").value=o.n;el("p").value=o.p;el("g").value=o.g;if(o.q!==undefined)el("q").value=o.q;el("r").value=o.r;calc();}
+function set(o){el("n").value=o.n;el("p").value=o.p;el("g").value=o.g;if(o.q!==undefined)el("q").value=o.q;el("r").value=o.r;setFP(true);calc();}
+el("fO").onclick=function(){setFP(true);seg(-1);calc()};
+el("fX").onclick=function(){setFP(false);seg(-1);calc()};
 function seg(x){["p0","p1","p2","p3"].forEach(function(y,i){el(y).classList.toggle("on",i==x);el(y).setAttribute?.("aria-pressed",String(i===x))})}
 el("p0").onclick=function(){seg(0);set({n:30,p:3200,g:45,q:50,r:72})};
 el("p1").onclick=function(){seg(1);set(DEF)};
 el("p2").onclick=function(){seg(2);set({n:110,p:8000,g:80,q:50,r:90})};
 el("p3").onclick=function(){seg(3);set({n:30,p:3200,g:40,q:50,r:52})};
 el("rst").onclick=function(){seg(1);set(DEF)};
-seg(1);calc();
+seg(1);setFP(true);calc();
 </script><footer class="wrap"><div class="titleblock">
 <div class="tb-row"><div class="k">Studio</div><div class="v2">© 2026 Miloš Petrović · Trench Logic Studio · milos@trench-logic.com · trenchlogicstudio.com</div></div>
 <div class="tb-row"><div class="k">Project</div><div class="v2">VIP SmartContract — Compliance-as-Revenue Layer</div></div>

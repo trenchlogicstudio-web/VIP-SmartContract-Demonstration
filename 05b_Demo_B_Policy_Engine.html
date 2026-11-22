@@ -120,6 +120,8 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 <label id="lStakes" style="margin-top:14px">stakes</label><div class="seg" role="group" aria-labelledby="lStakes"><button class="on" id="cC">Checked first</button><button id="cA">Reported after</button></div>
 <label for="s" style="margin-top:14px">stop-loss · <b id="vS">50%</b> of pre-committed budget <span style="color:var(--graphite)">· reference preset</span></label><input type="range" id="s" min="20" max="80" value="50" step="1">
 <label for="r">resort share before cap · <b id="vR">70%</b> of preserved budget <span style="color:var(--graphite)">· with the rollover set to 20% before the combined cap, the ceiling the engine accepts here is 80%</span></label><input type="range" id="r" min="40" max="80" value="70" step="1">
+<label id="lFp" style="margin-top:14px">future-play credit</label><div class="seg" role="group" aria-labelledby="lFp" aria-describedby="hFp"><button class="on" id="fO">On · 20%</button><button id="fX">Off</button></div>
+<p class="hint" id="hFp">Off where future-play credit counts as an inducement to gamble: its share stays in the guest’s balance (VIP_FUTURE_PLAY=off). The operator decides this with its counsel.</p>
 <p class="hint">Combined resort and future-play benefits are capped at €5,000 per guest and stop. The guest keeps the excess.</p>
 <label style="margin-top:14px">run the session</label>
 <button class="btn pri" id="deal" style="width:100%;margin-bottom:8px">DEAL · next hand</button>
@@ -145,17 +147,17 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 <script src="13_VIP_MVP/src/settlement.js"></script>
 <script>
 function el(i){return document.getElementById(i)}
-var BR=20000,dd=0,fired=false,mode="I",hand=0,timer=null,checked=true,seqI=0,capNext=0;
+var BR=20000,dd=0,fired=false,mode="I",hand=0,timer=null,checked=true,seqI=0,capNext=0,fp=true;
 function settleDemo(preserved, percent, permitted=true) {
-  return VIPSettlement.demoSettlement(preserved, percent, permitted);
+  return VIPSettlement.demoSettlement(preserved, percent, permitted, fp ? VIPSettlement.defaultRollover : 0);
 }
 function fmc(e){return "€"+e.toLocaleString("en-US",{minimumFractionDigits:(Math.round(e*100)%100?2:0),maximumFractionDigits:2})}
 var SEQ=[-1200,-800,600,-1500,-900,-1300,700,-1600,-1100,-1400,-900,-1200];
 function lg(h){var L=el("log");L.innerHTML+="<br>"+h;L.scrollTop=1e6}
 function fm(x){return "€"+Math.round(x).toLocaleString("en-US")}
 function upd(){
-for(const [id,pressed] of [["mI",mode==="I"],["mH",mode==="H"],["cC",checked],["cA",!checked]])el(id).setAttribute?.("aria-pressed",String(pressed));
-["s","r","mI","mH","cC","cA"].forEach(function(id){el(id).disabled=hand>0||seqI>0});
+for(const [id,pressed] of [["mI",mode==="I"],["mH",mode==="H"],["cC",checked],["cA",!checked],["fO",fp],["fX",!fp]])el(id).setAttribute?.("aria-pressed",String(pressed));
+["s","r","mI","mH","cC","cA","fO","fX"].forEach(function(id){el(id).disabled=hand>0||seqI>0});
 el("deal").disabled=fired;el("auto").disabled=fired;
 var lim=BR*(+el("s").value)/100;el("kL").textContent=fm(lim);el("kD").textContent=fm(dd);
 el("bar").style.width=Math.min(100,100*dd/lim)+"%";el("vS").textContent=el("s").value+"%";el("vR").textContent=el("r").value+"%";
@@ -186,7 +188,7 @@ lg("<span class=seal>POLICY STOP</span> threshold "+el("s").value+"% · session 
 var result=settleDemo(pres,Number(el("r").value),mode==="I");
 el("amounts").textContent="Resort services "+fmc(result.redirect)+" · future-play credit "+fmc(result.rollover)+" · guest balance "+fmc(result.residual)+".";
 lg("<b>Settlement</b> "+fmc(result.preserved)+" remaining · "+el("amounts").textContent+
-  (result.capped?" Combined €5,000 cap applied.":"")+(mode==="H"?" Benefits withheld.":""));
+  (result.capped?" Combined €5,000 cap applied.":"")+(mode==="H"?" Benefits withheld.":"")+(!fp&&mode==="I"?" Future-play credit off: its share stays with the guest.":""));
 var lab=["Spa "+fmc(result.credits.spa),"F&amp;B "+fmc(result.credits.fnb),"Retail "+fmc(result.credits.retail)];
 el("alloc").querySelectorAll(".chip").forEach(function(c,i){c.classList.remove("dis");c.classList.add("lock");c.innerHTML=lab[i]});
 stop();}
@@ -198,6 +200,8 @@ el("mI").onclick=function(){mode="I";el("mI").classList.add("on");el("mH").class
 el("mH").onclick=function(){mode="H";el("mH").classList.add("on");el("mI").classList.remove("on");lg("<span class=warn>engine</span> comparison → HARD-STOP ONLY (the no-incentive baseline, not the Hard-Stop mode of 03a)");upd();};
 el("cC").onclick=function(){checked=true;el("cC").classList.add("on");el("cA").classList.remove("on");lg("<b>engine</b> stakes → CHECKED FIRST · every stake asked for before the hand is dealt");upd();};
 el("cA").onclick=function(){checked=false;el("cA").classList.add("on");el("cC").classList.remove("on");lg("<span class=warn>engine</span> stakes → REPORTED AFTER · each hand reported once it is played, no check — the limit of such a platform");upd();};
+el("fO").onclick=function(){fp=true;el("fO").classList.add("on");el("fX").classList.remove("on");lg("<b>engine</b> future-play credit → ON · 20% of the preserved budget as credit toward later play");upd();};
+el("fX").onclick=function(){fp=false;el("fX").classList.add("on");el("fO").classList.remove("on");lg("<span class=warn>engine</span> future-play credit → OFF · that share stays in the guest’s balance (VIP_FUTURE_PLAY=off)");upd();};
 ["s","r"].forEach(function(i){el(i).oninput=upd});
 el("reset").onclick=function(){stop();dd=0;hand=0;fired=false;seqI=0;capNext=0;el("kP").textContent="€0";el("amounts").textContent="Run the session to see the three amounts.";el("log").innerHTML="<b>engine</b> policy armed · hard-stop · illustrative fingerprint 0x7f3a…c412, funds off chain";el("alloc").innerHTML='<span class="chip dis">Spa</span><span class="chip dis">F&amp;B</span><span class="chip dis">Retail</span>';upd();};
 upd();

@@ -30,6 +30,26 @@ function num(key, fallback, lo, hi) {
 }
 
 const settlement = require('./settlement');
+
+// ── future-play credit switch ─────────────────────────────────────────────
+// Future-play credit (the rollover) is the one leg of a settlement that returns
+// value to the gaming floor, and it is granted at the moment a guest stops. A
+// jurisdiction, or an operator's counsel, may treat that as an inducement to
+// gamble. VIP_FUTURE_PLAY=off removes it: the rollover share stays with the
+// guest as part of the guest's own balance, and the published terms show a
+// rollover of 0. on, or unset, leaves the rollover to VIP_ROLLOVER (default 20%).
+// The stricter setting wins: off applies whatever VIP_ROLLOVER says, which is
+// still validated so that a typo there is caught. Any other value refuses to
+// start, because a misspelt "off" must not leave the credit on.
+function futurePlay() {
+  const raw = process.env.VIP_FUTURE_PLAY;
+  if (raw === undefined || raw.trim() === '') return 'on';
+  const v = raw.trim().toLowerCase();
+  if (v !== 'on' && v !== 'off') throw new Error(`VIP_FUTURE_PLAY must be on or off, got "${raw}". Refusing to start.`);
+  return v;
+}
+const FUTURE_PLAY_SETTING = futurePlay();
+
 const MODES = ['hard_stop', 'advisory'];
 const MODE = process.env.VIP_MODE ?? 'hard_stop';
 if (!MODES.includes(MODE)) {
@@ -41,7 +61,8 @@ const CFG = {
   threshold: num('VIP_THRESHOLD', 0.50, 0.05, 0.95),   // canon thresholds.hard_stop_fraction
   nudge: num('VIP_NUDGE', 0.40, 0.05, 0.95),           // canon thresholds.advisory_nudge_fraction
   escalate: num('VIP_ESCALATE', 0.85, 0.05, 0.99),     // canon thresholds.advisory_escalate_fraction
-  rollover: num('VIP_ROLLOVER', settlement.defaultRollover, 0, 1),           // canon thresholds.rollover_fraction
+  rollover: FUTURE_PLAY_SETTING === 'off' ? (num('VIP_ROLLOVER', settlement.defaultRollover, 0, 1), 0)
+    : num('VIP_ROLLOVER', settlement.defaultRollover, 0, 1),           // canon thresholds.rollover_fraction
   // canon thresholds.redirect_split — per-jurisdiction configurable like every
   // other threshold above. A jurisdiction that caps F&B credit or bars retail
   // vouchers moves the split without touching the engine; each share is
@@ -367,5 +388,6 @@ module.exports = {
   CFG, MODES, REDIRECT_TOTAL, RESIDUAL, num, MICRO, MAX_EUR, W, cents, eur, lineCents,
   ELIGIBILITY, ELIGIBILITY_DEFAULT, effectiveEligibility, REWARD_CAP_EUR, REWARD_CAP_DEFAULT_EUR, capEur,
   ELIGIBILITY_TTL_DAYS, ELIGIBILITY_TTL_DEFAULT_DAYS, ttlDays, eligibilityExpired, allocate,
-  money, armedAt, assess, settle, restrictSettlement, preview, distanceToThreshold
+  money, armedAt, assess, settle, restrictSettlement, preview, distanceToThreshold,
+  FUTURE_PLAY: W.rollover > 0 ? 'on' : 'off', futurePlay
 };

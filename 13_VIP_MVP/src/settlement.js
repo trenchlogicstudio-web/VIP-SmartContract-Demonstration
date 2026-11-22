@@ -37,10 +37,12 @@ const VIPSettlement = (() => {
       credits: { spa: spa / 100, fnb: fnb / 100, retail: retail / 100 } };
   }
 
-  function demoSettlement(preserved, resortPercent = 70, permitted = true) {
+  // rollover: the future-play share; 0 when the operator switches future-play credit off,
+  // in which case that share stays with the guest.
+  function demoSettlement(preserved, resortPercent = 70, permitted = true, rollover = defaultRollover) {
     // Allocate the selected whole percentage across venues, preserving the exact total.
     const [spa, fnb, retail] = allocate(Math.round(resortPercent * MICRO / 100), [30, 25, 15]);
-    const w = weights({ spa: spa / MICRO, fnb: fnb / MICRO, retail: retail / MICRO }, defaultRollover);
+    const w = weights({ spa: spa / MICRO, fnb: fnb / MICRO, retail: retail / MICRO }, rollover);
     return settleCents(Math.round(preserved * 100), w, defaultCap * 100, permitted);
   }
   return { allocate, weights, settleCents, demoSettlement, defaultCap, defaultSplit, defaultRollover };
