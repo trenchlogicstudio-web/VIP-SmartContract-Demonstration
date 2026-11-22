@@ -15,7 +15,8 @@
     "reference": "node 04b_Integration_Reference.js",
     "test": "node 13_VIP_MVP/test.js && node --test 13_VIP_MVP/regression.test.js",
     "reset": "node 13_VIP_MVP/reset.js",
-    "example": "node 13_VIP_MVP/example.js"
+    "example": "node 13_VIP_MVP/example.js",
+    "replay": "node 13_VIP_MVP/replay.js"
   },
   "dependencies": {}
 }

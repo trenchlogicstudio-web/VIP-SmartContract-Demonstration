@@ -1327,3 +1327,66 @@ test('Demos B and C switch future-play credit off exactly as the engine does, an
   assert.equal(c.ctx.FP, true);
   assert.equal(c.node('tRoll').textContent, '€61,200');
 });
+
+test('the replay applies the engine’s own stop line and settlement to past sessions, under a stated budget', () => {
+  const R = require('./src/replay'), P = require('./src/policy');
+  const csv = '# a comment line\nguest,date,loss_eur\nA,2026-07-01,1000\nA,2026-07-02,3000\nA,2026-07-03,-500\nB,2026-07-01,12000\n"C, the third",2026-07-05,-200\n';
+  const { sessions } = R.readSessions(csv);
+  assert.equal(sessions.length, 5); assert.equal(sessions[4].guest, 'C, the third');
+  const fixed = R.replay(sessions, { budget: 'fixed:4000' });
+  const at2000 = P.settle(2000, 'permitted', '2026-07-02T12:00:00.000Z', Date.parse('2026-07-02T12:00:00.000Z'));
+  assert.deepEqual([at2000.redirect, at2000.rollover, at2000.residual], [1400, 400, 200]);
+  assert.equal(fixed.totals.stops, 2);
+  assert.equal(fixed.totals.gaming_win_eur, 15300);
+  assert.equal(fixed.totals.gaming_win_forgone_eur, 11000);
+  assert.deepEqual([fixed.totals.resort_credit_eur, fixed.totals.future_play_credit_eur, fixed.totals.guest_balances_eur, fixed.totals.preserved_eur], [2800, 800, 400, 4000]);
+  assert.deepEqual(fixed.stops.map(s => [s.guest, s.line_eur, s.win_forgone_eur]), [['A', 2000, 1000], ['B', 2000, 10000]]);
+  // typical:2 — each guest's own median losing session is the line; a guest who never lost has no budget.
+  const typical = R.replay(sessions, { budget: 'typical:2' });
+  assert.deepEqual(typical.stops.map(s => [s.guest, s.budget_eur, s.line_eur, s.win_forgone_eur]), [['A', 4000, 2000, 1000], ['B', 24000, 12000, 0]]);
+  const big = P.settle(12000, 'permitted', '2026-07-01T12:00:00.000Z', Date.parse('2026-07-01T12:00:00.000Z'));
+  assert.equal(typical.stops[1].resort_credit_eur, big.redirect);
+  assert.equal(typical.guests_without_budget, 1);
+  // A row's own budget and eligibility override the assumption; the peak column moves the trigger.
+  const rows = R.readSessions('guest,date,loss_eur,peak_loss_eur,budget_eur,eligibility\nD,2026-08-01,500,2600,5000,suppressed\n').sessions;
+  const d = R.replay(rows, { budget: 'fixed:100000' }).stops[0];
+  assert.deepEqual([d.budget_eur, d.line_eur, d.resort_credit_eur, d.guest_balance_eur, d.win_forgone_eur, d.eligibility], [5000, 2500, 0, 2500, -2000, 'suppressed']);
+  for (const [bad, message] of [
+    ['guest,date,loss_eur,email\nA,2026-07-01,10,a@b.c\n', /personal data \(email\)/],
+    ['guest,date,loss_eur\na@b.c,2026-07-01,10\n', /e-mail/],
+    ['guest,date,loss_eur\nA,2026-07-01,"1.234,56"\n', /not an amount in euros/],
+    ['guest,date,loss_eur\nA,2026-02-30,10\n', /not a calendar date/],
+    ['guest,date,loss_eur,peak_loss_eur\nA,2026-07-01,100,50\n', /below the final loss/],
+    ['guest,date\nA,2026-07-01\n', /no "loss_eur" column/],
+  ]) assert.throws(() => R.readSessions(bad), message);
+  assert.throws(() => R.replay(sessions, { budget: 'median:2' }), /typical:K/);
+});
+
+test('the replay runs from the command line on the synthetic sample, which the generator reproduces exactly, under the engine’s configuration', t => {
+  const dir = fs.mkdtempSync(path.join(require('node:os').tmpdir(), 'vip-replay-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const sample = path.join(__dirname, 'samples', 'sessions-synthetic.csv');
+  assert.equal(execFileSync(process.execPath, ['samples/make-sessions.js'], { cwd: __dirname, encoding: 'utf8' }), fs.readFileSync(sample, 'utf8'));
+  const run = (env, extra = []) => require('node:child_process').spawnSync(process.execPath,
+    ['replay.js', sample, '--json', path.join(dir, 'r.json'), '--stops', path.join(dir, 's.csv'), ...extra],
+    { cwd: __dirname, env: { ...process.env, ...env }, encoding: 'utf8' });
+  const on = run(DEFAULTS);
+  assert.equal(on.status, 0, on.stderr);
+  assert.match(on.stdout, /^VIP replay · 2,382 sessions · 400 guests · 2026-07-01 to 2026-09-30/);
+  const r = JSON.parse(fs.readFileSync(path.join(dir, 'r.json'), 'utf8')), T = r.totals, c = x => Math.round(x * 100);
+  assert.equal(c(T.credits.spa_eur) + c(T.credits.fnb_eur) + c(T.credits.retail_eur), c(T.resort_credit_eur));
+  assert.equal(c(T.resort_credit_eur) + c(T.future_play_credit_eur) + c(T.guest_balances_eur), c(T.preserved_eur));
+  assert.equal(r.months.reduce((n, m) => n + m.stops, 0), T.stops);
+  assert.ok(T.capped_stops > 0 && T.stops > 0 && T.future_play_credit_eur > 0);
+  const stops = fs.readFileSync(path.join(dir, 's.csv'), 'utf8').trim().split('\n');
+  assert.match(stops[0], /Miloš Petrović/); assert.equal(stops.length - 2, T.stops);
+  const off = run({ ...DEFAULTS, VIP_FUTURE_PLAY: 'off' });
+  assert.equal(off.status, 0, off.stderr);
+  const r2 = JSON.parse(fs.readFileSync(path.join(dir, 'r.json'), 'utf8'));
+  assert.equal(r2.future_play, 'off'); assert.equal(r2.totals.future_play_credit_eur, 0);
+  assert.equal(r2.totals.stops, T.stops); assert.equal(r2.totals.preserved_eur, T.preserved_eur);
+  const wrong = run(DEFAULTS, ['--budget', 'median:2']);
+  assert.equal(wrong.status, 1); assert.match(wrong.stderr, /^VIP replay: The budget must be typical:K/);
+  const unknown = run(DEFAULTS, ['--save']);
+  assert.equal(unknown.status, 1); assert.match(unknown.stderr, /unknown option --save/);
+});

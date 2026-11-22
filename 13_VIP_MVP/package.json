@@ -14,7 +14,8 @@
     "start": "node server.js",
     "test": "node test.js && node --test regression.test.js",
     "reset": "node reset.js",
-    "example": "node example.js"
+    "example": "node example.js",
+    "replay": "node replay.js"
   },
   "dependencies": {}
 }

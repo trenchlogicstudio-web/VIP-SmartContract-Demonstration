@@ -23,6 +23,11 @@ npm start
 ```
 
 Open **http://localhost:3400**. The server listens on the loopback interface only.
+
+To see what the policy would have cost on an operator's own past sessions, before
+anything runs live: `npm run replay -- sessions.csv` (anonymised guest key, date and
+net loss per session; see [the pilot worksheet](16_Evaluation.html#replay)). The
+synthetic sample is `13_VIP_MVP/samples/sessions-synthetic.csv`.
 `cd 13_VIP_MVP && node server.js` does the same, and `npm run reference` starts the
 in-memory reference service of slot 04b on port 8080.
 
