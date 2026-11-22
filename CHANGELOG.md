@@ -1,12 +1,35 @@
 # Changelog
 
-## v3.23 · MVP v0.2.17 · 21 November 2026
+## v3.23 · MVP v0.2.17 — 22 November 2026
 
-- Demos A, B and C and the SQLite service use the same integer-cent settlement. The €5,000 combined ceiling applies to each guest before aggregation. The synthetic reference quarter is preserved.
-- Guests can review personalized amounts, accept or decline, and read the resulting session receipt. Advisory and Hard-Stop have distinct threshold copy. The host walkthrough includes a withheld-benefit result.
-- The engine retains the full agreement for new sessions. Restarts keep accepted limits and permit tighter current restrictions. Stops and issuances record both versions and the reason. Identical retries of a reviewed confirmation return the original session.
-- Added an offline entry at the repository root, a local MVP quickstart, a reproducible two-receipt example and a pilot worksheet for 90-day non-gaming visits. The worksheet starts with no observations.
-- Existing contract clients keep the nine `/v3` routes. The three local quote, confirmation and receipt calls use `/vip`.
+The guest reviews the offer before agreeing to it, and what was agreed binds. Every
+v3.22 behaviour and figure is kept; the one figure that moves is Demo C's Ceiling
+preset, which v3.22 computed without the cap the engine applies by default.
+
+- **Review, accept or decline.** Guests can review personalized amounts, accept or
+  decline, and read the resulting session receipt. Advisory and Hard-Stop have distinct
+  threshold copy. The host walkthrough includes a withheld-benefit result.
+- **The agreement binds.** The engine retains the full agreement for new sessions.
+  Restarts keep accepted limits and permit tighter current restrictions. Stops and
+  issuances record both versions and the reason. Identical retries of a reviewed
+  confirmation return the original session.
+- **One settlement.** Demos A, B and C and the SQLite service use the same integer-cent
+  settlement. The €5,000 combined ceiling applies to each guest before aggregation. The
+  synthetic reference quarter is preserved; Demo C's Ceiling preset now applies the cap
+  (credit issued €440,000 and €330,000 to guests, where v3.22 showed €704,000 and €0).
+- **Pilot and example.** Added an offline entry at the repository root, a local MVP
+  quickstart, a reproducible two-receipt example and a pilot worksheet for 90-day
+  non-gaming visits. The worksheet starts with no observations.
+- **Routes.** Existing contract clients keep the nine `/v3` routes. The three local
+  quote, confirmation and receipt calls use `/vip`.
+- **Before publication.** The root page names its owner, and a regression scenario now
+  checks every file for it; the README leads with the live demos; the MVP guide's links
+  to its Markdown files open on GitHub when viewed on the project site; five Demo B
+  elements were raised to the WCAG AA contrast ratio, and an automated WCAG 2.2 AA scan
+  reports no violations on any page.
+- **Verified:** 314 checks and 68 regression scenarios pass, none skipped, on Node.js
+  22.13.0, 22.23.4, 24 and 26. The four Word documents render on the same number of
+  pages as in v3.22.
 
 ## v3.22 · MVP v0.2.16 — 21 November 2026
 

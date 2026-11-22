@@ -1,11 +1,20 @@
 # Fixes
 
 This is the record of the corrections in VIP SmartContract v3.19 / MVP v0.2.13,
-v3.20 / MVP v0.2.14 and v3.22 / MVP v0.2.16, with a reproduction for each and links to
-the code and the regression tests. Release v3.21 / MVP v0.2.15 changed the licence
+v3.20 / MVP v0.2.14, v3.22 / MVP v0.2.16 and v3.23 / MVP v0.2.17, with a reproduction
+for each and links to the code and the regression tests. Release v3.21 / MVP v0.2.15 changed the licence
 only — see the [changelog](../CHANGELOG.md). The historical line references below are pinned to the v3.22 source.
 
-## v3.23 / MVP v0.2.17
+## v3.23 / MVP v0.2.17 — 22 November 2026
+
+| Change | What it was and what it is now | Code and reproduction |
+|---|---|---|
+| Review before agreeing | The guest console armed a session from the entered amount. A guest now reviews the amounts at the line, the mode, the terms version and the benefit ceiling, then accepts or declines; a change to any input invalidates the review. | [quote and confirm](../13_VIP_MVP/src/engine.js#L106) · [routes](../13_VIP_MVP/src/web.js#L445) · [regression](../13_VIP_MVP/regression.test.js#L1021) · [withdrawal](../13_VIP_MVP/regression.test.js#L1038) · [Demo A](../13_VIP_MVP/regression.test.js#L1184) |
+| The agreement binds | A restart with looser settings could loosen a live session. Each new session now stores the agreement; a later policy change can only tighten it, and stops and issuances record both versions and the reason. | [agreed terms](../13_VIP_MVP/src/engine.js#L177) · [tighten only](../13_VIP_MVP/src/policy.js#L317) · [regression](../13_VIP_MVP/regression.test.js#L1095) · [legacy sessions](../13_VIP_MVP/regression.test.js#L1079) |
+| One confirmation per review | A retry of the same request, for example after a dropped connection, answered with an error. Identical retries of a reviewed confirmation now return the original session and the same receipt. | [confirm](../13_VIP_MVP/src/engine.js#L110) · [regression](../13_VIP_MVP/regression.test.js#L1050) |
+| One settlement everywhere | The demos and the service each computed the split. They now load one integer-cent settlement, and in Demo C the €5,000 ceiling applies to each guest before the quarter is added up: the Ceiling preset shows €440,000 issued and €330,000 to guests, where v3.22 showed €704,000 and €0. | [settlement](../13_VIP_MVP/src/settlement.js#L30) · [Demo C](../05c_Demo_C_Synthetic_Case_Study.html#L175) · [Demo B parity](../13_VIP_MVP/regression.test.js#L1152) · [Demo C](../13_VIP_MVP/regression.test.js#L1171) · [cents](../13_VIP_MVP/regression.test.js#L1199) |
+| A pilot can start | The package had no runnable worked example and no pilot measurement plan. A two-receipt example runs against a fresh database, and a pilot worksheet starts with no observations and reports absolute rates with their uncertainty. | [example](../13_VIP_MVP/example.js) · [worksheet](../16_Evaluation.html) · [regression](../13_VIP_MVP/regression.test.js#L1222) |
+| Before publication | The root page lacked the owner line; the README opened with an archive a GitHub visitor does not have; the MVP guide's Markdown links did not resolve on the project site; five Demo B elements were below the AA contrast ratio. All four are fixed, and two scenarios keep the first and third so. | [owner](../13_VIP_MVP/regression.test.js#L1238) · [project-site links](../13_VIP_MVP/regression.test.js#L1256) · [README](../README.md) · [Demo B](../05b_Demo_B_Policy_Engine.html#L70) |
 
 Run `npm test` in the complete package, and `npm run example` for the two €20,000 receipts. The [regression scenarios](../13_VIP_MVP/regression.test.js) cover default browser to service parity, per-stop caps, declined offers, eligibility withdrawals, same-request retries, migration, a mid-session policy change and the pilot worksheet. The [pilot and reconciliation guide](../16_Evaluation.html) lists the financial and visit measures. Earlier release references below describe their original revisions.
 
