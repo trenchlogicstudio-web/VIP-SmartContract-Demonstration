@@ -1,4 +1,4 @@
-// VIP SmartContract · MVP v0.2.17 · policy core
+// VIP SmartContract · MVP v0.2.18 · policy core
 // Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
 //
 // This file is the Body: the pre-commitment decision itself, with no database

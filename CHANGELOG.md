@@ -1,5 +1,32 @@
 # Changelog
 
+## v3.24 · MVP v0.2.18 — 22 November 2026
+
+Two additions an operator can use before anything runs live, and nothing taken away:
+every v3.23 behaviour, default, figure and preset is unchanged.
+
+- **A switch for future-play credit.** Future-play credit is the one part of a
+  settlement that returns value to the gaming floor, and it is granted at the moment a
+  guest stops. Where the operator's counsel treats that as an inducement to gamble,
+  `VIP_FUTURE_PLAY=off` removes it in both services: the rollover is 0; below the
+  benefit ceiling its share stays with the guest, and where the ceiling binds the
+  ceiling is all resort credit. The published terms and their version change with it;
+  `off` wins over any `VIP_ROLLOVER`, and a value other than on or off refuses to start.
+  The default is on, at 20%. Demos B and C carry the same switch, and the regulatory
+  map describes it.
+- **Replay past sessions.** `npm run replay -- sessions.csv` applies the engine's own
+  stop line and settlement to an operator's anonymised past sessions and reports the
+  stops, the gaming win forgone, the resort credit by venue, the future-play credit and
+  the guests' own balances, in total and by month. The budget is an assumption the
+  report states (`typical:2` by default, or `fixed:EUR`); the result is the cost of the
+  policy under it, not a measurement of behaviour. Columns that look like personal data
+  are refused and nothing leaves the computer. A synthetic quarter ships as a sample.
+- **Demo B in 30 seconds.** A square video without sound, captured from Demo B and
+  linked from the index and the README.
+- **Verified:** 314 checks and 72 regression scenarios pass, none skipped, on Node.js
+  22.13.0, 22.23.4, 24 and 26. An automated WCAG 2.2 AA scan reports no violations, and
+  the four Word documents render on the same number of pages.
+
 ## v3.23 · MVP v0.2.17 — 22 November 2026
 
 The guest reviews the offer before agreeing to it, and what was agreed binds. Every

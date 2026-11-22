@@ -1,4 +1,4 @@
-// VIP SmartContract · MVP v0.2.17 · store (schema + open)
+// VIP SmartContract · MVP v0.2.18 · store (schema + open)
 // Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT · not production infrastructure.
 // Design rule: a person's name lives ONLY in guests.display_name. Sessions, credits,
 // rollover and the event chain carry opaque guest ids, so erasure

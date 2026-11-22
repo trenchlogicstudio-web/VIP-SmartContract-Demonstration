@@ -4,8 +4,8 @@
 
 The operator handles funds. The local service maintains a hash-chained decision history.
 
-Open source under the [MIT License](LICENSE). This is package **v3.23**; the runnable
-build is **VIP MVP v0.2.17** in [`13_VIP_MVP`](13_VIP_MVP). The operating scenarios and business outcomes are synthetic. The cited external limit-setting study is identified separately.
+Open source under the [MIT License](LICENSE). This is package **v3.24**; the runnable
+build is **VIP MVP v0.2.18** in [`13_VIP_MVP`](13_VIP_MVP). The operating scenarios and business outcomes are synthetic. The cited external limit-setting study is identified separately.
 
 **Try it in the browser, nothing to install:** [the project index and the four demos](https://trenchlogicstudio-web.github.io/VIP-SmartContract-Demonstration/00_INDEX.html), then [a worked receipt and the pilot worksheet](https://trenchlogicstudio-web.github.io/VIP-SmartContract-Demonstration/16_Evaluation.html). Or [watch Demo B in 30 seconds](https://trenchlogicstudio-web.github.io/VIP-SmartContract-Demonstration/docs/media/vip-demo-b-30s.mp4).
 
@@ -72,7 +72,7 @@ nothing; `off` switches either off. Every setting is listed in
 npm test
 ```
 
-314 baseline checks and 68 regression scenarios, none skipped. Among them: the settlement
+314 baseline checks and 72 regression scenarios, none skipped. Among them: the settlement
 closes to the cent on every amount from €0.01 to €2,000.00, and the split is
 recomputed independently on every one of them; every stop, nudge and escalation
 line is checked on every budget in the same range; twelve stakes of €300 sent at

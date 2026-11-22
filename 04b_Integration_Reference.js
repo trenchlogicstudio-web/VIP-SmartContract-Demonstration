@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * VIP SmartContract — Integration Reference · v3.23 · registry slot 04b
+ * VIP SmartContract — Integration Reference · v3.24 · registry slot 04b
  * Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
  * A runnable reference for feasibility evaluation, not a deployable production system.
  *
@@ -805,7 +805,7 @@ const server = http.createServer((req, res) => {
 if (require.main === module) {
   server.listen(CFG.port, process.env.VIP_BIND_HOST || '127.0.0.1', () => {
     const pct = m => `${m / 10000}%`;
-    console.log(`VIP SmartContract reference v3.23 · mode=${CFG.mode} · threshold=${pct(W.threshold)} · ` +
+    console.log(`VIP SmartContract reference v3.24 · mode=${CFG.mode} · threshold=${pct(W.threshold)} · ` +
                 `rollover=${pct(W.rollover)} (future-play credit ${CFG.rollover > 0 ? 'on' : 'off'}) · redirect=${pct(W.redirect)} · residual=${pct(W.residual)} · ` +
                 `eligibility=${ELIGIBILITY_DEFAULT} · cap=${REWARD_CAP_EUR === null ? 'off' : REWARD_CAP_EUR} · ` +
                 `determination=${ELIGIBILITY_TTL_DAYS === null ? 'never expires' : ELIGIBILITY_TTL_DAYS + 'd'} · ` +

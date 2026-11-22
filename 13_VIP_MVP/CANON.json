@@ -3,13 +3,13 @@
   "_stability": "Code, wording and the console may improve in any later revision; the thresholds, splits, model figures and event vocabulary below do not change with them. The verification line is the one exception and says so where it stands: it counts checks, so it moves when a check is added. Restated in canon 1.14: the event vocabulary grew in v0.2.14 by the two types of the pre-stake check, stake.refused and stake.exceeded, which the package canon fixes as well; every earlier type keeps its meaning.",
   "project": "VIP SmartContract — Compliance-as-Revenue Layer",
   "artifact": "VIP MVP — runnable evaluation MVP",
-  "artifact_version": "v0.2.17",
-  "canon_version": "1.17",
+  "artifact_version": "v0.2.18",
+  "canon_version": "1.18",
   "canon_established": "2026-09-09",
   "canon_change_log": "1.0 — first canon for the VIP MVP, which is the first runnable build this product line has had. No value is invented: every threshold, split and model figure is lifted from the package canon at v3.5, and the two figures the seed needs beyond it are labelled where they appear.",
   "parent_package": {
     "name": "VIP SmartContract package",
-    "version": "v3.23",
+    "version": "v3.24",
     "_version_rule": "Names the package revision this MVP shipped with, not a claim about the current package. It is rewritten in the same revision that bumps the package.",
     "canon": "12_Canon.json",
     "registry_slot": "13_VIP_MVP",
@@ -325,5 +325,6 @@
     "snapshot": "New SQLite sessions retain the terms and exact on-line example. Confirmed client review, supplied terms version and configured-only are separately identified. Legacy agreements stay unknown.",
     "changed_rules": "Pending benefits are limited by both the original agreement and active policy. Tighter restrictions return the difference to the guest. Stops and issuances record agreed and active versions and the reason."
   },
-  "canon_change_log_18": "1.17 — v0.2.17. Implements I-1, I-2 and I-3 through per-stop cap parity, reviewable allocations and an explicit withheld-benefit path. The reference model, thresholds, nine contract routes and author intent are preserved."
+  "canon_change_log_18": "1.17 — v0.2.17. Implements I-1, I-2 and I-3 through per-stop cap parity, reviewable allocations and an explicit withheld-benefit path. The reference model, thresholds, nine contract routes and author intent are preserved.",
+  "canon_change_log_19": "1.18 — v0.2.18, with the package at v3.24. Two additions; no threshold, split, model figure, route or default value changed. VIP_FUTURE_PLAY=off removes future-play credit in both services: the rollover is 0, below the benefit ceiling its share stays with the guest and where the ceiling binds the ceiling is all redirect; the published terms and their version change with it, any value other than on or off refuses to start, and the default is on, at one fifth. npm run replay applies this build's stop line and settlement to an operator's anonymised past sessions under a stated budget assumption and reports stops, forgone gaming win, credits, future-play credit and guest balances; it refuses columns that look like personal data and writes no database."
 }

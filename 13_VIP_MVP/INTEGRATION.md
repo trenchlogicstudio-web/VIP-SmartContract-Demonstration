@@ -53,7 +53,7 @@ The hosted SQLite service keeps the original stop line, advisory lines and minim
 
 ## Downstream delivery
 
-Set both `VIP_DOWNSTREAM_URL` and `VIP_DOWNSTREAM_KEY` to activate the optional dispatcher. It posts JSON after the local transaction commits, using bearer authentication and a 1.5 second timeout. The envelope is `{ "source": "vip-mvp/0.2.17", "event": { "seq": 1, "type": "…", "payload": {}, "at": "…", "hash": "…", "fingerprint": "…" } }`. The sequence in this example is illustrative.
+Set both `VIP_DOWNSTREAM_URL` and `VIP_DOWNSTREAM_KEY` to activate the optional dispatcher. It posts JSON after the local transaction commits, using bearer authentication and a 1.5 second timeout. The envelope is `{ "source": "vip-mvp/0.2.18", "event": { "seq": 1, "type": "…", "payload": {}, "at": "…", "hash": "…", "fingerprint": "…" } }`. The sequence in this example is illustrative.
 
 | Mirrored event | Payload fields |
 |---|---|

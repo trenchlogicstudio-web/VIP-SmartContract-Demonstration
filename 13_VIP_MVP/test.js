@@ -1,4 +1,4 @@
-// VIP SmartContract · MVP v0.2.17 · test suite
+// VIP SmartContract · MVP v0.2.18 · test suite
 // Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
 //
 // Run:  node test.js

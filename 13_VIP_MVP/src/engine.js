@@ -1,4 +1,4 @@
-// VIP SmartContract · MVP v0.2.17 · engine (persistent session operations)
+// VIP SmartContract · MVP v0.2.18 · engine (persistent session operations)
 // Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
 //
 // This layer binds the pure policy core (policy.js) to storage and to the

@@ -1,4 +1,4 @@
-// VIP SmartContract · MVP v0.2.17 · web layer
+// VIP SmartContract · MVP v0.2.18 · web layer
 // Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
 //
 // Two surfaces, deliberately separated:

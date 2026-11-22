@@ -71,8 +71,8 @@
   "_dual_form_rule": "Every quantity appears twice and never once: the typed value carries the number, a parallel map carries the sentence. Figures resolve in model_figures with their prose in model_figures._figure_kinds; prices carry numeric bounds with a prose field beside them. A label never replaces a value and a value never replaces its explanation — a machine must be able to compute from this file and a person must be able to read it.",
   "project": "VIP SmartContract — Compliance-as-Revenue Layer",
   "package": "VIP SmartContract, single package",
-  "package_version": "v3.23",
-  "canon_version": "1.18",
+  "package_version": "v3.24",
+  "canon_version": "1.19",
   "canon_established": "2026-07-27",
   "canon_change_log": "1.0 — first canon for this package. No value is invented: every figure is lifted from the package's own demo layer (05, 05a, 05b, 05c, 05d), its API specification (04), its reference implementation (04b), its mode documents (03a, 03b) and its pricing model (06b). The document layer and the demo layer already agreed — 84% / 61% / 70% / €306K / €214K / 2.92× carry the same values in 01, 02a, 02b, 06, 07, 08c and 11 as in the demos — so nothing had to be reconciled.",
   "studio": "Trench Logic Studio — Miloš Petrović · milos@trench-logic.com · trenchlogicstudio.com",
@@ -359,7 +359,7 @@
     "stack": "04c_docker-compose.yml runs both as shipped: the reference on port 8080 and the MVP on port 3400.",
     "test_suite": "Run npm test. The full package exercises both services and the offline demos. In the standalone MVP the comparisons that need the separate reference service or package demos are explicitly skipped. See docs/FIXES.md.",
     "standalone_copy": "The 13_VIP_MVP folder also runs on its own: copied out of the repository it is the standalone VIP MVP, and the checks that need slot 04b or the offline demos report explicit skips.",
-    "adoption": "Package v3.16 adopts VIP MVP v0.2.10. Package v3.17 adopts VIP MVP v0.2.11. Package v3.18 adopts VIP MVP v0.2.12. Package v3.19 adopts VIP MVP v0.2.13. Package v3.20 adopts VIP MVP v0.2.14. Package v3.21 adopts VIP MVP v0.2.15. Package v3.22 adopts VIP MVP v0.2.16. Package v3.23 adopts VIP MVP v0.2.17.",
+    "adoption": "Package v3.16 adopts VIP MVP v0.2.10. Package v3.17 adopts VIP MVP v0.2.11. Package v3.18 adopts VIP MVP v0.2.12. Package v3.19 adopts VIP MVP v0.2.13. Package v3.20 adopts VIP MVP v0.2.14. Package v3.21 adopts VIP MVP v0.2.15. Package v3.22 adopts VIP MVP v0.2.16. Package v3.23 adopts VIP MVP v0.2.17. Package v3.24 adopts VIP MVP v0.2.18.",
     "_status_v3_2": "The v3.2 reference is NOT a service. It is a 30-line module exporting precommit, tick and _state, with a require.main walkthrough; it has no HTTP listener, reads no environment variable, and does not export the stop path even though the stop is the mechanism being sold. Its 04c is a copy of another product's compose file. Both are replaced in the same revision that seals this canon."
   },
   "runtime_floors": {
@@ -479,5 +479,6 @@
     "snapshot": "New SQLite sessions retain the terms and exact on-line example. Confirmed client review, supplied terms version and configured-only are separately identified. Legacy agreements stay unknown.",
     "changed_rules": "Pending benefits are limited by both the original agreement and active policy. Tighter restrictions return the difference to the guest. Stops and issuances record agreed and active versions and the reason."
   },
-  "canon_change_log_19": "1.18 — v3.23. Implements I-1, I-2 and I-3 through per-stop cap parity, reviewable allocations and an explicit withheld-benefit path. The reference model, thresholds, nine contract routes and author intent are preserved."
+  "canon_change_log_19": "1.18 — v3.23. Implements I-1, I-2 and I-3 through per-stop cap parity, reviewable allocations and an explicit withheld-benefit path. The reference model, thresholds, nine contract routes and author intent are preserved.",
+  "canon_change_log_20": "1.19 — v3.24, with VIP MVP v0.2.18. No threshold, split, model figure, metric, route or default changed value. thresholds._rollover_switch records the future-play credit switch, VIP_FUTURE_PLAY, on by default: off sets rollover_fraction to 0 in both services, so below the benefit ceiling that share stays with the guest and where the ceiling binds the ceiling is all redirect. Demos B and C carry the switch; Demo C's presets return it to on. The MVP gains a replay of an operator's past sessions under the engine's own rules and a stated budget assumption, with a synthetic sample, and a thirty-second video of Demo B ships in docs/media."
 }

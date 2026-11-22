@@ -1,4 +1,4 @@
-# VIP SmartContract v3.23 · Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
+# VIP SmartContract v3.24 · Copyright (c) 2026 Miloš Petrović (Trench Logic Studio) · SPDX-License-Identifier: MIT
 # From the repository root: docker compose -f 04c_docker-compose.yml up
 # Both ports are published on the Docker host's loopback interface.
 x-policy: &policy
