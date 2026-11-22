@@ -14,4 +14,16 @@ a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}@media(max-wi
 <p>This guide opens in a browser. The guest, host and admin consoles run locally using Node.js and SQLite. Use Node 22.13 or newer on the 22 line, or Node 24 or newer. No package installation is required.</p>
 <h2>Run the two example receipts</h2><p>Extract the ZIP and open a terminal in the package root or in the MVP folder. The example uses synthetic guests and leaves no database on disk.</p><pre><code>npm run example</code></pre>
 <h2>Open the guest console</h2><pre><code>npm start</code></pre><p>While the process is running, visit <a href="http://127.0.0.1:3400/">the guest screen on this computer</a>. Use a new guest ID and the €20,000 example. Review the terms before accepting. Hard-Stop blocks play on the checked line. Advisory alerts the host and permits a voluntary stop.</p>
-<h2>Verify the package</h2><pre><code>npm test</code></pre><p>The full package compares the browser calculations, the SQLite engine and the separate in-memory reference. The original nine contract routes also work from existing integrations.</p></main><footer>© 2026 Miloš Petrović · Trench Logic Studio · MIT License</footer></body></html>
+<h2>Verify the package</h2><pre><code>npm test</code></pre><p>The full package compares the browser calculations, the SQLite engine and the separate in-memory reference. The original nine contract routes also work from existing integrations.</p></main><footer>© 2026 Miloš Petrović · Trench Logic Studio · MIT License</footer>
+<script>
+// GitHub Pages publishes Markdown as HTML, so a link to a .md file would not be found there.
+// When this guide is served from the project site, those links open the file on GitHub instead.
+(function () {
+  var site = "https://trenchlogicstudio-web.github.io/VIP-SmartContract-Demonstration/";
+  var repo = "https://github.com/trenchlogicstudio-web/VIP-SmartContract-Demonstration/blob/main/";
+  if (location.href.indexOf(site) !== 0) return;
+  document.querySelectorAll("a[href$='.md']").forEach(function (a) {
+    if (a.href.indexOf(site) === 0) a.href = repo + a.href.slice(site.length);
+  });
+})();
+</script></body></html>

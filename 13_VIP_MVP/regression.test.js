@@ -1252,3 +1252,18 @@ test('every text file names its owner, in the MVP and, when present, in the whol
   for (const root of roots) walk(root);
   assert.deepEqual([...new Set(missing)], []);
 });
+
+test('on the project site the MVP guide opens its Markdown links on GitHub, and a downloaded copy keeps them local', () => {
+  const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+  assert.match(html, /href="README\.md"/);
+  assert.match(html, /href="INTEGRATION\.md"/);
+  const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+  const site = 'https://trenchlogicstudio-web.github.io/VIP-SmartContract-Demonstration/13_VIP_MVP/';
+  const online = [{ href: site + 'README.md' }, { href: site + 'INTEGRATION.md' }];
+  require('node:vm').runInNewContext(script, { location: { href: site + 'index.html' }, document: { querySelectorAll: () => online } });
+  assert.deepEqual(online.map(a => a.href), ['README.md', 'INTEGRATION.md']
+    .map(f => 'https://github.com/trenchlogicstudio-web/VIP-SmartContract-Demonstration/blob/main/13_VIP_MVP/' + f));
+  const offline = [{ href: 'file:///x/13_VIP_MVP/README.md' }];
+  require('node:vm').runInNewContext(script, { location: { href: 'file:///x/13_VIP_MVP/index.html' }, document: { querySelectorAll: () => offline } });
+  assert.equal(offline[0].href, 'file:///x/13_VIP_MVP/README.md');
+});
