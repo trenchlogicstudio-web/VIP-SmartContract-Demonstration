@@ -67,7 +67,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--display);font-weight:700;font-size:12.5px;padding:7px 12px;border:var(--rule);border-radius:20px;background:#fff;cursor:pointer;margin:3px;user-select:none}
 .chip.on{background:var(--accent);color:#fff;border-color:var(--accent-deep)}
 .chip.lock{background:var(--ink);color:var(--paper);border-color:var(--ink);cursor:default}
-.chip:disabled,.chip.dis{opacity:.4;cursor:not-allowed}
+.chip:disabled,.chip.dis{color:var(--graphite);background:#F4F6F5;border-style:dashed;cursor:not-allowed}
 .log{border:var(--rule);border-radius:var(--r);background:var(--ink);color:#CFE0E6;font-family:var(--mono);font-size:11.5px;padding:14px 16px;max-height:210px;overflow-y:auto;line-height:1.8}
 .log b{color:#fff}.log .ok{color:#9FD0B7}.log .warn{color:#E8C9A0}.log .seal{color:#E7A9A9}
 .kpi{display:flex;gap:14px;flex-wrap:wrap}
@@ -118,8 +118,8 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 <div class="ctrlcard">
 <label id="lMode">mode</label><div class="seg" role="group" aria-labelledby="lMode"><button class="on" id="mI">Incentive</button><button id="mH">Hard-stop only</button></div>
 <label id="lStakes" style="margin-top:14px">stakes</label><div class="seg" role="group" aria-labelledby="lStakes"><button class="on" id="cC">Checked first</button><button id="cA">Reported after</button></div>
-<label for="s" style="margin-top:14px">stop-loss · <b id="vS">50%</b> of pre-committed budget <span style="opacity:.6">· reference preset</span></label><input type="range" id="s" min="20" max="80" value="50" step="1">
-<label for="r">resort share before cap · <b id="vR">70%</b> of preserved budget <span style="opacity:.6">· with the rollover set to 20% before the combined cap, the ceiling the engine accepts here is 80%</span></label><input type="range" id="r" min="40" max="80" value="70" step="1">
+<label for="s" style="margin-top:14px">stop-loss · <b id="vS">50%</b> of pre-committed budget <span style="color:var(--graphite)">· reference preset</span></label><input type="range" id="s" min="20" max="80" value="50" step="1">
+<label for="r">resort share before cap · <b id="vR">70%</b> of preserved budget <span style="color:var(--graphite)">· with the rollover set to 20% before the combined cap, the ceiling the engine accepts here is 80%</span></label><input type="range" id="r" min="40" max="80" value="70" step="1">
 <p class="hint">Combined resort and future-play benefits are capped at €5,000 per guest and stop. The guest keeps the excess.</p>
 <label style="margin-top:14px">run the session</label>
 <button class="btn pri" id="deal" style="width:100%;margin-bottom:8px">DEAL · next hand</button>
