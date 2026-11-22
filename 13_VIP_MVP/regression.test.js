@@ -1234,3 +1234,21 @@ test('pilot worksheet starts empty, rejects inconsistent counts and reports abso
   d.node('nt').value=0; d.node('nt').oninput();assert.match(result(),/each group needs/i);
   d.node('nt').value=29; d.node('nt').oninput();assert.match(result(),/visits cannot exceed/);
 });
+
+test('every text file names its owner, in the MVP and, when present, in the whole package', () => {
+  const roots = [__dirname];
+  if (!inPackage.skip) roots.push(PACKAGE);
+  const skipDir = new Set(['.git', 'node_modules', 'data']);
+  const binary = /\.(docx|png|jpe?g|gif|ico|pdf|zip|db|db-wal|db-shm|sqlite)$/i;
+  const missing = [];
+  const walk = dir => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) { if (!skipDir.has(entry.name)) walk(full); continue; }
+      if (!entry.isFile() || binary.test(entry.name)) continue;
+      if (!fs.readFileSync(full, 'utf8').includes('Miloš Petrović')) missing.push(path.relative(PACKAGE, full));
+    }
+  };
+  for (const root of roots) walk(root);
+  assert.deepEqual([...new Set(missing)], []);
+});
