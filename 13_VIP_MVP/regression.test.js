@@ -1239,7 +1239,7 @@ test('every text file names its owner, in the MVP and, when present, in the whol
   const roots = [__dirname];
   if (!inPackage.skip) roots.push(PACKAGE);
   const skipDir = new Set(['.git', 'node_modules', 'data']);
-  const binary = /\.(docx|png|jpe?g|gif|ico|pdf|zip|db|db-wal|db-shm|sqlite)$/i;
+  const binary = /\.(docx|png|jpe?g|gif|ico|pdf|zip|mp4|webm|mov|mp3|wav|db|db-wal|db-shm|sqlite)$/i;
   const missing = [];
   const walk = dir => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {

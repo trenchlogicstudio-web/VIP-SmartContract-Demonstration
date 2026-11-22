@@ -7,7 +7,7 @@ The operator handles funds. The local service maintains a hash-chained decision 
 Open source under the [MIT License](LICENSE). This is package **v3.23**; the runnable
 build is **VIP MVP v0.2.17** in [`13_VIP_MVP`](13_VIP_MVP). The operating scenarios and business outcomes are synthetic. The cited external limit-setting study is identified separately.
 
-**Try it in the browser, nothing to install:** [the project index and the four demos](https://trenchlogicstudio-web.github.io/VIP-SmartContract-Demonstration/00_INDEX.html), then [a worked receipt and the pilot worksheet](https://trenchlogicstudio-web.github.io/VIP-SmartContract-Demonstration/16_Evaluation.html).
+**Try it in the browser, nothing to install:** [the project index and the four demos](https://trenchlogicstudio-web.github.io/VIP-SmartContract-Demonstration/00_INDEX.html), then [a worked receipt and the pilot worksheet](https://trenchlogicstudio-web.github.io/VIP-SmartContract-Demonstration/16_Evaluation.html). Or [watch Demo B in 30 seconds](https://trenchlogicstudio-web.github.io/VIP-SmartContract-Demonstration/docs/media/vip-demo-b-30s.mp4).
 
 **From a downloaded copy:** extract the archive and open [the project index](00_INDEX.html) and [the pilot worksheet](16_Evaluation.html), or run the same two receipts against SQLite with `npm run example`.
 
